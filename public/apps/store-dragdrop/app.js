@@ -1,6 +1,6 @@
 
 // ====== LOCAL STORAGE FALLBACK ENGINE ======
-const MOCK_STORAGE_KEY = 'store_app_local_data_v16';
+const MOCK_STORAGE_KEY = 'store_app_local_data_v17';
 
 function getInitialLocalData() {
   return {
@@ -8465,7 +8465,7 @@ function getLocIcon(loc) {
   var type = typeof loc === 'object' ? loc.type : null;
   if (name.includes('ร้านค้า') || name.includes('เช่า')) return '🏪';
   if (name.includes('ร้านซ่อม') || name.includes('ซ่อม')) return '🔧';
-  if (name.includes('สูญหาย') || name.includes('หาย')) return '📦❌';
+  if (name.includes('สูญหาย') || name.includes('หาย')) return '🚫';
   if (name.includes('จำหน่าย') || name.includes('ทิ้ง') || name.includes('ตัดออก')) return '🗑️';
   if (type === 'สโตร์') return '🏭';
   if (type === 'ไซต์งาน') return '🏗️';
