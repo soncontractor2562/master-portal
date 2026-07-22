@@ -1,6 +1,6 @@
 
 // ====== LOCAL STORAGE FALLBACK ENGINE ======
-const MOCK_STORAGE_KEY = 'store_app_local_data_v14';
+const MOCK_STORAGE_KEY = 'store_app_local_data_v15';
 
 function getInitialLocalData() {
   return {
@@ -6163,8 +6163,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -6178,8 +6178,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6193,8 +6193,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6208,8 +6208,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 411,
+    "balanceTo": 10,
     "imageFolderUrl": ""
   },
   {
@@ -6224,7 +6224,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "บจก. เอลแกน บิลด์",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 502,
     "imageFolderUrl": ""
   },
   {
@@ -6238,8 +6238,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 8,
+    "balanceTo": 18,
     "imageFolderUrl": ""
   },
   {
@@ -6253,8 +6253,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 140,
+    "balanceTo": 116,
     "imageFolderUrl": ""
   },
   {
@@ -6268,8 +6268,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 81,
+    "balanceTo": 68,
     "imageFolderUrl": ""
   },
   {
@@ -6283,8 +6283,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 120,
+    "balanceTo": 52,
     "imageFolderUrl": ""
   },
   {
@@ -6298,8 +6298,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6313,8 +6313,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ประจำชุดช่างตา",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -1,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -6328,8 +6328,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ประจำชุดช่างตา",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -1,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6343,8 +6343,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ประจำชุดช่างตา",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6358,8 +6358,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ประจำชุดช่างตา",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2,
+    "balanceTo": 0,
     "imageFolderUrl": ""
   },
   {
@@ -6373,8 +6373,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ประจำชุดช่างตา",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6389,7 +6389,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6403,8 +6403,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "คุณปุยเอ็นแมท ขอยืมไปแล้วนำกลับมาคืน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6418,8 +6418,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -25,
+    "balanceTo": 27,
     "imageFolderUrl": ""
   },
   {
@@ -6433,8 +6433,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -12,
+    "balanceTo": 8,
     "imageFolderUrl": ""
   },
   {
@@ -6448,8 +6448,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1,
+    "balanceTo": 0,
     "imageFolderUrl": ""
   },
   {
@@ -6463,8 +6463,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 3,
+    "balanceTo": 3,
     "imageFolderUrl": ""
   },
   {
@@ -6478,8 +6478,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 3,
     "imageFolderUrl": ""
   },
   {
@@ -6493,8 +6493,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1873,
+    "balanceTo": 240,
     "imageFolderUrl": ""
   },
   {
@@ -6508,8 +6508,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 628,
     "imageFolderUrl": ""
   },
   {
@@ -6523,8 +6523,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1251,
+    "balanceTo": 2113,
     "imageFolderUrl": ""
   },
   {
@@ -6538,8 +6538,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -42,
+    "balanceTo": 383,
     "imageFolderUrl": ""
   },
   {
@@ -6553,8 +6553,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ชุด ผรม.ช่างภูบาล  ใช้งานขึ้นวัสดุ",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6568,8 +6568,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "รร.แนชเลิกใช้ นำกลับมาสต็อกรอขึ้นงานใหม่",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 47,
+    "balanceTo": 114,
     "imageFolderUrl": ""
   },
   {
@@ -6583,8 +6583,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ชุดช่างดำ ใช้งาน สำหรับงานซ่อมแต่ละโครงการ",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -1,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6598,8 +6598,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ชุดช่างดำ ใช้งาน สำหรับงานซ่อมแต่ละโครงการ",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6613,8 +6613,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ชุดช่างดำ ใช้งาน สำหรับงานซ่อมแต่ละโครงการ",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6628,8 +6628,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 80,
+    "balanceTo": 1753,
     "imageFolderUrl": ""
   },
   {
@@ -6643,8 +6643,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 12,
+    "balanceTo": 603,
     "imageFolderUrl": ""
   },
   {
@@ -6658,8 +6658,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 72,
+    "balanceTo": 353,
     "imageFolderUrl": ""
   },
   {
@@ -6673,8 +6673,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "ชำรุด",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 20,
+    "balanceTo": 396,
     "imageFolderUrl": ""
   },
   {
@@ -6688,8 +6688,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 70,
+    "balanceTo": 346,
     "imageFolderUrl": ""
   },
   {
@@ -6703,8 +6703,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 169,
+    "balanceTo": 421,
     "imageFolderUrl": ""
   },
   {
@@ -6718,8 +6718,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 60,
+    "balanceTo": 385,
     "imageFolderUrl": ""
   },
   {
@@ -6733,8 +6733,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 10,
+    "balanceTo": 428,
     "imageFolderUrl": ""
   },
   {
@@ -6748,8 +6748,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 107,
+    "balanceTo": 432,
     "imageFolderUrl": ""
   },
   {
@@ -6763,8 +6763,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 11,
+    "balanceTo": 138,
     "imageFolderUrl": ""
   },
   {
@@ -6778,8 +6778,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -4,
+    "balanceTo": 345,
     "imageFolderUrl": ""
   },
   {
@@ -6793,8 +6793,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -8,
+    "balanceTo": 260,
     "imageFolderUrl": ""
   },
   {
@@ -6808,8 +6808,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -6,
+    "balanceTo": 289,
     "imageFolderUrl": ""
   },
   {
@@ -6823,8 +6823,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -5,
+    "balanceTo": 301,
     "imageFolderUrl": ""
   },
   {
@@ -6838,8 +6838,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1611,
+    "balanceTo": 1513,
     "imageFolderUrl": ""
   },
   {
@@ -6853,8 +6853,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -3,
+    "balanceTo": 3,
     "imageFolderUrl": ""
   },
   {
@@ -6868,8 +6868,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2061,
+    "balanceTo": 1063,
     "imageFolderUrl": ""
   },
   {
@@ -6883,8 +6883,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 233,
+    "balanceTo": 341,
     "imageFolderUrl": ""
   },
   {
@@ -6898,8 +6898,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "อยู่ร้านซ่อม รอเสนอราคา  เบอร์ร้าน 086-8948122",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6913,8 +6913,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "อยู่ร้านซ่อม รอเสนอราคา  เบอร์ร้าน 086-8948122",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 1,
     "imageFolderUrl": ""
   },
   {
@@ -6928,8 +6928,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -12,
+    "balanceTo": 221,
     "imageFolderUrl": ""
   },
   {
@@ -6943,8 +6943,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -6958,8 +6958,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2511,
+    "balanceTo": 613,
     "imageFolderUrl": ""
   },
   {
@@ -6973,8 +6973,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -3,
+    "balanceTo": 211,
     "imageFolderUrl": ""
   },
   {
@@ -6988,8 +6988,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 17,
+    "balanceTo": 17,
     "imageFolderUrl": ""
   },
   {
@@ -7003,8 +7003,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 47,
+    "balanceTo": 249,
     "imageFolderUrl": ""
   },
   {
@@ -7018,8 +7018,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 41,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -7033,8 +7033,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -40,
+    "balanceTo": 283,
     "imageFolderUrl": ""
   },
   {
@@ -7048,8 +7048,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -161,
+    "balanceTo": 296,
     "imageFolderUrl": ""
   },
   {
@@ -7063,8 +7063,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -18,
+    "balanceTo": 15,
     "imageFolderUrl": ""
   },
   {
@@ -7079,7 +7079,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 398,
     "imageFolderUrl": ""
   },
   {
@@ -7094,7 +7094,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 108,
     "imageFolderUrl": ""
   },
   {
@@ -7109,7 +7109,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 402,
     "imageFolderUrl": ""
   },
   {
@@ -7124,7 +7124,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 380,
     "imageFolderUrl": ""
   },
   {
@@ -7138,8 +7138,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -4,
+    "balanceTo": 12,
     "imageFolderUrl": ""
   },
   {
@@ -7153,8 +7153,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -140,
+    "balanceTo": 978,
     "imageFolderUrl": ""
   },
   {
@@ -7168,8 +7168,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -18,
+    "balanceTo": 175,
     "imageFolderUrl": ""
   },
   {
@@ -7183,8 +7183,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -13,
+    "balanceTo": 53,
     "imageFolderUrl": ""
   },
   {
@@ -7198,8 +7198,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 1,
+    "balanceTo": 61,
     "imageFolderUrl": ""
   },
   {
@@ -7213,8 +7213,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 164,
+    "balanceTo": 628,
     "imageFolderUrl": ""
   },
   {
@@ -7228,8 +7228,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 93,
+    "balanceTo": 188,
     "imageFolderUrl": ""
   },
   {
@@ -7243,8 +7243,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 66,
+    "balanceTo": 118,
     "imageFolderUrl": ""
   },
   {
@@ -7258,8 +7258,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 132,
+    "balanceTo": 243,
     "imageFolderUrl": ""
   },
   {
@@ -7273,8 +7273,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 5,
     "imageFolderUrl": ""
   },
   {
@@ -7288,8 +7288,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -33,
+    "balanceTo": 209,
     "imageFolderUrl": ""
   },
   {
@@ -7303,8 +7303,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -15,
+    "balanceTo": 107,
     "imageFolderUrl": ""
   },
   {
@@ -7318,8 +7318,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 208,
     "imageFolderUrl": ""
   },
   {
@@ -7333,8 +7333,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -11,
+    "balanceTo": 11,
     "imageFolderUrl": ""
   },
   {
@@ -7348,8 +7348,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -5,
+    "balanceTo": 24,
     "imageFolderUrl": ""
   },
   {
@@ -7363,8 +7363,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -54,
+    "balanceTo": 186,
     "imageFolderUrl": ""
   },
   {
@@ -7378,8 +7378,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 11,
+    "balanceTo": 106,
     "imageFolderUrl": ""
   },
   {
@@ -7393,8 +7393,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 30,
+    "balanceTo": 3,
     "imageFolderUrl": ""
   },
   {
@@ -7408,8 +7408,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -35,
+    "balanceTo": 358,
     "imageFolderUrl": ""
   },
   {
@@ -7423,8 +7423,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -12,
+    "balanceTo": 0,
     "imageFolderUrl": ""
   },
   {
@@ -7438,8 +7438,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 12,
+    "balanceTo": 217,
     "imageFolderUrl": ""
   },
   {
@@ -7453,8 +7453,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -7468,8 +7468,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -12,
+    "balanceTo": 313,
     "imageFolderUrl": ""
   },
   {
@@ -7483,8 +7483,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -65,
+    "balanceTo": 503,
     "imageFolderUrl": ""
   },
   {
@@ -7498,8 +7498,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 62,
+    "balanceTo": 8,
     "imageFolderUrl": ""
   },
   {
@@ -7513,8 +7513,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 5,
     "imageFolderUrl": ""
   },
   {
@@ -7528,8 +7528,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -4,
+    "balanceTo": 92,
     "imageFolderUrl": ""
   },
   {
@@ -7543,8 +7543,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 200,
+    "balanceTo": 592,
     "imageFolderUrl": ""
   },
   {
@@ -7558,8 +7558,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 68,
+    "balanceTo": 313,
     "imageFolderUrl": ""
   },
   {
@@ -7574,7 +7574,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "ซื้อจากร้านค้า",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 301,
     "imageFolderUrl": ""
   },
   {
@@ -7589,7 +7589,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "ซื้อจากร้านค้า",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 252,
     "imageFolderUrl": ""
   },
   {
@@ -7603,8 +7603,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 80,
     "imageFolderUrl": ""
   },
   {
@@ -7618,8 +7618,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 200,
     "imageFolderUrl": ""
   },
   {
@@ -7633,8 +7633,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -35,
+    "balanceTo": 176,
     "imageFolderUrl": ""
   },
   {
@@ -7648,8 +7648,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -2,
+    "balanceTo": 107,
     "imageFolderUrl": ""
   },
   {
@@ -7663,8 +7663,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -63,
+    "balanceTo": 190,
     "imageFolderUrl": ""
   },
   {
@@ -7678,8 +7678,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -6,
+    "balanceTo": 6,
     "imageFolderUrl": ""
   },
   {
@@ -7693,8 +7693,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 320,
+    "balanceTo": 50,
     "imageFolderUrl": ""
   },
   {
@@ -7708,8 +7708,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 74,
+    "balanceTo": 532,
     "imageFolderUrl": ""
   },
   {
@@ -7723,8 +7723,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -7,
+    "balanceTo": 7,
     "imageFolderUrl": ""
   },
   {
@@ -7738,8 +7738,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 112,
+    "balanceTo": 438,
     "imageFolderUrl": ""
   },
   {
@@ -7753,8 +7753,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 112,
+    "balanceTo": 151,
     "imageFolderUrl": ""
   },
   {
@@ -7768,8 +7768,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 156,
+    "balanceTo": 72,
     "imageFolderUrl": ""
   },
   {
@@ -7783,8 +7783,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 144,
+    "balanceTo": 111,
     "imageFolderUrl": ""
   },
   {
@@ -7798,8 +7798,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 40,
+    "balanceTo": 109,
     "imageFolderUrl": ""
   },
   {
@@ -7813,8 +7813,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 137,
+    "balanceTo": 189,
     "imageFolderUrl": ""
   },
   {
@@ -7828,8 +7828,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -4,
+    "balanceTo": 36,
     "imageFolderUrl": ""
   },
   {
@@ -7843,8 +7843,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 31,
+    "balanceTo": 14,
     "imageFolderUrl": ""
   },
   {
@@ -7858,8 +7858,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 41,
+    "balanceTo": 48,
     "imageFolderUrl": ""
   },
   {
@@ -7873,8 +7873,8 @@ function getInitialLocalData() {
     "receiver": "ช่างวิน",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 260,
+    "balanceTo": 92,
     "imageFolderUrl": ""
   },
   {
@@ -7888,8 +7888,8 @@ function getInitialLocalData() {
     "receiver": "ช่างวิน",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 174,
+    "balanceTo": 56,
     "imageFolderUrl": ""
   },
   {
@@ -7903,8 +7903,8 @@ function getInitialLocalData() {
     "receiver": "ช่างวิน",
     "reporter": "พี่โย",
     "remark": "",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 19,
+    "balanceTo": 0,
     "imageFolderUrl": ""
   },
   {
@@ -7918,8 +7918,8 @@ function getInitialLocalData() {
     "receiver": "ช่างวิน",
     "reporter": "พี่โย",
     "remark": "งานโครงหหลังคา/ช่างยะ",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 4,
+    "balanceTo": 4,
     "imageFolderUrl": ""
   },
   {
@@ -7933,8 +7933,8 @@ function getInitialLocalData() {
     "receiver": "ช่างวิน",
     "reporter": "พี่โย",
     "remark": "งานโครงหหลังคา/ช่างยะ",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 4,
+    "balanceTo": 4,
     "imageFolderUrl": ""
   },
   {
@@ -7948,8 +7948,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -7963,8 +7963,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 9,
+    "balanceTo": 9,
     "imageFolderUrl": ""
   },
   {
@@ -7978,8 +7978,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 0,
+    "balanceTo": 18,
     "imageFolderUrl": ""
   },
   {
@@ -7993,8 +7993,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 36,
+    "balanceTo": 20,
     "imageFolderUrl": ""
   },
   {
@@ -8008,8 +8008,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -13,
+    "balanceTo": 17,
     "imageFolderUrl": ""
   },
   {
@@ -8023,8 +8023,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 17,
+    "balanceTo": 0,
     "imageFolderUrl": ""
   },
   {
@@ -8038,8 +8038,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -17,
+    "balanceTo": 20,
     "imageFolderUrl": ""
   },
   {
@@ -8053,8 +8053,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 2,
+    "balanceTo": 69,
     "imageFolderUrl": ""
   },
   {
@@ -8068,8 +8068,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 78,
+    "balanceTo": 12,
     "imageFolderUrl": ""
   },
   {
@@ -8083,8 +8083,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 228,
+    "balanceTo": 160,
     "imageFolderUrl": ""
   },
   {
@@ -8098,8 +8098,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -14,
+    "balanceTo": 34,
     "imageFolderUrl": ""
   },
   {
@@ -8113,8 +8113,8 @@ function getInitialLocalData() {
     "receiver": "สมพงษ์",
     "reporter": "พี่โย",
     "remark": "เลิกใช้งาน",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 50,
+    "balanceTo": 87,
     "imageFolderUrl": ""
   },
   {
@@ -8129,7 +8129,7 @@ function getInitialLocalData() {
     "reporter": "พี่โย",
     "remark": "รับจากเอ็นโค่",
     "balanceFrom": null,
-    "balanceTo": null,
+    "balanceTo": 2,
     "imageFolderUrl": ""
   },
   {
@@ -8143,8 +8143,8 @@ function getInitialLocalData() {
     "receiver": "มานพ",
     "reporter": "พี่โย",
     "remark": "รับพื้นชั้น 2",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": 25,
+    "balanceTo": 269,
     "imageFolderUrl": ""
   },
   {
@@ -8158,8 +8158,8 @@ function getInitialLocalData() {
     "receiver": "มานพ",
     "reporter": "พี่โย",
     "remark": "รับพื้นชั้น 2",
-    "balanceFrom": null,
-    "balanceTo": null,
+    "balanceFrom": -32,
+    "balanceTo": 159,
     "imageFolderUrl": ""
   }
 ]
