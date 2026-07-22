@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบขอซื้อ (PR) งานก่อสร้าง - Construction Procurement Kanban</title>
+    <!-- Google Fonts: Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <!-- App Container -->
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <i data-lucide="hard-hat"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>CONSTRUCT PR</h1>
+                    <span>ระบบขอซื้อหน้างาน</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <button id="nav-kanban" class="nav-btn active">
+                    <i data-lucide="kanban-square"></i>
+                    <span>บอร์ดคันบัง (PR Board)</span>
+                </button>
+                <button id="nav-boq" class="nav-btn">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>งบประมาณ BOQ</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="theme-toggle">
+                    <button id="theme-toggle-btn" title="เปลี่ยนโหมดสี">
+                        <i data-lucide="sun" class="sun-icon"></i>
+                        <i data-lucide="moon" class="moon-icon"></i>
+                        <span id="theme-text">โหมดสว่าง</span>
+                    </button>
+                </div>
+                <button id="reset-data-btn" class="reset-btn" title="รีเซ็ตข้อมูลเป็นค่าเริ่มต้น">
+                    <i data-lucide="rotate-ccw"></i>
+                    <span>รีเซ็ตข้อมูล</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar / Header -->
+            <header class="top-bar">
+                <div class="header-search-filter">
+                    <div class="header-nav-tabs">
+                        <button id="nav-kanban-top" class="top-tab-btn active">
+                            <i data-lucide="kanban-square"></i>
+                            <span>บอร์ดคันบัง</span>
+                        </button>
+                        <button id="nav-boq-top" class="top-tab-btn">
+                            <i data-lucide="bar-chart-3"></i>
+                            <span>งบประมาณ BOQ</span>
+                        </button>
+                    </div>
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="search-input" placeholder="ค้นหาใบขอซื้อ, รายการ หรือผู้สั่ง...">
+                    </div>
+                    <div class="filter-box">
+                        <i data-lucide="building-2"></i>
+                        <select id="project-filter">
+                            <option value="all">ทุกโครงการ</option>
+                            <!-- Projects will be dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="create-pr-btn" class="btn btn-primary">
+                        <i data-lucide="plus-circle"></i>
+                        <span>ออก PR หน้างาน</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content Panels -->
+            <div class="content-body">
+                <!-- PANEL 1: KANBAN BOARD -->
+                <section id="panel-kanban" class="content-panel active">
+                    <div class="kanban-board">
+                        
+                        <!-- COLUMN 1: ออก PR หน้างาน -->
+                        <div class="kanban-column" id="col-1" data-step="1">
+                            <div class="column-header">
+                                <div class="column-title-wrapper">
+                                    <span class="column-indicator col-step-1"></span>
+                                    <h2>1. หน้างานขอซื้อ</h2>
+                                </div>
+                                <span class="card-count" id="count-col-1">0</span>
+                            </div>
+                            <div class="column-cards-container" id="cards-col-1" ondragover="allowDrop(event)" ondrop="drop(event, 1)">
+                                <!-- Cards injected here -->
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 2: จัดซื้อสั่งซื้อ & ใบเสนอราคา -->
+                        <div class="kanban-column" id="col-2" data-step="2">
+                            <div class="column-header">
+                                <div class="column-title-wrapper">
+                                    <span class="column-indicator col-step-2"></span>
+                                    <h2>2. จัดซื้อเสนอราคา / ออก PO</h2>
+                                </div>
+                                <span class="card-count" id="count-col-2">0</span>
+                            </div>
+                            <div class="column-cards-container" id="cards-col-2" ondragover="allowDrop(event)" ondrop="drop(event, 2)">
+                                <!-- Cards injected here -->
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 3: ของถึงหน้างาน & ตรวจเช็ค -->
+                        <div class="kanban-column" id="col-3" data-step="3">
+                            <div class="column-header">
+                                <div class="column-title-wrapper">
+                                    <span class="column-indicator col-step-3"></span>
+                                    <h2>3. ของส่งมอบหน้างาน</h2>
+                                </div>
+                                <span class="card-count" id="count-col-3">0</span>
+                            </div>
+                            <div class="column-cards-container" id="cards-col-3" ondragover="allowDrop(event)" ondrop="drop(event, 3)">
+                                <!-- Cards injected here -->
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 4: ได้รับใบกำกับภาษี -->
+                        <div class="kanban-column" id="col-4" data-step="4">
+                            <div class="column-header">
+                                <div class="column-title-wrapper">
+                                    <span class="column-indicator col-step-4"></span>
+                                    <h2>4. บันทึกใบกำกับภาษี</h2>
+                                </div>
+                                <span class="card-count" id="count-col-4">0</span>
+                            </div>
+                            <div class="column-cards-container" id="cards-col-4" ondragover="allowDrop(event)" ondrop="drop(event, 4)">
+                                <!-- Cards injected here -->
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- PANEL 2: BOQ BUDGET DASHBOARD -->
+                <section id="panel-boq" class="content-panel">
+                    <div class="boq-dashboard-wrapper">
+                        <div class="dashboard-summary-cards">
+                            <div class="summary-card">
+                                <div class="card-icon info-icon"><i data-lucide="wallet"></i></div>
+                                <div class="card-data">
+                                    <span class="label">งบประมาณรวมทุกโครงการ</span>
+                                    <h3 id="total-boq-budget">0.00 บาท</h3>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-icon warning-icon"><i data-lucide="shopping-cart"></i></div>
+                                <div class="card-data">
+                                    <span class="label">ยอดสั่งซื้อสะสม (PO Issued)</span>
+                                    <h3 id="total-po-spent">0.00 บาท</h3>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-icon success-icon"><i data-lucide="badge-percent"></i></div>
+                                <div class="card-data">
+                                    <span class="label">คงเหลือสุทธิ (Remaining)</span>
+                                    <h3 id="total-boq-remaining">0.00 บาท</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="boq-project-details-section">
+                            <div class="project-selector-card">
+                                <h3>เลือกโครงการเพื่อดูรายละเอียด BOQ</h3>
+                                <div class="project-btn-list" id="boq-project-tabs">
+                                    <!-- Dynamic Project Tabs -->
+                                </div>
+                            </div>
+
+                            <div class="boq-table-card">
+                                <div class="boq-table-header">
+                                    <h3 id="selected-project-title">รายละเอียดงบประมาณ BOQ</h3>
+                                    <span class="budget-progress-percentage" id="project-usage-badge">0% Used</span>
+                                </div>
+                                <div class="project-overall-progress">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" id="project-progress-fill" style="width: 0%"></div>
+                                    </div>
+                                    <div class="progress-labels">
+                                        <span>ใช้งบไปแล้ว <strong id="proj-spent-text">0</strong> บาท</span>
+                                        <span>จากงบทั้งหมด <strong id="proj-budget-text">0</strong> บาท</span>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="boq-table">
+                                        <thead>
+                                            <tr>
+                                                <th>รหัส/หมวดงาน BOQ</th>
+                                                <th>งบประมาณที่ตั้งไว้</th>
+                                                <th>ขอซื้อไปแล้ว (PR/PO)</th>
+                                                <th>คงเหลือใช้ได้</th>
+                                                <th>สัดส่วนการใช้งบ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="boq-table-rows">
+                                            <!-- Dynamic Rows injected here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL 1: NEW PR FORM (Phase 1) -->
+    <div id="new-pr-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2><i data-lucide="plus-circle" style="color: var(--primary);"></i> ออกใบขอซื้อ (PR) จากหน้างาน</h2>
+                <button class="close-modal-btn" onclick="closeModal('new-pr-modal')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="new-pr-form">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group col-span-2">
+                            <label for="new-project">โครงการ <span class="required">*</span></label>
+                            <select id="new-project" required onchange="updateBOQDropdown('new-project', 'new-boq')">
+                                <option value="" disabled selected>เลือกโครงการ...</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-boq">ใช้ในหมวดงาน BOQ <span class="required">*</span></label>
+                            <select id="new-boq" required disabled>
+                                <option value="" disabled selected>กรุณาเลือกโครงการก่อน...</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-span-4">
+                            <label for="new-item-name">รายการวัสดุ/ของที่ต้องการสั่งซื้อ <span class="required">*</span></label>
+                            <input type="text" id="new-item-name" placeholder="ระบุของที่ต้องการ เช่น ปูนซิเมนต์ TPI, เหล็กข้ออ้อย 12 มม." required>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-qty">จำนวน <span class="required">*</span></label>
+                            <input type="number" id="new-qty" min="1" step="any" placeholder="ตัวเลขจำนวน" required>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-unit">หน่วยนับ <span class="required">*</span></label>
+                            <input type="text" id="new-unit" placeholder="เช่น ถุง, ตัน, เส้น, คิว" required>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-order-date">วันที่สั่งซื้อ <span class="required">*</span></label>
+                            <input type="date" id="new-order-date" required>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-need-date">วันที่ต้องการใช้ของ <span class="required">*</span></label>
+                            <input type="date" id="new-need-date" required>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-requester">ผู้ขอซื้อ (สั่งโดยใคร) <span class="required">*</span></label>
+                            <input type="text" id="new-requester" placeholder="ระบุชื่อผู้ขอซื้อหน้างาน" required>
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="new-urgency">ความเร่งด่วน</label>
+                            <select id="new-urgency">
+                                <option value="low">ปกติ</option>
+                                <option value="medium" selected>ด่วน</option>
+                                <option value="high">ด่วนที่สุด</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-span-4">
+                            <label for="new-remarks">หมายเหตุ / คำอธิบายเพิ่มเติม</label>
+                            <textarea id="new-remarks" rows="2" placeholder="ระบุข้อมูลเพิ่มเติม (ถ้ามี) เช่น สเปกเฉพาะเจาะจง หรือสถานที่จัดส่ง"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('new-pr-modal')">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">ส่งขอสั่งซื้อ (PR)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PR DETAILS & STEP UPDATE (Phase 2, 3, 4) -->
+    <div id="pr-detail-modal" class="modal-overlay">
+        <div class="modal-container modal-large">
+            <div class="modal-header">
+                <div class="pr-modal-title">
+                    <span class="badge" id="detail-pr-id">PR-XXXX</span>
+                    <h2 id="detail-item-name">รายการสั่งซื้อ</h2>
+                </div>
+                <button class="close-modal-btn" onclick="closeModal('pr-detail-modal')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-layout-grid">
+                    
+                    <!-- Left Panel: Information & Documents -->
+                    <div class="modal-left-panel">
+                        
+                        <!-- Progress Pipeline -->
+                        <div class="pipeline-status-bar">
+                            <div class="pipeline-step active" id="pipe-1">
+                                <span class="step-num">1</span>
+                                <span class="step-label">หน้างานขอซื้อ</span>
+                            </div>
+                            <div class="pipeline-step" id="pipe-2">
+                                <span class="step-num">2</span>
+                                <span class="step-label">จัดซื้อเสนอราคา / PO</span>
+                            </div>
+                            <div class="pipeline-step" id="pipe-3">
+                                <span class="step-num">3</span>
+                                <span class="step-label">ของส่งหน้างาน</span>
+                            </div>
+                            <div class="pipeline-step" id="pipe-4">
+                                <span class="step-num">4</span>
+                                <span class="step-label">ใบกำกับภาษี</span>
+                            </div>
+                        </div>
+
+                        <div class="info-block-container">
+                            <div class="section-title">
+                                <i data-lucide="info"></i> ข้อมูลใบขอซื้อหน้างาน (PR)
+                            </div>
+                            <div class="details-info-grid">
+                                <div>
+                                    <span class="info-label">โครงการ:</span>
+                                    <span class="info-value" id="detail-project">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">งาน BOQ:</span>
+                                    <span class="info-value" id="detail-boq">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">สั่งซื้อโดย:</span>
+                                    <span class="info-value" id="detail-requester">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">วันที่สั่ง:</span>
+                                    <span class="info-value" id="detail-order-date">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">จำนวนสั่ง:</span>
+                                    <span class="info-value" id="detail-qty">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">วันที่ใช้ของ:</span>
+                                    <span class="info-value text-warning" id="detail-need-date">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">ความเร่งด่วน:</span>
+                                    <span id="detail-urgency-badge" class="urgency-badge">-</span>
+                                </div>
+                                <div>
+                                    <span class="info-label">หมายเหตุขอซื้อ:</span>
+                                    <span class="info-value" id="detail-remarks">-</span>
+                                </div>
+                                <div id="detail-delivery-remarks-container" style="grid-column: span 2; display: none;">
+                                    <span class="info-label">หมายเหตุการตรวจรับของ:</span>
+                                    <span class="info-value text-warning" id="detail-delivery-remarks">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Documents Section -->
+                        <div class="documents-section">
+                            <div class="section-title">
+                                <i data-lucide="paperclip"></i> เอกสารประกอบรายการ
+                            </div>
+                            <div class="attachments-list">
+                                <!-- Step 2 Document -->
+                                <div class="attachment-item" id="doc-step2">
+                                    <div class="doc-icon"><i data-lucide="file-text"></i></div>
+                                    <div class="doc-details">
+                                        <span class="doc-title">ใบเสนอราคา & PO (จัดซื้อ)</span>
+                                        <span class="doc-status" id="doc-step2-status">ยังไม่ได้แนบ</span>
+                                    </div>
+                                    <button class="btn-view-doc" id="btn-view-quote" disabled>
+                                        <i data-lucide="eye"></i> ดูไฟล์
+                                    </button>
+                                </div>
+                                <!-- Step 3 Document -->
+                                <div class="attachment-item" id="doc-step3">
+                                    <div class="doc-icon"><i data-lucide="image"></i></div>
+                                    <div class="doc-details">
+                                        <span class="doc-title">ใบส่งของ / รูปถ่ายของส่งหน้างาน</span>
+                                        <span class="doc-status" id="doc-step3-status">ยังไม่ได้แนบ</span>
+                                    </div>
+                                    <button class="btn-view-doc" id="btn-view-delivery" disabled>
+                                        <i data-lucide="eye"></i> ดูไฟล์
+                                    </button>
+                                </div>
+                                <!-- Step 4 Document -->
+                                <div class="attachment-item" id="doc-step4">
+                                    <div class="doc-icon"><i data-lucide="receipt"></i></div>
+                                    <div class="doc-details">
+                                        <span class="doc-title">ใบกำกับภาษี (Tax Invoice)</span>
+                                        <span class="doc-status" id="doc-step4-status">ยังไม่ได้แนบ</span>
+                                    </div>
+                                    <button class="btn-view-doc" id="btn-view-invoice" disabled>
+                                        <i data-lucide="eye"></i> ดูไฟล์
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Step Action Form -->
+                    <div class="modal-right-panel">
+                        <div class="step-action-card">
+                            <div class="action-header" id="action-step-title">
+                                <h3>ดำเนินการขั้นตอนที่ 2</h3>
+                            </div>
+                            
+                            <!-- ACTION FORM: PHASE 2 (จัดซื้อแนบเสนอราคา/PO) -->
+                            <form id="action-form-step2" class="step-action-form">
+                                <div class="form-group">
+                                    <label for="step2-supplier">ร้านค้า/ผู้ขาย (Supplier) <span class="required">*</span></label>
+                                    <input type="text" id="step2-supplier" placeholder="ระบุชื่อร้านค้า/ซัพพลายเออร์" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step2-po-number">เลขที่ใบสั่งซื้อ (PO Number) <span class="required">*</span></label>
+                                    <input type="text" id="step2-po-number" placeholder="เช่น PO-26-0001" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step2-price">ราคารวมเสนอราคา (บาท) <span class="required">*</span></label>
+                                    <input type="number" id="step2-price" min="0" step="any" placeholder="ระบุราคารวมสุทธิ" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>แนบใบเสนอราคา/ใบสั่งซื้อ (รูปภาพ/PDF) <span class="required">*</span></label>
+                                    <div class="file-dropzone" onclick="triggerFileInput('step2-file')">
+                                        <i data-lucide="upload-cloud"></i>
+                                        <p>คลิกเพื่ออัปโหลดใบเสนอราคา/PO</p>
+                                        <span id="step2-file-name" class="selected-file-label">ไม่ได้เลือกไฟล์</span>
+                                        <input type="file" id="step2-file" accept="image/*,.pdf" style="display:none" onchange="handleFileSelected(this, 'step2-file-name')">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i data-lucide="check-circle2"></i> ยืนยันออก PO และเสนอราคา
+                                </button>
+                            </form>
+
+                            <!-- ACTION FORM: PHASE 3 (ของส่งมอบหน้างาน) -->
+                            <form id="action-form-step3" class="step-action-form" style="display:none">
+                                <div class="form-group">
+                                    <label for="step3-receiver">ผู้รับของหน้างาน <span class="required">*</span></label>
+                                    <input type="text" id="step3-receiver" placeholder="ระบุชื่อผู้ตรวจรับของหน้างาน" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step3-receive-date">วันที่ของถึงหน้างาน <span class="required">*</span></label>
+                                    <input type="date" id="step3-receive-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step3-status">สภาพและจำนวนสินค้า <span class="required">*</span></label>
+                                    <select id="step3-status" required>
+                                        <option value="complete">ถูกต้องครบถ้วนและสภาพดี</option>
+                                        <option value="incomplete">ได้ของไม่ครบ (ระบุในหมายเหตุ)</option>
+                                        <option value="damaged">ของเสียหาย ชำรุด (ระบุในหมายเหตุ)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step3-remarks">หมายเหตุการรับของ (ระบุสินค้าขาด/ชำรุด หรือข้อมูลเพิ่มเติม)</label>
+                                    <textarea id="step3-remarks" rows="2" placeholder="กรอกหมายเหตุตรวจรับของหน้างาน (ถ้ามี)"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>แนบใบส่งของหรือถ่ายรูปสินค้า <span class="required">*</span></label>
+                                    <div class="file-dropzone" onclick="triggerFileInput('step3-file')">
+                                        <i data-lucide="camera"></i>
+                                        <p>คลิกเพื่อถ่ายรูป/แนบใบส่งของ</p>
+                                        <span id="step3-file-name" class="selected-file-label">ไม่ได้เลือกไฟล์</span>
+                                        <input type="file" id="step3-file" accept="image/*,.pdf" style="display:none" onchange="handleFileSelected(this, 'step3-file-name')">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i data-lucide="package-check"></i> ตรวจรับของเรียบร้อย
+                                </button>
+                            </form>
+
+                            <!-- ACTION FORM: PHASE 4 (ใบกำกับภาษี) -->
+                            <form id="action-form-step4" class="step-action-form" style="display:none">
+                                <div class="form-group">
+                                    <label for="step4-invoice-number">เลขที่ใบกำกับภาษี (Tax Invoice No.) <span class="required">*</span></label>
+                                    <input type="text" id="step4-invoice-number" placeholder="เช่น INV-690601" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step4-invoice-date">วันที่ในใบกำกับภาษี <span class="required">*</span></label>
+                                    <input type="date" id="step4-invoice-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="step4-uploader">ผู้บันทึกใบกำกับภาษี <span class="required">*</span></label>
+                                    <select id="step4-uploader" required>
+                                        <option value="จัดซื้อ" selected>จัดซื้อ (Procurement)</option>
+                                        <option value="หน้างาน">หน้างาน (Site Staff)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>แนบใบกำกับภาษี <span class="required">*</span></label>
+                                    <div class="file-dropzone" onclick="triggerFileInput('step4-file')">
+                                        <i data-lucide="file-digit"></i>
+                                        <p>คลิกเพื่ออัปโหลดใบกำกับภาษี</p>
+                                        <span id="step4-file-name" class="selected-file-label">ไม่ได้เลือกไฟล์</span>
+                                        <input type="file" id="step4-file" accept="image/*,.pdf" style="display:none" onchange="handleFileSelected(this, 'step4-file-name')">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-block">
+                                    <i data-lucide="archive"></i> ปิดงาน - ได้รับใบกำกับภาษีครบถ้วน
+                                </button>
+                            </form>
+
+                            <!-- Completed Message if PR is in Step 4 completed -->
+                            <div id="pr-completed-message" class="completed-success-card" style="display:none">
+                                <div class="success-icon-badge">
+                                    <i data-lucide="check-circle"></i>
+                                </div>
+                                <h3>กระบวนการ PR/PO เสร็จสมบูรณ์</h3>
+                                <p>ได้รับของหน้างานและใบกำกับภาษีเข้าสู่ระบบเรียบร้อยแล้ว</p>
+                                <div class="completed-meta-details">
+                                    <div><strong>ผู้รับของ:</strong> <span id="comp-receiver">-</span></div>
+                                    <div><strong>สภาพสินค้า:</strong> <span id="comp-status">-</span></div>
+                                    <div id="comp-del-remarks-container"><strong>หมายเหตุการรับของ:</strong> <span id="comp-del-remarks">-</span></div>
+                                    <div><strong>เลขที่ PO:</strong> <span id="comp-po">-</span></div>
+                                    <div><strong>เลขที่ใบกำกับภาษี:</strong> <span id="comp-inv">-</span></div>
+                                    <div><strong>ยอดเงินตัด BOQ:</strong> <span id="comp-price">-</span> บาท</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCUMENT PREVIEW MODAL (Lightweight image/doc viewer) -->
+    <div id="doc-preview-modal" class="modal-overlay preview-overlay">
+        <div class="modal-container modal-small">
+            <div class="modal-header">
+                <h3 id="preview-title">แสดงเอกสาร</h3>
+                <button class="close-modal-btn" onclick="closeModal('doc-preview-modal')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body preview-body" id="preview-content-area">
+                <!-- Image or placeholder will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
