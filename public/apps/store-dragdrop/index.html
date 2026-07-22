@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Store Manager V1</title>
-  <meta name="description" content="ระบบจัดการสโตร์ ไซต์งาน และวัสดุอุปกรณ์" />
+  <meta name="description" content="เธฃเธฐเธเธเธเธฑเธ”เธเธฒเธฃเธชเนเธ•เธฃเน เนเธเธ•เนเธเธฒเธ เนเธฅเธฐเธงเธฑเธชเธ”เธธเธญเธธเธเธเธฃเธ“เน" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
@@ -22,12 +22,12 @@
     /* ===== IFRAME SCROLL BUG FIX ===== */
     html, body {
       margin: 0; padding: 0;
-      height: 100%; overflow: hidden; /* ล็อค body ไม่ให้เลื่อน */
+      height: 100%; overflow: hidden; /* เธฅเนเธญเธ body เนเธกเนเนเธซเนเน€เธฅเธทเนเธญเธ */
       background: var(--bg); color: var(--text);
       font-family: 'Sarabun', sans-serif;
     }
 
-    /* ให้ #app เป็นตัวเลื่อนแทน body (แก้บั๊กเมาส์วีลใน GAS) */
+    /* เนเธซเน #app เน€เธเนเธเธ•เธฑเธงเน€เธฅเธทเนเธญเธเนเธ—เธ body (เนเธเนเธเธฑเนเธเน€เธกเธฒเธชเนเธงเธตเธฅเนเธ GAS) */
     #app {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -37,7 +37,7 @@
       display: block;
     }
 
-    /* ===== SIDEBAR (desktop ≥1024px) ===== */
+    /* ===== SIDEBAR (desktop โฅ1024px) ===== */
     .sidebar {
       display: none;
       position: fixed; top: 0; left: 0; bottom: 0;
@@ -377,22 +377,22 @@
     <div class="sidebar-logo">
       <div class="app-title">Store Manager V1</div>
       <div class="company-name" data-company-name style="display:none;"></div>
-      <div class="update-time" id="sidebarUpdate">กำลังโหลด...</div>
+      <div class="update-time" id="sidebarUpdate">เธเธณเธฅเธฑเธเนเธซเธฅเธ”...</div>
     </div>
     <nav class="sidebar-nav">
       <button class="sidebar-btn active" id="snav-move" onclick="switchPage('move')">
-        <span class="s-icon">🚛</span> ขนย้ายสินค้า
+        <span class="s-icon">๐</span> เธเธเธขเนเธฒเธขเธชเธดเธเธเนเธฒ
       </button>
       <button class="sidebar-btn" id="snav-inventory" onclick="switchPage('inventory')">
-        <span class="s-icon">🗂️</span> ทะเบียนวัสดุ
+        <span class="s-icon">๐—๏ธ</span> เธ—เธฐเน€เธเธตเธขเธเธงเธฑเธชเธ”เธธ
       </button>
       <button class="sidebar-btn" id="snav-history" onclick="switchPage('history')">
-        <span class="s-icon">📜</span> ประวัติ
+        <span class="s-icon">๐“</span> เธเธฃเธฐเธงเธฑเธ•เธด
       </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="sidebar-action-btn" onclick="showSettingsModal()">⚙️ ตั้งค่าระบบ</button>
-      <button class="sidebar-action-btn" onclick="refreshAll()">🔄 รีเฟรชข้อมูล</button>
+      <button class="sidebar-action-btn" onclick="showSettingsModal()">โ๏ธ เธ•เธฑเนเธเธเนเธฒเธฃเธฐเธเธ</button>
+      <button class="sidebar-action-btn" onclick="refreshAll()">๐” เธฃเธตเน€เธเธฃเธเธเนเธญเธกเธนเธฅ</button>
     </div>
   </aside>
 
@@ -404,7 +404,7 @@
       <div class="top-bar">
         <div>
           <div class="top-bar-title">Store Manager V1</div>
-          <div class="top-bar-sub" id="lastUpdate">โหลดข้อมูล...</div>
+          <div class="top-bar-sub" id="lastUpdate">เนเธซเธฅเธ”เธเนเธญเธกเธนเธฅ...</div>
         </div>
 
       </div>
@@ -413,23 +413,23 @@
         <div id="moveStepBar">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="flex:1;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:8px 12px;text-align:center;">
-              <div style="font-size:10px;color:#60a5fa;font-weight:700;margin-bottom:2px;">ต้นทาง</div>
+              <div style="font-size:10px;color:#60a5fa;font-weight:700;margin-bottom:2px;">เธ•เนเธเธ—เธฒเธ</div>
               <div id="stepSourceName" style="font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">-</div>
             </div>
-            <div style="font-size:20px;color:var(--muted);flex-shrink:0;">→</div>
+            <div style="font-size:20px;color:var(--muted);flex-shrink:0;">โ’</div>
             <div style="flex:1;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:8px 12px;text-align:center;">
-              <div style="font-size:10px;color:#4ade80;font-weight:700;margin-bottom:2px;">ปลายทาง</div>
-              <div id="stepDestName" style="font-size:13px;font-weight:700;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">แตะเลือก...</div>
+              <div style="font-size:10px;color:#4ade80;font-weight:700;margin-bottom:2px;">เธเธฅเธฒเธขเธ—เธฒเธ</div>
+              <div id="stepDestName" style="font-size:13px;font-weight:700;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">เนเธ•เธฐเน€เธฅเธทเธญเธ...</div>
             </div>
-            <button onclick="cancelMove()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:9px 11px;border-radius:10px;cursor:pointer;font-size:15px;flex-shrink:0;">✕</button>
+            <button onclick="cancelMove()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:9px 11px;border-radius:10px;cursor:pointer;font-size:15px;flex-shrink:0;">โ•</button>
           </div>
         </div>
         <!-- Location filter -->
         <div class="filter-row">
-          <button class="filter-pill active" id="locFilter-all" onclick="filterLocations('all')">ทั้งหมด</button>
-          <button class="filter-pill" id="locFilter-store" onclick="filterLocations('store')">🏭 สโตร์</button>
-          <button class="filter-pill" id="locFilter-site" onclick="filterLocations('site')">🏗️ ไซต์งาน</button>
-          <button class="filter-pill" id="locFilter-other" onclick="filterLocations('other')">📦 อื่นๆ</button>
+          <button class="filter-pill active" id="locFilter-all" onclick="filterLocations('all')">เธ—เธฑเนเธเธซเธกเธ”</button>
+          <button class="filter-pill" id="locFilter-store" onclick="filterLocations('store')">๐ญ เธชเนเธ•เธฃเน</button>
+          <button class="filter-pill" id="locFilter-site" onclick="filterLocations('site')">๐—๏ธ เนเธเธ•เนเธเธฒเธ</button>
+          <button class="filter-pill" id="locFilter-other" onclick="filterLocations('other')">๐“ฆ เธญเธทเนเธเน</button>
         </div>
         <!-- Location grid -->
         <div id="locGridContent">
@@ -444,15 +444,15 @@
     <!-- PAGE: INVENTORY -->
     <div class="page" id="page-inventory">
       <div class="top-bar">
-        <div class="top-bar-title">ทะเบียนวัสดุ</div>
+        <div class="top-bar-title">เธ—เธฐเน€เธเธตเธขเธเธงเธฑเธชเธ”เธธ</div>
         <div class="top-bar-actions">
-          <button onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เพิ่มของ</button>
+          <button onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เน€เธเธดเนเธกเธเธญเธ</button>
         </div>
       </div>
       <div class="page-body">
         <div style="position:relative;margin-bottom:10px;">
-          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;">🔍</span>
-          <input type="text" id="searchInput" class="form-input" style="padding-left:36px;" placeholder="ค้นหาชื่อหรือหมวดหมู่..." oninput="filterInventory()" />
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;">๐”</span>
+          <input type="text" id="searchInput" class="form-input" style="padding-left:36px;" placeholder="เธเนเธเธซเธฒเธเธทเนเธญเธซเธฃเธทเธญเธซเธกเธงเธ”เธซเธกเธนเน..." oninput="filterInventory()" />
         </div>
         <div id="invLocFilter" class="filter-row"></div>
         <div id="inventoryList">
@@ -466,12 +466,12 @@
     <!-- PAGE: HISTORY -->
     <div class="page" id="page-history">
       <div class="top-bar">
-        <div class="top-bar-title">ประวัติการเคลื่อนย้าย</div>
+        <div class="top-bar-title">เธเธฃเธฐเธงเธฑเธ•เธดเธเธฒเธฃเน€เธเธฅเธทเนเธญเธเธขเนเธฒเธข</div>
         <div style="font-size:12px;color:var(--muted);" id="historyCount">-</div>
       </div>
       <div class="page-body">
         <div id="historyList"></div>
-        <button id="historyLoadMore" onclick="loadMoreHistory()" style="display:none;width:100%;margin-top:12px;padding:12px;background:rgba(30,41,59,0.7);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;">โหลดเพิ่มเติม...</button>
+        <button id="historyLoadMore" onclick="loadMoreHistory()" style="display:none;width:100%;margin-top:12px;padding:12px;background:rgba(30,41,59,0.7);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;">เนเธซเธฅเธ”เน€เธเธดเนเธกเน€เธ•เธดเธก...</button>
       </div>
     </div>
 
@@ -480,13 +480,13 @@
   <!-- BOTTOM NAV (mobile) -->
   <nav class="navbar">
     <button class="nav-btn active" id="nav-move" onclick="switchPage('move')">
-      <span class="nav-icon">🚛</span><span class="nav-label">ขนย้าย</span>
+      <span class="nav-icon">๐</span><span class="nav-label">เธเธเธขเนเธฒเธข</span>
     </button>
     <button class="nav-btn" id="nav-inventory" onclick="switchPage('inventory')">
-      <span class="nav-icon">🗂️</span><span class="nav-label">ทะเบียน</span>
+      <span class="nav-icon">๐—๏ธ</span><span class="nav-label">เธ—เธฐเน€เธเธตเธขเธ</span>
     </button>
     <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
-      <span class="nav-icon">📜</span><span class="nav-label">ประวัติ</span>
+      <span class="nav-icon">๐“</span><span class="nav-label">เธเธฃเธฐเธงเธฑเธ•เธด</span>
     </button>
   </nav>
 
@@ -496,22 +496,22 @@
 <div class="modal-overlay" id="moveModal" onclick="closeMoveModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">🚛 บันทึกการขนย้าย</div>
+    <div class="modal-title">๐ เธเธฑเธเธ—เธถเธเธเธฒเธฃเธเธเธขเนเธฒเธข</div>
     <div id="modalRouteInfo" style="background:rgba(15,23,42,0.7);border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:13px;font-weight:700;color:#60a5fa;text-align:center;"></div>
-    <label class="form-label">รายการวัสดุ-อุปกรณ์</label>
+    <label class="form-label">เธฃเธฒเธขเธเธฒเธฃเธงเธฑเธชเธ”เธธ-เธญเธธเธเธเธฃเธ“เน</label>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <select id="moveItemSelect" class="form-input form-select" onchange="onMoveItemChange()" style="flex:1;"></select>
       <button onclick="showAddItemModal(true)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:10px 14px;border-radius:12px;cursor:pointer;font-size:18px;line-height:1;flex-shrink:0;">+</button>
     </div>
     <div id="moveItemStock" style="display:none;background:rgba(15,23,42,0.5);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#94a3b8;"></div>
-    <label class="form-label">จำนวน</label>
+    <label class="form-label">เธเธณเธเธงเธ</label>
     <input type="number" id="moveQuantity" class="form-input" style="margin-bottom:12px;" placeholder="0" min="1" />
-    <label class="form-label">ผู้ขนของ / ผู้รายงาน</label>
-    <input type="text" id="moveCarrier" class="form-input" style="margin-bottom:12px;" placeholder="ชื่อผู้ขนของ..." />
-    <label class="form-label">หมายเหตุ</label>
-    <input type="text" id="moveRemark" class="form-input" style="margin-bottom:18px;" placeholder="หมายเหตุ..." />
-    <button id="confirmMoveBtn" class="btn-primary btn-success" onclick="confirmMove()">✅ ยืนยัน</button>
-    <button onclick="closeMoveModalDirect()" class="btn-primary btn-ghost" style="margin-top:10px;">ยกเลิก</button>
+    <label class="form-label">เธเธนเนเธเธเธเธญเธ / เธเธนเนเธฃเธฒเธขเธเธฒเธ</label>
+    <input type="text" id="moveCarrier" class="form-input" style="margin-bottom:12px;" placeholder="เธเธทเนเธญเธเธนเนเธเธเธเธญเธ..." />
+    <label class="form-label">เธซเธกเธฒเธขเน€เธซเธ•เธธ</label>
+    <input type="text" id="moveRemark" class="form-input" style="margin-bottom:18px;" placeholder="เธซเธกเธฒเธขเน€เธซเธ•เธธ..." />
+    <button id="confirmMoveBtn" class="btn-primary btn-success" onclick="confirmMove()">โ… เธขเธทเธเธขเธฑเธ</button>
+    <button onclick="closeMoveModalDirect()" class="btn-primary btn-ghost" style="margin-top:10px;">เธขเธเน€เธฅเธดเธ</button>
   </div>
 </div>
 
@@ -519,29 +519,29 @@
 <div class="modal-overlay" id="addItemModal" onclick="closeAddItemModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">➕ เพิ่มรายการใหม่</div>
-    <label class="form-label">ชื่อรายการวัสดุ *</label>
-    <input type="text" id="newItemName" class="form-input" style="margin-bottom:12px;" placeholder="ชื่อวัสดุ-อุปกรณ์..." />
+    <div class="modal-title">โ• เน€เธเธดเนเธกเธฃเธฒเธขเธเธฒเธฃเนเธซเธกเน</div>
+    <label class="form-label">เธเธทเนเธญเธฃเธฒเธขเธเธฒเธฃเธงเธฑเธชเธ”เธธ *</label>
+    <input type="text" id="newItemName" class="form-input" style="margin-bottom:12px;" placeholder="เธเธทเนเธญเธงเธฑเธชเธ”เธธ-เธญเธธเธเธเธฃเธ“เน..." />
 
     <!-- Category with datalist dropdown -->
-    <label class="form-label">หมวดหมู่ (เลือกหรือพิมพ์ใหม่)</label>
-    <input type="text" id="newItemCategory" class="form-input" style="margin-bottom:4px;" placeholder="เลือกหมวดหมู่ หรือพิมพ์ชื่อใหม่..." list="categoryList" autocomplete="off" />
+    <label class="form-label">เธซเธกเธงเธ”เธซเธกเธนเน (เน€เธฅเธทเธญเธเธซเธฃเธทเธญเธเธดเธกเธเนเนเธซเธกเน)</label>
+    <input type="text" id="newItemCategory" class="form-input" style="margin-bottom:4px;" placeholder="เน€เธฅเธทเธญเธเธซเธกเธงเธ”เธซเธกเธนเน เธซเธฃเธทเธญเธเธดเธกเธเนเธเธทเนเธญเนเธซเธกเน..." list="categoryList" autocomplete="off" />
     <datalist id="categoryList"></datalist>
-    <div style="font-size:11px;color:#475569;margin-bottom:12px;padding-left:2px;">💡 เลือกจากหมวดที่มี หรือพิมพ์เพื่อสร้างหมวดใหม่</div>
+    <div style="font-size:11px;color:#475569;margin-bottom:12px;padding-left:2px;">๐’ก เน€เธฅเธทเธญเธเธเธฒเธเธซเธกเธงเธ”เธ—เธตเนเธกเธต เธซเธฃเธทเธญเธเธดเธกเธเนเน€เธเธทเนเธญเธชเธฃเนเธฒเธเธซเธกเธงเธ”เนเธซเธกเน</div>
 
-    <label class="form-label">หน่วย</label>
-    <input type="text" id="newItemUnit" class="form-input" style="margin-bottom:12px;" placeholder="ชิ้น, อัน, ขา, ตัว, ม้วน..." list="unitList" />
+    <label class="form-label">เธซเธเนเธงเธข</label>
+    <input type="text" id="newItemUnit" class="form-input" style="margin-bottom:12px;" placeholder="เธเธดเนเธ, เธญเธฑเธ, เธเธฒ, เธ•เธฑเธง, เธกเนเธงเธ..." list="unitList" />
     <datalist id="unitList">
-      <option value="ชิ้น"></option><option value="อัน"></option><option value="ขา"></option>
-      <option value="ตัว"></option><option value="ม้วน"></option><option value="แผ่น"></option>
-      <option value="ชุด"></option><option value="กล่อง"></option><option value="ถัง"></option>
-      <option value="เส้น"></option><option value="คู่"></option><option value="หลอด"></option>
+      <option value="เธเธดเนเธ"></option><option value="เธญเธฑเธ"></option><option value="เธเธฒ"></option>
+      <option value="เธ•เธฑเธง"></option><option value="เธกเนเธงเธ"></option><option value="เนเธเนเธ"></option>
+      <option value="เธเธธเธ”"></option><option value="เธเธฅเนเธญเธ"></option><option value="เธ–เธฑเธ"></option>
+      <option value="เน€เธชเนเธ"></option><option value="เธเธนเน"></option><option value="เธซเธฅเธญเธ”"></option>
     </datalist>
 
-    <label class="form-label">หมายเหตุ</label>
-    <input type="text" id="newItemNote" class="form-input" style="margin-bottom:18px;" placeholder="หมายเหตุ..." />
-    <button onclick="confirmAddItem()" class="btn-primary btn-success">✅ เพิ่มรายการ</button>
-    <button onclick="document.getElementById('addItemModal').style.display='none'" class="btn-primary btn-ghost" style="margin-top:10px;">ยกเลิก</button>
+    <label class="form-label">เธซเธกเธฒเธขเน€เธซเธ•เธธ</label>
+    <input type="text" id="newItemNote" class="form-input" style="margin-bottom:18px;" placeholder="เธซเธกเธฒเธขเน€เธซเธ•เธธ..." />
+    <button onclick="confirmAddItem()" class="btn-primary btn-success">โ… เน€เธเธดเนเธกเธฃเธฒเธขเธเธฒเธฃ</button>
+    <button onclick="document.getElementById('addItemModal').style.display='none'" class="btn-primary btn-ghost" style="margin-top:10px;">เธขเธเน€เธฅเธดเธ</button>
   </div>
 </div>
 
@@ -557,7 +557,7 @@
       <span id="detailTotalBadge" style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;"></span>
     </div>
     <div id="detailLocationList" style="display:flex;flex-direction:column;gap:8px;"></div>
-    <button onclick="closeItemDetailModal()" class="btn-primary btn-ghost" style="margin-top:20px;">ปิด</button>
+    <button onclick="closeItemDetailModal()" class="btn-primary btn-ghost" style="margin-top:20px;">เธเธดเธ”</button>
   </div>
 </div>
 
@@ -565,27 +565,27 @@
 <div class="modal-overlay" id="adjustModal" onclick="closeAdjustModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">⚖️ ปรับยอดสต็อก</div>
+    <div class="modal-title">โ–๏ธ เธเธฃเธฑเธเธขเธญเธ”เธชเธ•เนเธญเธ</div>
     <div id="adjustItemInfo" style="background:rgba(15,23,42,0.6);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;font-weight:700;color:#fbbf24;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <div style="flex:1;text-align:center;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">ยอดปัจจุบัน</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">เธขเธญเธ”เธเธฑเธเธเธธเธเธฑเธ</div>
         <div id="adjustCurrentQty" style="font-size:26px;font-weight:800;font-family:'Outfit',sans-serif;color:var(--text);"></div>
         <div id="adjustUnit" style="font-size:11px;color:var(--muted);"></div>
       </div>
-      <div style="font-size:20px;color:var(--muted);flex-shrink:0;">→</div>
+      <div style="font-size:20px;color:var(--muted);flex-shrink:0;">โ’</div>
       <div style="flex:1;text-align:center;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">ยอดใหม่</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">เธขเธญเธ”เนเธซเธกเน</div>
         <input type="number" id="adjustNewQty" class="form-input" style="text-align:center;font-size:20px;font-weight:800;font-family:'Outfit',sans-serif;padding:10px;" placeholder="0" min="0" oninput="calcAdjustDiff()" />
       </div>
     </div>
     <div id="adjustDiffDisplay" style="display:none;" class="diff-box"><span id="adjustDiffText"></span></div>
-    <label class="form-label">ชื่อผู้ปรับยอด *</label>
-    <input type="text" id="adjustAdjuster" class="form-input" style="margin-bottom:12px;" placeholder="ชื่อผู้ปรับยอด..." />
-    <label class="form-label">หมายเหตุ</label>
-    <input type="text" id="adjustRemark" class="form-input" style="margin-bottom:18px;" placeholder="เหตุผลที่ปรับ..." />
-    <button onclick="confirmAdjust()" class="btn-primary" style="background:linear-gradient(135deg,#d97706,#b45309);">✅ บันทึกการปรับยอด</button>
-    <button onclick="document.getElementById('adjustModal').style.display='none'" class="btn-primary btn-ghost" style="margin-top:10px;">ยกเลิก</button>
+    <label class="form-label">เธเธทเนเธญเธเธนเนเธเธฃเธฑเธเธขเธญเธ” *</label>
+    <input type="text" id="adjustAdjuster" class="form-input" style="margin-bottom:12px;" placeholder="เธเธทเนเธญเธเธนเนเธเธฃเธฑเธเธขเธญเธ”..." />
+    <label class="form-label">เธซเธกเธฒเธขเน€เธซเธ•เธธ</label>
+    <input type="text" id="adjustRemark" class="form-input" style="margin-bottom:18px;" placeholder="เน€เธซเธ•เธธเธเธฅเธ—เธตเนเธเธฃเธฑเธ..." />
+    <button onclick="confirmAdjust()" class="btn-primary" style="background:linear-gradient(135deg,#d97706,#b45309);">โ… เธเธฑเธเธ—เธถเธเธเธฒเธฃเธเธฃเธฑเธเธขเธญเธ”</button>
+    <button onclick="document.getElementById('adjustModal').style.display='none'" class="btn-primary btn-ghost" style="margin-top:10px;">เธขเธเน€เธฅเธดเธ</button>
   </div>
 </div>
 
@@ -593,30 +593,30 @@
 <div class="modal-overlay" id="settingsModal" onclick="closeSettingsModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">⚙️ ตั้งค่าระบบ</div>
+    <div class="modal-title">โ๏ธ เธ•เธฑเนเธเธเนเธฒเธฃเธฐเธเธ</div>
 
     <!-- Location Management -->
     <div class="section-card">
-      <div class="section-title">📍 จัดการสถานที่</div>
-      <input type="text" id="newLocName" class="form-input" style="margin-bottom:8px;" placeholder="ชื่อสถานที่ใหม่..." />
+      <div class="section-title">๐“ เธเธฑเธ”เธเธฒเธฃเธชเธ–เธฒเธเธ—เธตเน</div>
+      <input type="text" id="newLocName" class="form-input" style="margin-bottom:8px;" placeholder="เธเธทเนเธญเธชเธ–เธฒเธเธ—เธตเนเนเธซเธกเน..." />
       <select id="newLocType" class="form-input form-select" style="margin-bottom:8px;">
-        <option value="ไซต์งาน">🏗️ ไซต์งาน</option>
-        <option value="สโตร์">🏭 สโตร์</option>
-        <option value="อื่นๆ">📦 อื่นๆ (ร้านซ่อม, สูญหาย, จำหน่ายออก...)</option>
+        <option value="เนเธเธ•เนเธเธฒเธ">๐—๏ธ เนเธเธ•เนเธเธฒเธ</option>
+        <option value="เธชเนเธ•เธฃเน">๐ญ เธชเนเธ•เธฃเน</option>
+        <option value="เธญเธทเนเธเน">๐“ฆ เธญเธทเนเธเน (เธฃเนเธฒเธเธเนเธญเธก, เธชเธนเธเธซเธฒเธข, เธเธณเธซเธเนเธฒเธขเธญเธญเธ...)</option>
       </select>
-      <button id="addLocBtn" onclick="confirmAddLocation()" class="btn-primary btn-success" style="padding:10px;margin-bottom:12px;">✅ เพิ่มสถานที่</button>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">สถานที่ทั้งหมด · เปิด/ปิดการแสดงผล</div>
-      <div id="locationManageList"><div style="text-align:center;color:var(--muted);padding:14px;font-size:13px;">⏳ กำลังโหลด...</div></div>
+      <button id="addLocBtn" onclick="confirmAddLocation()" class="btn-primary btn-success" style="padding:10px;margin-bottom:12px;">โ… เน€เธเธดเนเธกเธชเธ–เธฒเธเธ—เธตเน</button>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">เธชเธ–เธฒเธเธ—เธตเนเธ—เธฑเนเธเธซเธกเธ” ยท เน€เธเธดเธ”/เธเธดเธ”เธเธฒเธฃเนเธชเธ”เธเธเธฅ</div>
+      <div id="locationManageList"><div style="text-align:center;color:var(--muted);padding:14px;font-size:13px;">โณ เธเธณเธฅเธฑเธเนเธซเธฅเธ”...</div></div>
     </div>
 
     <!-- Category Management -->
     <div class="section-card">
-      <div class="section-title">📂 จัดการหมวดหมู่</div>
-      <div style="font-size:12px;color:#475569;margin-bottom:10px;">เปลี่ยนชื่อหมวดหมู่ (จะเปลี่ยนในทะเบียนทุกรายการ)</div>
-      <div id="categoryManageList"><div style="text-align:center;color:var(--muted);padding:14px;font-size:13px;">⏳ กำลังโหลด...</div></div>
+      <div class="section-title">๐“ เธเธฑเธ”เธเธฒเธฃเธซเธกเธงเธ”เธซเธกเธนเน</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:10px;">เน€เธเธฅเธตเนเธขเธเธเธทเนเธญเธซเธกเธงเธ”เธซเธกเธนเน (เธเธฐเน€เธเธฅเธตเนเธขเธเนเธเธ—เธฐเน€เธเธตเธขเธเธ—เธธเธเธฃเธฒเธขเธเธฒเธฃ)</div>
+      <div id="categoryManageList"><div style="text-align:center;color:var(--muted);padding:14px;font-size:13px;">โณ เธเธณเธฅเธฑเธเนเธซเธฅเธ”...</div></div>
     </div>
 
-    <button onclick="closeSettingsModal()" class="btn-primary btn-ghost">ปิด</button>
+    <button onclick="closeSettingsModal()" class="btn-primary btn-ghost">เธเธดเธ”</button>
   </div>
 </div>
 
@@ -624,18 +624,18 @@
 <div class="modal-overlay" id="undoModal" onclick="closeUndoModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title" style="color:#f87171;">🔙 ยืนยันการยกเลิก</div>
+    <div class="modal-title" style="color:#f87171;">๐” เธขเธทเธเธขเธฑเธเธเธฒเธฃเธขเธเน€เธฅเธดเธ</div>
     <div id="undoInfo" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:14px;margin-bottom:16px;font-size:14px;color:var(--text);line-height:1.8;"></div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">⚠️ การยกเลิกจะย้อนยอดวัสดุกลับสู่ค่าก่อนบันทึก และลบรายการประวัตินี้ออก</div>
-    <button id="confirmUndoBtn" onclick="confirmUndo()" class="btn-primary btn-danger">🔙 ยืนยันการยกเลิก</button>
-    <button onclick="document.getElementById('undoModal').style.display='none'" class="btn-primary btn-ghost" style="margin-top:10px;">ยกเลิก</button>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">โ ๏ธ เธเธฒเธฃเธขเธเน€เธฅเธดเธเธเธฐเธขเนเธญเธเธขเธญเธ”เธงเธฑเธชเธ”เธธเธเธฅเธฑเธเธชเธนเนเธเนเธฒเธเนเธญเธเธเธฑเธเธ—เธถเธ เนเธฅเธฐเธฅเธเธฃเธฒเธขเธเธฒเธฃเธเธฃเธฐเธงเธฑเธ•เธดเธเธตเนเธญเธญเธ</div>
+    <button id="confirmUndoBtn" onclick="confirmUndo()" class="btn-primary btn-danger">๐” เธขเธทเธเธขเธฑเธเธเธฒเธฃเธขเธเน€เธฅเธดเธ</button>
+    <button onclick="document.getElementById('undoModal').style.display='none'" class="btn-primary btn-ghost" style="margin-top:10px;">เธขเธเน€เธฅเธดเธ</button>
   </div>
 </div>
 
 <!-- TOAST CONTAINER -->
 <div id="toastContainer"></div>
 
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
 

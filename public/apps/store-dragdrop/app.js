@@ -1,6 +1,6 @@
 
 // ====== LOCAL STORAGE FALLBACK ENGINE ======
-const MOCK_STORAGE_KEY = 'store_app_local_data_v15';
+const MOCK_STORAGE_KEY = 'store_app_local_data_v16';
 
 function getInitialLocalData() {
   return {
@@ -94,13 +94,6 @@ function getInitialLocalData() {
     "name": "ร้านซ่อม",
     "type": "อื่นๆ",
     "col": 16,
-    "archived": false,
-    "hideCount": false
-  },
-  {
-    "name": "สูญหาย",
-    "type": "อื่นๆ",
-    "col": 17,
     "archived": false,
     "hideCount": false
   }
@@ -8181,10 +8174,6 @@ function loadLocalData() {
       if (parsed && Array.isArray(parsed.items) && parsed.items.length >= 200) {
         if (!Array.isArray(parsed.history)) parsed.history = [];
         if (!Array.isArray(parsed.locations)) parsed.locations = [];
-        if (!parsed.locations.some(function(l) { return l.name === 'สูญหาย'; })) {
-          parsed.locations.push({ name: 'สูญหาย', type: 'อื่นๆ', col: parsed.locations.length + 4, archived: false, hideCount: false });
-          saveLocalData(parsed);
-        }
         return parsed;
       }
     }
@@ -8212,7 +8201,6 @@ async function apiGet(pathStr) {
           if (pathStr.startsWith('/api/inventory') && (!Array.isArray(data.items) || data.items.length === 0)) {
             throw new Error('empty');
           }
-          // The backend Express server already reverses history, so we just use it directly!
           return data;
         }
       }
@@ -8235,7 +8223,6 @@ async function apiGet(pathStr) {
     return { success: true, settings: { appTitle: 'Store Manager V1' } };
   }
   if (pathStr.startsWith('/api/history')) {
-    // local.history is already reversed by getInitialLocalData or unshift
     const hist = local.history || [];
     const page = parseInt(pathStr.split('page=')[1]) || 1;
     const limit = parseInt(pathStr.split('limit=')[1]) || 30;
@@ -8264,66 +8251,66 @@ async function apiPost(pathStr, body) {
 
   if (pathStr === '/api/inventory/move') {
     const item = local.items.find(function(i) { return i.name === body.itemName; });
-    if (!item) throw new Error('��辺��¡�� ' + body.itemName);
+    if (!item) throw new Error('ไม่พบรายการ ' + body.itemName);
     const qty = Number(body.quantity);
     const cf = item.quantities[body.fromLocation] || 0;
-    if (cf < qty) throw new Error('�ʹ�鹷ҧ���� (�� ' + cf + ')');
+    if (cf < qty) throw new Error('ยอดต้นทางไม่พอ (มี ' + cf + ')');
     item.quantities[body.fromLocation] = cf - qty;
     item.quantities[body.toLocation] = (item.quantities[body.toLocation] || 0) + qty;
-    local.history.unshift({ date: new Date().toISOString(), type: '������', itemName: body.itemName, quantity: qty, fromLocation: body.fromLocation, toLocation: body.toLocation, carrier: body.carrier||'', receiver: body.receiver||'', reporter: body.reporter||body.carrier||'', remark: body.remark||'', balanceFrom: item.quantities[body.fromLocation], balanceTo: item.quantities[body.toLocation] });
+    local.history.unshift({ date: new Date().toISOString(), type: 'ขนย้าย', itemName: body.itemName, quantity: qty, fromLocation: body.fromLocation, toLocation: body.toLocation, carrier: body.carrier||'', receiver: body.receiver||'', reporter: body.reporter||body.carrier||'', remark: body.remark||'', balanceFrom: item.quantities[body.fromLocation], balanceTo: item.quantities[body.toLocation] });
     saveLocalData(local);
-    return { success: true, message: '? ������ ' + body.itemName + ' �ӹǹ ' + qty + ' ���º����' };
+    return { success: true, message: 'ขนย้าย ' + body.itemName + ' จำนวน ' + qty + ' เรียบร้อย' };
   }
 
   if (pathStr === '/api/inventory/adjust') {
     const item = local.items.find(function(i) { return i.name === body.itemName; });
-    if (!item) throw new Error('��辺��¡�� ' + body.itemName);
+    if (!item) throw new Error('ไม่พบรายการ ' + body.itemName);
     const prev = item.quantities[body.location] || 0;
     const newQ = Number(body.newQuantity);
     item.quantities[body.location] = newQ;
-    local.history.unshift({ date: new Date().toISOString(), type: '��Ѻ�ʹ', itemName: body.itemName, quantity: Math.abs(newQ - prev), fromLocation: body.location, reporter: body.adjusterName, remark: body.remark||'', balanceFrom: prev, balanceTo: newQ });
+    local.history.unshift({ date: new Date().toISOString(), type: 'ปรับยอด', itemName: body.itemName, quantity: Math.abs(newQ - prev), fromLocation: body.location, reporter: body.adjusterName, remark: body.remark||'', balanceFrom: prev, balanceTo: newQ });
     saveLocalData(local);
-    return { success: true, message: '? ��Ѻ�ʹ ' + body.itemName + ' �� ' + newQ + ' ���º����' };
+    return { success: true, message: 'ปรับยอด ' + body.itemName + ' เป็น ' + newQ + ' เรียบร้อย' };
   }
 
   if (pathStr === '/api/inventory/add-item') {
-    if (local.items.some(function(i) { return i.name === body.name; })) throw new Error('����¡�ù����������');
-    const ni = { row: local.items.length + 3, category: body.category||'�����', name: body.name, unit: body.unit||'���', quantities: {}, note: body.note||'' };
+    if (local.items.some(function(i) { return i.name === body.name; })) throw new Error('มีรายการนี้อยู่แล้ว');
+    const ni = { row: local.items.length + 3, category: body.category||'ทั่วไป', name: body.name, unit: body.unit||'ชิ้น', quantities: {}, note: body.note||'' };
     local.locations.forEach(function(l) { ni.quantities[l.name] = 0; });
     local.items.push(ni);
     saveLocalData(local);
-    return { success: true, message: '? ������¡�� ' + body.name + ' ���º����' };
+    return { success: true, message: 'เพิ่มรายการ ' + body.name + ' เรียบร้อย' };
   }
 
   if (pathStr === '/api/locations/add') {
-    if (local.locations.some(function(l) { return l.name === body.name; })) throw new Error('��ʶҹ�������������');
-    local.locations.push({ name: body.name, type: body.type||'䫵�ҹ', col: local.locations.length + 4, archived: false, hideCount: false });
+    if (local.locations.some(function(l) { return l.name === body.name; })) throw new Error('มีสถานที่นี้อยู่แล้ว');
+    local.locations.push({ name: body.name, type: body.type||'ไซต์งาน', col: local.locations.length + 4, archived: false, hideCount: false });
     saveLocalData(local);
-    return { success: true, message: '? ����ʶҹ��� ' + body.name + ' ���º����' };
+    return { success: true, message: 'เพิ่มสถานที่ ' + body.name + ' เรียบร้อย' };
   }
 
   if (pathStr === '/api/locations/archive') {
     const loc = local.locations.find(function(l) { return l.name === body.name; });
     if (loc) loc.archived = body.archived;
     saveLocalData(local);
-    return { success: true, message: '�ѹ�֡ʶҹ����º����' };
+    return { success: true, message: 'บันทึกสถานะเรียบร้อย' };
   }
 
   if (pathStr === '/api/settings') {
-    return { success: true, message: '�ѹ�֡���º����' };
+    return { success: true, message: 'บันทึกเรียบร้อย' };
   }
 
   if (pathStr === '/api/categories/rename') {
     local.items.forEach(function(i) { if (i.category === body.oldName) i.category = body.newName; });
     saveLocalData(local);
-    return { success: true, message: '����¹������Ǵ�������º����' };
+    return { success: true, message: 'เปลี่ยนชื่อหมวดหมู่เรียบร้อย' };
   }
 
   if (pathStr === '/api/history/undo') {
-    if (!local.history.length) throw new Error('�������¡�����¡��ԡ');
+    if (!local.history.length) throw new Error('ไม่มีรายการให้ยกเลิก');
     const last = local.history.shift();
     saveLocalData(local);
-    return { success: true, message: '? ¡��ԡ��¡�� "' + last.itemName + '" ����' };
+    return { success: true, message: 'ยกเลิกรายการ "' + last.itemName + '" แล้ว' };
   }
 
   return { success: true };
@@ -8478,7 +8465,7 @@ function getLocIcon(loc) {
   var type = typeof loc === 'object' ? loc.type : null;
   if (name.includes('ร้านค้า') || name.includes('เช่า')) return '🏪';
   if (name.includes('ร้านซ่อม') || name.includes('ซ่อม')) return '🔧';
-  if (name.includes('สูญหาย') || name.includes('หาย')) return '❓';
+  if (name.includes('สูญหาย') || name.includes('หาย')) return '📦❌';
   if (name.includes('จำหน่าย') || name.includes('ทิ้ง') || name.includes('ตัดออก')) return '🗑️';
   if (type === 'สโตร์') return '🏭';
   if (type === 'ไซต์งาน') return '🏗️';
