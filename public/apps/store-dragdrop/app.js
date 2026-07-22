@@ -96,6 +96,13 @@ function getInitialLocalData() {
     "col": 16,
     "archived": false,
     "hideCount": false
+  },
+  {
+    "name": "สูญหาย",
+    "type": "อื่นๆ",
+    "col": 17,
+    "archived": false,
+    "hideCount": false
   }
 ],
     items: [
@@ -8174,6 +8181,10 @@ function loadLocalData() {
       if (parsed && Array.isArray(parsed.items) && parsed.items.length >= 200) {
         if (!Array.isArray(parsed.history)) parsed.history = [];
         if (!Array.isArray(parsed.locations)) parsed.locations = [];
+        if (!parsed.locations.some(function(l) { return l.name === 'สูญหาย'; })) {
+          parsed.locations.push({ name: 'สูญหาย', type: 'อื่นๆ', col: parsed.locations.length + 4, archived: false, hideCount: false });
+          saveLocalData(parsed);
+        }
         return parsed;
       }
     }
