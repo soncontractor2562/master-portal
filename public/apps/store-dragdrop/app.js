@@ -8479,7 +8479,7 @@ async function apiGet(pathStr) {
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
         const data = await res.json();
-        if (data && data.success !== false) {
+        if (data && data.success === true) {
           if (pathStr.startsWith('/api/inventory') && (!Array.isArray(data.items) || data.items.length === 0)) {
             throw new Error('empty');
           }
@@ -8524,7 +8524,7 @@ async function apiPost(pathStr, body) {
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
         const data = await res.json();
-        if (data && data.success !== false) return data;
+        if (data && data.success === true) return data;
       }
     }
   } catch (err) {}
