@@ -90,26 +90,42 @@
       padding-bottom: calc(var(--nav-height) + 4px);
     }
 
-    /* ===== TOP BAR ===== */
-    .top-bar {
+    /* ===== PAGE HEADER BAR (compact, no sticky overlap) ===== */
+    .page-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px 12px;
+      padding: 12px 14px 10px;
       border-bottom: 1px solid var(--border);
-      background: rgba(15,23,42,0.85); backdrop-filter: blur(8px);
-      position: sticky; top: 0; z-index: 50;
     }
-    .top-bar-title {
-      font-size: 18px; font-weight: 800; font-family: 'Outfit', sans-serif;
+    .page-header-title {
+      font-size: 17px; font-weight: 800; font-family: 'Outfit', sans-serif;
       background: linear-gradient(135deg,#60a5fa,#34d399);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .top-bar-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .top-bar-actions { display: flex; gap: 8px; align-items: center; }
+    .page-header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .page-header-actions { display: flex; gap: 8px; align-items: center; }
 
     /* ===== PAGES ===== */
     .page { display: none; }
     .page.active { display: block; }
     .page-body { padding: 14px 14px; }
+
+    /* ===== SORT MODE ===== */
+    .sort-handle {
+      cursor: grab; font-size: 18px; color: var(--muted);
+      padding: 0 6px; flex-shrink: 0; touch-action: none;
+      display: none;
+    }
+    body.sort-mode .sort-handle { display: flex; align-items: center; }
+    body.sort-mode .inv-row { cursor: grab; }
+    body.sort-mode .adj-btn-wrap { display: none; }
+    .inv-row.drag-over-row { border-top: 2px solid var(--blue); }
+    .inv-row.dragging-row { opacity: 0.4; }
+    /* Sort toggle button active state */
+    .btn-sort-active {
+      background: rgba(59,130,246,0.2) !important;
+      border-color: rgba(59,130,246,0.5) !important;
+      color: #60a5fa !important;
+    }
 
     /* ===== BOTTOM NAV (mobile <1024px) ===== */
     .navbar {
@@ -391,6 +407,8 @@
       </button>
     </nav>
     <div class="sidebar-footer">
+      <button class="sidebar-action-btn" onclick="refreshAll()">🔄 <span>รีเฟรชข้อมูล</span></button>
+      <button class="sidebar-action-btn" onclick="showSettingsModal()">⚙️ <span>ตั้งค่าระบบ</span></button>
     </div>
   </aside>
 
@@ -399,12 +417,14 @@
 
     <!-- PAGE: MOVE -->
     <div class="page active" id="page-move">
-      <div class="top-bar">
+      <div class="page-header">
         <div>
-          <div class="top-bar-title">Store Manager V1</div>
-          <div class="top-bar-sub" id="lastUpdate">โหลดข้อมูล...</div>
+          <div class="page-header-title">อัพเดทสโตร์</div>
+          <div class="page-header-sub" id="lastUpdate">โหลดข้อมูล...</div>
         </div>
-
+        <div class="page-header-actions">
+          <button onclick="refreshAll()" id="refreshBtn" class="icon-btn" title="รีเฟรช">🔄</button>
+        </div>
       </div>
       <div class="page-body">
         <!-- Move step bar -->
@@ -441,9 +461,10 @@
 
     <!-- PAGE: INVENTORY -->
     <div class="page" id="page-inventory">
-      <div class="top-bar">
-        <div class="top-bar-title">ทะเบียนวัสดุ</div>
-        <div class="top-bar-actions">
+      <div class="page-header">
+        <div class="page-header-title">ทะเบียนวัสดุ</div>
+        <div class="page-header-actions">
+          <button id="sortToggleBtn" onclick="toggleSortMode()" class="icon-btn" title="จัดเรียง">☰ Sort</button>
           <button onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เพิ่มของ</button>
         </div>
       </div>
@@ -453,6 +474,10 @@
           <input type="text" id="searchInput" class="form-input" style="padding-left:36px;" placeholder="ค้นหาชื่อหรือหมวดหมู่..." oninput="filterInventory()" />
         </div>
         <div id="invLocFilter" class="filter-row"></div>
+        <!-- Sort mode banner -->
+        <div id="sortModeBanner" style="display:none;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#60a5fa;font-weight:600;display:none;">
+          ☰ โหมดจัดเรียง — ลาก ≡ เพื่อเรียงลำดับ · <button onclick="toggleSortMode()" style="background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;padding:4px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Sarabun',sans-serif;">✅ เสร็จสิ้น</button>
+        </div>
         <div id="inventoryList">
           <div class="skeleton" style="height:56px;border-radius:14px;margin-bottom:8px;"></div>
           <div class="skeleton" style="height:56px;border-radius:14px;margin-bottom:8px;"></div>
@@ -463,8 +488,8 @@
 
     <!-- PAGE: HISTORY -->
     <div class="page" id="page-history">
-      <div class="top-bar">
-        <div class="top-bar-title">ประวัติการเคลื่อนย้าย</div>
+      <div class="page-header">
+        <div class="page-header-title">ประวัติ</div>
         <div style="font-size:12px;color:var(--muted);" id="historyCount">-</div>
       </div>
       <div class="page-body">
@@ -485,6 +510,9 @@
     </button>
     <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
       <span class="nav-icon">📜</span><span class="nav-label">ประวัติ</span>
+    </button>
+    <button class="nav-btn" onclick="showSettingsModal()">
+      <span class="nav-icon">⚙️</span><span class="nav-label">ตั้งค่า</span>
     </button>
   </nav>
 
@@ -536,6 +564,17 @@
       <option value="เส้น"></option><option value="คู่"></option><option value="หลอด"></option>
     </datalist>
 
+    <!-- Initial stock section -->
+    <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+      <div class="section-title" style="margin-bottom:10px;">📦 ยอดเริ่มต้น (ไม่บังคับ)</div>
+      <label class="form-label">สถานที่</label>
+      <select id="newItemInitLoc" class="form-input form-select" style="margin-bottom:8px;">
+        <option value="">-- ไม่ระบุ --</option>
+      </select>
+      <label class="form-label">จำนวนเริ่มต้น</label>
+      <input type="number" id="newItemInitQty" class="form-input" placeholder="0" min="0" style="margin-bottom:0;" />
+    </div>
+
     <label class="form-label">หมายเหตุ</label>
     <input type="text" id="newItemNote" class="form-input" style="margin-bottom:18px;" placeholder="หมายเหตุ..." />
     <button onclick="confirmAddItem()" class="btn-primary btn-success">✅ เพิ่มรายการ</button>
@@ -552,7 +591,10 @@
         <div id="detailItemName" class="modal-title" style="margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
         <div id="detailItemCat" style="font-size:12px;color:var(--muted);"></div>
       </div>
-      <span id="detailTotalBadge" style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0;"></span>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <button id="detailRenameBtn" onclick="startRenameItem()" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:6px 12px;border-radius:9px;cursor:pointer;font-size:13px;" title="เปลี่ยนชื่อ">✏️</button>
+        <span id="detailTotalBadge" style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap;"></span>
+      </div>
     </div>
     <div id="detailLocationList" style="display:flex;flex-direction:column;gap:8px;"></div>
     <button onclick="closeItemDetailModal()" class="btn-primary btn-ghost" style="margin-top:20px;">ปิด</button>
@@ -603,7 +645,7 @@
         <option value="อื่นๆ">📦 อื่นๆ (ร้านซ่อม, สูญหาย, จำหน่ายออก...)</option>
       </select>
       <button id="addLocBtn" onclick="confirmAddLocation()" class="btn-primary btn-success" style="padding:10px;margin-bottom:12px;">✅ เพิ่มสถานที่</button>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">สถานที่ทั้งหมด · เปิด/ปิดการแสดงผล</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">สถานที่ทั้งหมด · เปิด/ปิด/เปลี่ยนชื่อ</div>
       <div id="locationManageList"><div style="text-align:center;color:var(--muted);padding:14px;font-size:13px;">⏳ กำลังโหลด...</div></div>
     </div>
 
@@ -634,6 +676,7 @@
 <div id="toastContainer"></div>
 
 <script src="app.js?v=18"></script>
+<script src="sort-mode.js?v=1"></script>
 </body>
 </html>
 
