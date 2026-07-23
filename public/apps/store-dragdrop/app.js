@@ -1,6 +1,6 @@
 
 // ====== LOCAL STORAGE FALLBACK ENGINE ======
-const MOCK_STORAGE_KEY = 'store_app_local_data_v19';
+const MOCK_STORAGE_KEY = 'store_app_local_data_v25';
 
 function getInitialLocalData() {
   return {
