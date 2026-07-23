@@ -8557,26 +8557,11 @@ async function apiPost(pathStr, body) {
 
   if (pathStr === '/api/inventory/add-item') {
     if (local.items.some(function(i) { return i.name === body.name; })) throw new Error('มีรายการนี้อยู่แล้ว');
-    var ni = { row: local.items.length + 3, category: body.category||'ทั่วไป', name: body.name, unit: body.unit||'ชิ้น', quantities: {}, note: body.note||'' };
+    const ni = { row: local.items.length + 3, category: body.category||'ทั่วไป', name: body.name, unit: body.unit||'ชิ้น', quantities: {}, note: body.note||'' };
     local.locations.forEach(function(l) { ni.quantities[l.name] = 0; });
-    if (body.initLocation && Number(body.initQty) > 0) {
-      ni.quantities[body.initLocation] = Number(body.initQty);
-      local.history = local.history || [];
-      local.history.unshift({ date: new Date().toISOString(), type: 'เพิ่มรายการ', itemName: body.name, quantity: Number(body.initQty), fromLocation: body.initLocation, toLocation: body.initLocation, reporter: 'ระบบ', remark: 'ยอดเริ่มต้น', balanceFrom: 0, balanceTo: Number(body.initQty) });
-    }
     local.items.push(ni);
     saveLocalData(local);
     return { success: true, message: 'เพิ่มรายการ ' + body.name + ' เรียบร้อย' };
-  }
-
-  if (pathStr === '/api/inventory/rename-item') {
-    var itm = local.items.find(function(i) { return i.name === body.oldName; });
-    if (!itm) throw new Error('ไม่พบรายการ ' + body.oldName);
-    if (local.items.some(function(i) { return i.name === body.newName; })) throw new Error('มีชื่อ "' + body.newName + '" อยู่แล้ว');
-    itm.name = body.newName;
-    (local.history || []).forEach(function(h) { if (h.itemName === body.oldName) h.itemName = body.newName; });
-    saveLocalData(local);
-    return { success: true, message: 'เปลี่ยนชื่อ "' + body.oldName + '" ⇒ "' + body.newName + '" เรียบร้อย' };
   }
 
   if (pathStr === '/api/locations/add') {
@@ -8584,25 +8569,6 @@ async function apiPost(pathStr, body) {
     local.locations.push({ name: body.name, type: body.type||'ไซต์งาน', col: local.locations.length + 4, archived: false, hideCount: false });
     saveLocalData(local);
     return { success: true, message: 'เพิ่มสถานที่ ' + body.name + ' เรียบร้อย' };
-  }
-
-  if (pathStr === '/api/locations/rename') {
-    var loc = local.locations.find(function(l) { return l.name === body.oldName; });
-    if (!loc) throw new Error('ไม่พบสถานที่ ' + body.oldName);
-    if (local.locations.some(function(l) { return l.name === body.newName; })) throw new Error('มีชื่อ "' + body.newName + '" อยู่แล้ว');
-    local.items.forEach(function(it) {
-      if (it.quantities.hasOwnProperty(body.oldName)) {
-        it.quantities[body.newName] = it.quantities[body.oldName];
-        delete it.quantities[body.oldName];
-      }
-    });
-    (local.history || []).forEach(function(h) {
-      if (h.fromLocation === body.oldName) h.fromLocation = body.newName;
-      if (h.toLocation === body.oldName) h.toLocation = body.newName;
-    });
-    loc.name = body.newName;
-    saveLocalData(local);
-    return { success: true, message: 'เปลี่ยนชื่อสถานที่ "' + body.oldName + '" ⇒ "' + body.newName + '" เรียบร้อย' };
   }
 
   if (pathStr === '/api/locations/archive') {
@@ -8625,8 +8591,21 @@ async function apiPost(pathStr, body) {
   if (pathStr === '/api/history/undo') {
     if (!local.history.length) throw new Error('ไม่มีรายการให้ยกเลิก');
     const last = local.history.shift();
+    
+    // Restore inventory balance
+    const item = local.items.find(function(i) { return i.name === last.itemName; });
+    if (item) {
+      if (last.type === 'ขนย้าย') {
+        const qty = Number(last.quantity) || 0;
+        if (last.fromLocation) item.quantities[last.fromLocation] = (item.quantities[last.fromLocation] || 0) + qty;
+        if (last.toLocation) item.quantities[last.toLocation] = Math.max(0, (item.quantities[last.toLocation] || 0) - qty);
+      } else if (last.type === 'ปรับยอด' && last.balanceFrom !== undefined) {
+        if (last.fromLocation) item.quantities[last.fromLocation] = last.balanceFrom;
+      }
+    }
+    
     saveLocalData(local);
-    return { success: true, message: 'ยกเลิกรายการ "' + last.itemName + '" แล้ว' };
+    return { success: true, message: 'ยกเลิกรายการ "' + last.itemName + '" แล้ว (คืนยอดเดิม)' };
   }
 
   return { success: true };
@@ -8986,11 +8965,6 @@ function updateCategoryDatalist() {
   dl.innerHTML = state.allCategories.map(function(c) {
     return '<option value="' + esc(c) + '">' + c + '</option>';
   }).join('');
-  var initLocSel = document.getElementById('newItemInitLoc');
-  if (initLocSel) {
-    initLocSel.innerHTML = '<option value="">— ไม่ระบุ —</option>' +
-      state.locations.map(function(l) { return '<option value="' + esc(l.name) + '">' + getLocIcon(l) + ' ' + l.name + '</option>'; }).join('');
-  }
 }
 function closeAddItemModal(e) {
   if (e && e.target !== document.getElementById('addItemModal')) return;
@@ -9002,11 +8976,9 @@ async function confirmAddItem() {
   var category = document.getElementById('newItemCategory').value.trim();
   var unit = document.getElementById('newItemUnit').value.trim();
   var note = document.getElementById('newItemNote').value.trim();
-  var initLoc = (document.getElementById('newItemInitLoc')||{value:''}).value;
-  var initQty = Number((document.getElementById('newItemInitQty')||{value:0}).value);
   if (!name) { showToast('กรุณาระบุชื่อสิ่งของ', 'error'); return; }
   try {
-    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLocation: initLoc, initQty: initQty });
+    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note });
     showToast(res.message, 'success');
     document.getElementById('addItemModal').style.display = 'none';
     await loadInventory();
@@ -9190,11 +9162,9 @@ function renderInventoryRow(item) {
 
 
 // ====== ITEM DETAIL MODAL ======
-var _detailCurrentItem = null;
 function showItemDetail(itemName) {
   var item = state.items.find(function(it) { return it.name === itemName; });
   if (!item) return;
-  _detailCurrentItem = itemName;
   document.getElementById('detailItemName').textContent = item.name;
   document.getElementById('detailItemCat').textContent = (item.category || '-') + ' · ' + item.unit;
   var total = Object.values(item.quantities).reduce(function(s, q) { return s + Math.max(0, q || 0); }, 0);
@@ -9216,24 +9186,6 @@ function showItemDetail(itemName) {
 function closeItemDetailModal(e) {
   if (e && e.target !== document.getElementById('itemDetailModal')) return;
   document.getElementById('itemDetailModal').style.display = 'none';
-  _detailCurrentItem = null;
-}
-
-// ====== RENAME ITEM ======
-function startRenameItem() {
-  if (!_detailCurrentItem) return;
-  var oldName = _detailCurrentItem;
-  var newName = prompt('เปลี่ยนชื่อวัสดุ "' + oldName + '" เป็น:', oldName);
-  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
-  newName = newName.trim();
-  apiPost('/api/inventory/rename-item', { oldName: oldName, newName: newName })
-    .then(function(res) {
-      showToast(res.message, 'success');
-      _detailCurrentItem = newName;
-      document.getElementById('itemDetailModal').style.display = 'none';
-      return loadInventory();
-    })
-    .catch(function(err) { showToast(err.message, 'error'); });
 }
 
 // ====== ADJUST MODAL ======
@@ -9471,29 +9423,12 @@ function renderLocationManageList() {
       '<div style="font-size:13px;font-weight:600;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;">' + loc.name + '</div>' +
       '<div style="font-size:11px;color:#64748b;">' + getLocTypeLabel(loc.type) + '</div>' +
       '</div>' +
-      '<button onclick="startRenameLoc(\'' + esc(loc.name) + '\')" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#60a5fa;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:13px;flex-shrink:0;margin-right:6px;" title="เปลี่ยนชื่อ">✏️</button>' +
       '<label class="toggle-switch">' +
       '<input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleArchiveLocation(\'' + esc(loc.name) + '\', this.checked)" />' +
       '<span class="toggle-slider"></span>' +
       '</label></div>';
   }).join('');
 }
-function startRenameLoc(oldName) {
-  var newName = prompt('เปลี่ยนชื่อสถานที่ "' + oldName + '" เป็น:', oldName);
-  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
-  newName = newName.trim();
-  apiPost('/api/locations/rename', { oldName: oldName, newName: newName })
-    .then(function(res) {
-      showToast(res.message, 'success');
-      return Promise.all([apiGet('/api/locations'), loadInventory()]);
-    })
-    .then(function(results) {
-      state.allLocations = (results[0] && results[0].locations) ? results[0].locations : state.locations.slice();
-      renderLocationManageList();
-    })
-    .catch(function(err) { showToast(err.message, 'error'); });
-}
-
 async function toggleArchiveLocation(name, active) {
   try {
     await apiPost('/api/locations/archive', { name: name, archived: !active });
