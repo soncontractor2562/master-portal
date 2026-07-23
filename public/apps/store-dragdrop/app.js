@@ -8597,10 +8597,10 @@ async function apiPost(pathStr, body) {
     if (item) {
       if (last.type === 'ขนย้าย') {
         const qty = Number(last.quantity) || 0;
-        if (last.fromLocation) item.quantities[last.fromLocation] = (item.quantities[last.fromLocation] || 0) + qty;
-        if (last.toLocation) item.quantities[last.toLocation] = Math.max(0, (item.quantities[last.toLocation] || 0) - qty);
+        if (last.fromLocation) item.quantities[last.fromLocation] = Number(item.quantities[last.fromLocation] || 0) + qty;
+        if (last.toLocation) item.quantities[last.toLocation] = Math.max(0, Number(item.quantities[last.toLocation] || 0) - qty);
       } else if (last.type === 'ปรับยอด' && last.balanceFrom !== undefined) {
-        if (last.fromLocation) item.quantities[last.fromLocation] = last.balanceFrom;
+        if (last.fromLocation) item.quantities[last.fromLocation] = Number(last.balanceFrom);
       }
     }
     
