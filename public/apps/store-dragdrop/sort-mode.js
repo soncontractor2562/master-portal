@@ -1,5 +1,5 @@
 // ====== INVENTORY SORT MODE ======
-// Appended as separate module to avoid conflicts with large app.js data section
+// Simple sort mode module - no wrapping of renderInventoryList
 
 var _sortState = {
   active: false,
@@ -14,23 +14,17 @@ function toggleSortMode() {
     document.body.classList.add('sort-mode');
     if (btn) btn.classList.add('btn-sort-active');
     if (banner) banner.style.display = 'block';
-    enableInvRowDrag(true);
+    // Re-render so rows get data-item-name and drag handlers
+    renderInventoryList();
     showToast('โหมดจัดเรียง: ลาก ≡ เพื่อเรียงลำดับ', 'info');
   } else {
     document.body.classList.remove('sort-mode');
     if (btn) btn.classList.remove('btn-sort-active');
     if (banner) banner.style.display = 'none';
-    enableInvRowDrag(false);
     saveInvSortOrder();
+    renderInventoryList();
     showToast('บันทึกลำดับเรียบร้อย ✅', 'success');
   }
-}
-
-function enableInvRowDrag(enabled) {
-  var rows = document.querySelectorAll('#inventoryList [data-item-name]');
-  rows.forEach(function(row) {
-    row.setAttribute('draggable', enabled ? 'true' : 'false');
-  });
 }
 
 function onInvRowDragStart(e, name) {
@@ -69,21 +63,18 @@ function onInvRowDrop(e, targetName) {
   _sortState.draggingItemName = null;
   if (!fromName || fromName === targetName) return;
 
-  // Reorder state.items
   var fromIdx = state.items.findIndex(function(it) { return it.name === fromName; });
   var toIdx = state.items.findIndex(function(it) { return it.name === targetName; });
   if (fromIdx === -1 || toIdx === -1) return;
   var moved = state.items.splice(fromIdx, 1)[0];
   state.items.splice(toIdx, 0, moved);
   renderInventoryList();
-  enableInvRowDrag(true); // re-enable drag after re-render
 }
 
 function saveInvSortOrder() {
   try {
     var order = state.items.map(function(it) { return it.name; });
     localStorage.setItem('inv_item_order', JSON.stringify(order));
-    // Also update local data store order
     var local = loadLocalData();
     var newItems = [];
     order.forEach(function(name) {
@@ -97,31 +88,3 @@ function saveInvSortOrder() {
     saveLocalData(local);
   } catch (_) {}
 }
-
-// Apply saved item order on load
-document.addEventListener('DOMContentLoaded', function() {
-  // This runs after app.js DOMContentLoaded, so we hook into loadInventory completion
-  // by wrapping the renderInventoryList function to apply saved order
-  var origRenderInventoryList = window.renderInventoryList;
-  if (origRenderInventoryList) {
-    window.renderInventoryList = function() {
-      // Apply saved order to state.items before rendering
-      try {
-        var savedOrder = localStorage.getItem('inv_item_order');
-        if (savedOrder) {
-          var order = JSON.parse(savedOrder);
-          var ordered = [];
-          order.forEach(function(name) {
-            var item = state.items.find(function(i) { return i.name === name; });
-            if (item) ordered.push(item);
-          });
-          state.items.forEach(function(it) {
-            if (!ordered.find(function(i) { return i.name === it.name; })) ordered.push(it);
-          });
-          state.items = ordered;
-        }
-      } catch (_) {}
-      origRenderInventoryList();
-    };
-  }
-});
