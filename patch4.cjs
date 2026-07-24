@@ -1,4 +1,6 @@
-// ====== INVENTORY SORT MODE ======
+const fs = require('fs');
+
+const sortModeJs = `// ====== INVENTORY SORT MODE ======
 // Sort mode module using SortableJS
 
 var _sortState = {
@@ -86,3 +88,34 @@ function onInvRowDragEnd(e) {}
 function onInvRowDragOver(e) {}
 function onInvRowDragLeave(e) {}
 function onInvRowDrop(e, targetName) {}
+`;
+
+// 1. Overwrite sort-mode.js
+fs.writeFileSync('C:/Users/HP/Desktop/Antigravity/Master Portal/public/apps/store-dragdrop/sort-mode.js', sortModeJs);
+console.log('sort-mode.js replaced');
+
+// 2. Replace the equivalent section in JavaScript.html
+let jsHtml = fs.readFileSync('C:/Users/HP/Desktop/Antigravity/Store Drag&Drop/Store manager V1/JavaScript.html', 'utf8');
+const startToken = '// ====== INVENTORY SORT MODE ======';
+
+const idxStart = jsHtml.indexOf(startToken);
+// Find end of saveInvSortOrder
+const endMatch = jsHtml.substring(idxStart).match(/catch \(\_\) \{\}\n\}/);
+if (idxStart !== -1 && endMatch) {
+  const idxEnd = idxStart + endMatch.index + endMatch[0].length;
+  // Also remove the old native drag stubs that were trailing
+  const furtherMatch = jsHtml.substring(idxEnd).match(/function onInvRowDrop\(e, targetName\) \{\s*if \(\!_sortState\.active\) return;\s*e\.preventDefault\(\);\s*e\.currentTarget\.classList\.remove\('drag-over-row'\);\s*var fromName = _sortState\.draggingItemName;\s*_sortState\.draggingItemName = null;\s*if \(!fromName \|\| fromName === targetName\) return;\s*var fromIdx = state\.items\.findIndex\(function\(it\) \{ return it\.name === fromName; \}\);\s*var toIdx = state\.items\.findIndex\(function\(it\) \{ return it\.name === targetName; \}\);\s*if \(fromIdx === -1 \|\| toIdx === -1\) return;\s*var moved = state\.items\.splice\(fromIdx, 1\)\[0\];\s*state\.items\.splice\(toIdx, 0, moved\);\s*renderInventoryList\(\);\s*\}/);
+  
+  // Actually, to make it simple, let's just do a string replace of the entire old block.
+  // The simplest is to just overwrite the whole block from startToken to the next section "// ====== SETTINGS & MODALS ======"
+  
+  const nextSectionToken = '// ====== SETTINGS & MODALS ======';
+  const idxNext = jsHtml.indexOf(nextSectionToken);
+  if (idxNext !== -1) {
+     jsHtml = jsHtml.substring(0, idxStart) + sortModeJs + "\n\n" + jsHtml.substring(idxNext);
+     fs.writeFileSync('C:/Users/HP/Desktop/Antigravity/Store Drag&Drop/Store manager V1/JavaScript.html', jsHtml);
+     console.log('JavaScript.html replaced sort-mode');
+  }
+} else {
+  console.log('Could not find sort mode block in JavaScript.html');
+}

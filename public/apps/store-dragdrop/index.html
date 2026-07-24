@@ -135,6 +135,7 @@
     .inv-row.drag-over-row { border-top: 2px solid var(--blue); }
     .inv-row.dragging-row { opacity: 0.4; }
     /* Sort toggle button active state */
+    .sort-mode .drag-handle { display: block !important; }
     .btn-sort-active {
       background: rgba(59,130,246,0.2) !important;
       border-color: rgba(59,130,246,0.5) !important;
@@ -887,9 +888,9 @@
 <!-- TOAST CONTAINER -->
 <div id="toastContainer"></div>
 
-<!-- SUPABASE JS SDK -->
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="app.js?v=34"></script>
 <script src="sort-mode.js?v=1"></script>
 </body>
