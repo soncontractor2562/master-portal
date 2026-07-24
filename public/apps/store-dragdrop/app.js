@@ -526,10 +526,11 @@ async function refreshAll() {
   var btn = document.getElementById('refreshBtn');
   if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
   try {
-    // Load settings and inventory in parallel
-    var [settingsRes, _] = await Promise.all([
+    // Load settings, inventory, and pending in parallel
+    var [settingsRes, _, __] = await Promise.all([
       apiGet('/api/settings').catch(function(){ return { settings: {} }; }),
       loadInventory(),
+      (typeof loadPending === 'function' ? loadPending() : Promise.resolve())
     ]);
     if (settingsRes && settingsRes.settings) {
       state.settings = settingsRes.settings;
