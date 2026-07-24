@@ -235,7 +235,13 @@ async function apiPost(pathStr, body) {
     }
 
     if (pathStr === '/api/history/undo') {
-      const { data: hist, error: err1 } = await supabaseClient.from('store_history').select('*').order('date', { ascending: false }).limit(1);
+      let histQuery = supabaseClient.from('store_history').select('*');
+      if (body && body.id) {
+        histQuery = histQuery.eq('id', body.id);
+      } else {
+        histQuery = histQuery.order('date', { ascending: false }).limit(1);
+      }
+      const { data: hist, error: err1 } = await histQuery;
       if (err1) throw err1;
       if (!hist || hist.length === 0) throw new Error('ไม่มีรายการให้ยกเลิก');
       const last = hist[0];
@@ -949,7 +955,6 @@ function renderHistoryList() {
   }
   container.innerHTML = state.history.map(function(h, idx) {
     var isMove = h.type === 'ขนย้าย';
-    var isFirst = idx === 0;
     var dotColor = isMove ? '#3b82f6' : '#f59e0b';
     var dotEmoji = isMove ? '🚛' : '⚖️';
     var dateStr = h.date ? formatDate(new Date(h.date)) : '-';
@@ -1004,9 +1009,10 @@ function renderHistoryList() {
 }
 
 // ====== UNDO MODAL ======
-function showUndoModal() {
-  var h = state.history[0];
+function showUndoModal(id) {
+  var h = state.history.find(function(x) { return x.id === id; });
   if (!h) return;
+  state.undoTargetId = id;
   document.getElementById('undoInfo').innerHTML =
     '<div><span style="color:#94a3b8;">ประเภท:</span> <strong>' + h.type + '</strong></div>' +
     '<div><span style="color:#94a3b8;">รายการ:</span> <strong>' + h.itemName + '</strong></div>' +
@@ -1025,7 +1031,7 @@ async function confirmUndo() {
   var btn = document.getElementById('confirmUndoBtn');
   btn.disabled = true; btn.textContent = '⏳ กำลังยกเลิก...';
   try {
-    var res = await apiPost('/api/history/undo', {});
+    var res = await apiPost('/api/history/undo', { id: state.undoTargetId });
     showToast(res.message, 'success');
     document.getElementById('undoModal').style.display = 'none';
     await loadInventory(); await loadHistory(true);
