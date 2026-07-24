@@ -429,7 +429,7 @@
     </nav>
     <div class="sidebar-footer">
       <button class="sidebar-action-btn" onclick="refreshAll()">🔄 <span>รีเฟรชข้อมูล</span></button>
-      <button class="sidebar-action-btn" onclick="showSettingsModal()">⚙️ <span>ตั้งค่าระบบ</span></button>
+      <button class="sidebar-action-btn" id="nav-settings" onclick="showSettingsModal()">⚙️ <span>ตั้งค่าระบบ</span></button>
     </div>
   </aside>
 
@@ -486,7 +486,7 @@
         <div class="page-header-title">ทะเบียนวัสดุ</div>
         <div class="page-header-actions">
           <button id="sortToggleBtn" onclick="toggleSortMode()" class="icon-btn" title="จัดเรียง">☰ Sort</button>
-          <button onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เพิ่มของ</button>
+          <button id="addInventoryBtn" onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เพิ่มของ</button>
         </div>
       </div>
       <div class="page-body">
@@ -507,6 +507,17 @@
       </div>
     </div>
 
+    <!-- PAGE: PENDING -->
+    <div class="page" id="page-pending" style="display:none;">
+      <div class="page-header">
+        <div class="page-header-title">รอรับของ</div>
+        <div style="font-size:12px;color:var(--muted);" id="pendingCount">-</div>
+      </div>
+      <div class="page-body">
+        <div id="pendingList"></div>
+      </div>
+    </div>
+    
     <!-- PAGE: HISTORY -->
     <div class="page" id="page-history">
       <div class="page-header">
@@ -538,6 +549,38 @@
   </nav>
 
 </div><!-- /app -->
+
+<!-- ========== MODAL: LOGIN ========== -->
+<div class="modal-overlay" id="loginModal" style="display:flex; z-index:9999; background:rgba(15,23,42,0.95); backdrop-filter:blur(8px);">
+  <div class="modal-sheet" style="max-width:400px; margin:auto; top:20%;">
+    <div style="text-align:center; margin-bottom:20px; font-size:24px;">🔒 ล็อคอินเข้าสู่ระบบ</div>
+    <div class="form-group">
+      <label class="form-label">ชื่อผู้ใช้ (Username)</label>
+      <input type="text" id="loginUsername" class="form-input" placeholder="กรอกชื่อผู้ใช้..." autocomplete="off">
+    </div>
+    <div class="form-group" style="margin-bottom:24px;">
+      <label class="form-label">รหัส PIN</label>
+      <input type="password" id="loginPin" class="form-input" placeholder="กรอกรหัส PIN..." autocomplete="off" onkeyup="if(event.key==='Enter') doLogin()">
+    </div>
+    <button onclick="doLogin()" class="btn-primary" style="width:100%; padding:14px; font-size:16px;">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ========== MODAL: RECEIVE ========== -->
+<div class="modal-overlay" id="receiveModal" onclick="closeReceiveModal(event)">
+  <div class="modal-sheet" style="max-width: 600px; display: flex; flex-direction: column; max-height: 95vh; padding-bottom: 20px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📥 ตรวจรับของ</div>
+    <div style="font-size:13px; color:var(--muted); margin-bottom:12px;" id="receiveMeta"></div>
+    <div id="receiveItemsList" style="flex:1; overflow-y:auto; margin-bottom:16px; padding-right:4px; display:flex; flex-direction:column; gap:8px;"></div>
+    
+    <div style="display:flex; gap:10px;">
+      <button onclick="confirmReceive()" class="btn-primary" style="flex:1;">✅ ยืนยันการรับของ</button>
+      <button id="forceCompleteBtn" onclick="forceCompleteReceive()" class="btn-primary" style="background:#ef4444; display:none;">🚨 บังคับจบงาน (สูญหาย)</button>
+    </div>
+    <button onclick="closeReceiveModal()" class="btn-primary btn-ghost" style="margin-top:10px;">ปิด</button>
+  </div>
+</div>
 
 <!-- ========== MODAL: MOVE ========== -->
 <div class="modal-overlay" id="moveModal" onclick="closeMoveModal(event)">
@@ -684,6 +727,9 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">⚙️ ตั้งค่าระบบ</div>
+    <div style="margin-bottom:12px; text-align:right;">
+      <button onclick="logout()" style="background:#ef4444; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">🚪 ออกจากระบบ</button>
+    </div>
 
     <!-- Location Management -->
     <div class="section-card">
@@ -728,7 +774,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=44"></script>
+<script src="app.js?v=45"></script>
 <script src="sort-mode.js?v=1"></script>
 </body>
 </html>

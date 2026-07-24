@@ -30,6 +30,12 @@ async function apiGet(pathStr) {
       const activeLocs = (locRes.data || []).filter(l => !l.archived);
       return { success: true, locations: activeLocs, allLocations: locRes.data || [], items: itemRes.data || [] };
     }
+    
+    if (pathStr.startsWith('/api/pending/list')) {
+      const pendingRes = await supabaseClient.from('store_pending_moves').select('*').eq('status', 'รอรับ').order('date', { ascending: false });
+      if (pendingRes.error) throw pendingRes.error;
+      return { success: true, pending: pendingRes.data || [] };
+    }
     if (pathStr.startsWith('/api/locations')) {
       const locRes = await supabaseClient.from('store_locations').select('*').order('col', { ascending: true });
       if (locRes.error) throw locRes.error;
@@ -68,12 +74,122 @@ async function apiPost(pathStr, body) {
   try {
     if (!supabaseClient) throw new Error("Supabase is not initialized.");
     // (Omitted other post commands for brevity in this fallback testing, wait no, I MUST include them all!)
+    
+    if (pathStr === '/api/pending/receive') {
+      const { id, items } = body;
+      const { error: e } = await supabaseClient.from('store_pending_moves').update({ items }).eq('id', id);
+      if (e) throw e;
+      return { success: true, message: 'บันทึกยอดรับแล้ว' };
+    }
+    
+    if (pathStr === '/api/pending/complete') {
+      const { move } = body;
+      
+      const histories = [];
+      for (const m of move.items) {
+        const { data: itemsDB, error: err1 } = await supabaseClient.from('store_items').select('*').eq('name', m.itemName);
+        if (err1) throw err1;
+        if (!itemsDB || itemsDB.length === 0) continue;
+        const item = itemsDB[0];
+        
+        item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + Number(m.quantityReceived);
+        
+        const { error: err2 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+        if (err2) throw err2;
+        
+        histories.push({
+          date: move.date,
+          type: 'รับของเข้า',
+          itemName: m.itemName,
+          quantity: Number(m.quantityReceived),
+          fromLocation: move.from_location,
+          toLocation: move.to_location,
+          carrier: move.carrier,
+          reporter: move.reporter,
+          remark: move.remark,
+          balanceFrom: 0, // Not available easily
+          balanceTo: item.quantities[move.to_location]
+        });
+      }
+      
+      if (histories.length > 0) {
+        await supabaseClient.from('store_history').insert(histories);
+      }
+      
+      await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น' }).eq('id', move.id);
+      
+      return { success: true, message: 'รับของเสร็จสมบูรณ์' };
+    }
+    
+    if (pathStr === '/api/pending/force-complete') {
+      const { move } = body;
+      
+      // Ensure "สูญหาย" location exists
+      const { data: locs } = await supabaseClient.from('store_locations').select('*').eq('name', 'สูญหาย');
+      if (!locs || locs.length === 0) {
+        await supabaseClient.from('store_locations').insert([{ name: 'สูญหาย', type: 'สูญหาย', col: 99, archived: false, hideCount: true }]);
+      }
+      
+      const histories = [];
+      for (const m of move.items) {
+        const { data: itemsDB, error: err1 } = await supabaseClient.from('store_items').select('*').eq('name', m.itemName);
+        if (err1) throw err1;
+        if (!itemsDB || itemsDB.length === 0) continue;
+        const item = itemsDB[0];
+        
+        const qRcv = Number(m.quantityReceived || 0);
+        const qSent = Number(m.quantitySent || 0);
+        const diff = qSent - qRcv;
+        
+        if (qRcv > 0) {
+          item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + qRcv;
+          histories.push({
+            date: move.date,
+            type: 'รับของเข้า',
+            itemName: m.itemName,
+            quantity: qRcv,
+            fromLocation: move.from_location,
+            toLocation: move.to_location,
+            reporter: move.reporter,
+            remark: move.remark,
+            balanceFrom: 0,
+            balanceTo: item.quantities[move.to_location]
+          });
+        }
+        
+        if (diff > 0) {
+          item.quantities['สูญหาย'] = (item.quantities['สูญหาย'] || 0) + diff;
+          histories.push({
+            date: new Date().toISOString(),
+            type: 'สูญหาย',
+            itemName: m.itemName,
+            quantity: diff,
+            fromLocation: move.from_location,
+            toLocation: 'สูญหาย',
+            reporter: move.reporter,
+            remark: 'ยอดขาดจากการส่ง',
+            balanceFrom: 0,
+            balanceTo: item.quantities['สูญหาย']
+          });
+        }
+        
+        await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+      }
+      
+      if (histories.length > 0) {
+        await supabaseClient.from('store_history').insert(histories);
+      }
+      
+      await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น' }).eq('id', move.id);
+      
+      return { success: true, message: 'จบงานสำเร็จ (บันทึกส่วนที่หายลง สูญหาย แล้ว)' };
+    }
     if (pathStr === '/api/inventory/move-bulk') {
       const moves = body.moves;
       if (!moves || moves.length === 0) throw new Error('ไม่มีรายการขนย้าย');
       
-      const histories = [];
       const d = body.date ? new Date(body.date).toISOString() : new Date().toISOString();
+      const pendingItems = [];
       
       for (let i = 0; i < moves.length; i++) {
         const m = moves[i];
@@ -87,34 +203,35 @@ async function apiPost(pathStr, body) {
         if (cf < qty) throw new Error('ยอด ' + m.itemName + ' ไม่พอ (มี ' + cf + ')');
         
         item.quantities[body.fromLocation] = cf - qty;
-        item.quantities[body.toLocation] = (item.quantities[body.toLocation] || 0) + qty;
         
+        // 1. ตัดสต็อกต้นทางอย่างเดียว
         const { error: err2 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
         if (err2) throw err2;
         
-        let fullRemark = body.remark || '';
-        if (body.sender) fullRemark = '[ผู้ส่ง: ' + body.sender + '] ' + fullRemark;
-        
-        histories.push({
-          date: d,
-          type: 'ขนย้าย',
+        pendingItems.push({
           itemName: m.itemName,
-          quantity: qty,
-          fromLocation: body.fromLocation,
-          toLocation: body.toLocation,
-          carrier: body.carrier || '',
-          receiver: body.receiver || '',
-          reporter: body.reporter || '',
-          remark: fullRemark,
-          balanceFrom: item.quantities[body.fromLocation],
-          balanceTo: item.quantities[body.toLocation]
+          quantitySent: qty,
+          quantityReceived: qty // default equal
         });
       }
       
-      const { error: err3 } = await supabaseClient.from('store_history').insert(histories);
+      let fullRemark = body.remark || '';
+      if (body.sender) fullRemark = '[ผู้ส่ง: ' + body.sender + '] ' + fullRemark;
+      
+      // 2. สร้าง record ใน store_pending_moves
+      const { error: err3 } = await supabaseClient.from('store_pending_moves').insert([{
+        date: d,
+        from_location: body.fromLocation,
+        to_location: body.toLocation,
+        reporter: body.reporter || '',
+        carrier: body.carrier || '',
+        remark: fullRemark,
+        items: pendingItems,
+        status: 'รอรับ'
+      }]);
       if (err3) throw err3;
       
-      return { success: true, message: 'ขนย้าย ' + moves.length + ' รายการเรียบร้อย' };
+      return { success: true, message: 'ส่งรายการ ' + moves.length + ' ชิ้นไปที่รอรับแล้ว' };
     }
 
     if (pathStr === '/api/inventory/move') {
@@ -326,6 +443,8 @@ const state = {
   groupCollapsed: {},
   catOrder: [],          // manual category order (stored in localStorage)
   allCategories: [],     // all unique categories from server
+  currentUser: null,
+  pending: [],
 };
 
 // ====== INIT ======
@@ -338,10 +457,70 @@ document.addEventListener('DOMContentLoaded', function() {
     var savedOrder = localStorage.getItem('inv_cat_order');
     if (savedOrder) state.catOrder = JSON.parse(savedOrder);
   } catch (_) {}
-  refreshAll();
+  
+  var savedUser = localStorage.getItem('inv_user');
+  if (savedUser) {
+    try {
+      state.currentUser = JSON.parse(savedUser);
+      document.getElementById('loginModal').style.display = 'none';
+      applyUserRole();
+      refreshAll();
+    } catch(e) {
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+  } else {
+    document.getElementById('loginModal').style.display = 'flex';
+  }
 });
 
 
+
+
+async function doLogin() {
+  var u = document.getElementById('loginUsername').value.trim();
+  var p = document.getElementById('loginPin').value.trim();
+  if (!u || !p) return showToast('กรุณากรอกข้อมูล', 'error');
+  try {
+    var { data, error } = await supabaseClient.from('store_users').select('*').eq('username', u).eq('pin', p);
+    if (error) throw error;
+    if (data && data.length > 0) {
+      state.currentUser = data[0];
+      localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+      document.getElementById('loginModal').style.display = 'none';
+      showToast('เข้าสู่ระบบสำเร็จ', 'success');
+      applyUserRole();
+      refreshAll();
+    } else {
+      showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+    }
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('inv_user');
+  location.reload();
+}
+
+function applyUserRole() {
+  if (!state.currentUser) return;
+  var r = state.currentUser.role;
+  var isUser = (r === 'ผู้ใช้งาน');
+  
+  if (document.getElementById('addInventoryBtn')) {
+    document.getElementById('addInventoryBtn').style.display = isUser ? 'none' : 'block';
+  }
+  if (document.getElementById('nav-move')) {
+    document.getElementById('nav-move').style.display = isUser ? 'none' : 'flex';
+  }
+  
+  if (isUser && state.currentPage === 'move') {
+    switchPage('pending');
+  } else if (!isUser && state.currentPage === 'pending') {
+    // switchPage('move');
+  }
+}
 
 async function refreshAll() {
   var btn = document.getElementById('refreshBtn');
@@ -835,8 +1014,8 @@ function toggleGroup(cat) {
 
 function renderInventoryRow(item) {
   var qty = state.invLocFilter !== 'all' ? (item.quantities[state.invLocFilter] || 0) :
-    Object.values(item.quantities).reduce(function(s, q) { return s + Math.max(0, q || 0); }, 0);
-  var locCount = Object.values(item.quantities).filter(function(q) { return q > 0; }).length;
+    Object.keys(item.quantities).reduce(function(s, k) { return s + (k === 'สูญหาย' ? 0 : Math.max(0, item.quantities[k] || 0)); }, 0);
+  var locCount = Object.keys(item.quantities).filter(function(k) { return k !== 'สูญหาย' && item.quantities[k] > 0; }).length;
   var sub = state.invLocFilter !== 'all' ? state.invLocFilter : locCount + ' สถานที่';
 
   // Qty badge style (inline - no CSS class dependency)
@@ -897,7 +1076,7 @@ function showItemDetail(itemName) {
   state.currentItem = item;
   document.getElementById('detailItemName').textContent = item.name;
   document.getElementById('detailItemCat').textContent = (item.category || '-') + ' · ' + item.unit;
-  var total = Object.values(item.quantities).reduce(function(s, q) { return s + Math.max(0, q || 0); }, 0);
+  var total = Object.keys(item.quantities).reduce(function(s, k) { return s + (k === 'สูญหาย' ? 0 : Math.max(0, item.quantities[k] || 0)); }, 0);
   document.getElementById('detailTotalBadge').textContent = 'รวม ' + total + ' ' + item.unit;
   document.getElementById('detailLocationList').innerHTML = state.locations.map(function(loc) {
     var qty = item.quantities[loc.name] || 0;
@@ -1313,4 +1492,179 @@ function startRenameLocation(oldName) {
     .catch(function(err) {
       alert('Error: ' + err.message);
     });
+}
+
+
+// ====== PENDING PAGE ======
+async function loadPending() {
+  if (!state.currentUser) return;
+  var data = await apiGet('/api/pending/list');
+  state.pending = data.pending || [];
+  
+  // Update badge
+  var badge = document.getElementById('pendingBadge');
+  if (badge) {
+    if (state.pending.length > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = state.pending.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  
+  var countEl = document.getElementById('pendingCount');
+  if (countEl) countEl.textContent = state.pending.length + ' รายการ';
+  
+  renderPendingList();
+}
+
+function renderPendingList() {
+  var c = document.getElementById('pendingList');
+  if (!c) return;
+  if (state.pending.length === 0) {
+    c.innerHTML = '<div class="empty-state">ไม่มีรายการรอรับ</div>';
+    return;
+  }
+  
+  c.innerHTML = state.pending.map(function(p) {
+    var d = new Date(p.date);
+    var dateStr = (d.getDate().toString().padStart(2, '0')) + '/' + ((d.getMonth() + 1).toString().padStart(2, '0')) + '/' + (d.getFullYear() + 543) + ' ' + (d.getHours().toString().padStart(2, '0')) + ':' + (d.getMinutes().toString().padStart(2, '0'));
+    
+    return '<div class="timeline-item">' +
+      '<div class="timeline-dot" style="background:#fbbf24;"></div>' +
+      '<div class="glass-card" style="border-left:4px solid #fbbf24; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
+        '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + p.from_location + ' ➔ ' + p.to_location + '</div>' +
+        '<div style="font-size:13px;color:#cbd5e1;">' + p.items.length + ' รายการ</div>' +
+        (p.remark ? '<div style="font-size:12px;color:#fbbf24;margin-top:6px;">' + p.remark + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+let currentReceiveMove = null;
+
+function openReceiveModal(id) {
+  var p = state.pending.find(function(x) { return x.id === id; });
+  if (!p) return;
+  currentReceiveMove = p;
+  
+  var meta = document.getElementById('receiveMeta');
+  meta.innerHTML = 'ต้นทาง: ' + p.from_location + '<br>ปลายทาง: ' + p.to_location + '<br>หมายเหตุ: ' + (p.remark || '-');
+  
+  var list = document.getElementById('receiveItemsList');
+  var canEdit = (state.currentUser.role !== 'ผู้ดูแลสโตร์'); // Admin or User can edit
+  
+  list.innerHTML = p.items.map(function(item, idx) {
+    return '<div style="background:rgba(30,41,59,0.5); padding:10px; border-radius:8px;">' +
+      '<div style="font-weight:700; color:#e2e8f0; margin-bottom:6px;">' + item.itemName + '</div>' +
+      '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+        '<div style="font-size:12px; color:#cbd5e1;">ยอดส่ง: <span style="font-weight:700; color:#38bdf8;">' + item.quantitySent + '</span></div>' +
+        '<div style="display:flex; align-items:center; gap:6px;">' +
+          '<span style="font-size:12px; color:#cbd5e1;">ยอดรับ:</span>' +
+          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:60px; padding:4px; text-align:center;" value="' + (item.quantityReceived || item.quantitySent) + '" ' + (canEdit ? '' : 'disabled') + ' min="0">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  
+  // Force complete button for Admin / Store
+  var forceBtn = document.getElementById('forceCompleteBtn');
+  if (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') {
+    forceBtn.style.display = 'block';
+  } else {
+    forceBtn.style.display = 'none';
+  }
+  
+  document.getElementById('receiveModal').style.display = 'flex';
+}
+
+function closeReceiveModal(e) {
+  if (e && e.target !== document.getElementById('receiveModal')) return;
+  document.getElementById('receiveModal').style.display = 'none';
+  currentReceiveMove = null;
+}
+
+async function confirmReceive() {
+  if (!currentReceiveMove) return;
+  if (state.currentUser.role === 'ผู้ดูแลสโตร์') {
+    showToast('สโตร์ไม่สามารถกดรับของได้', 'error');
+    return;
+  }
+  
+  // Read inputs
+  var updatedItems = [];
+  var allMatch = true;
+  for (var i = 0; i < currentReceiveMove.items.length; i++) {
+    var oldItem = currentReceiveMove.items[i];
+    var inp = document.getElementById('rcvQty_' + i);
+    var qRcv = Number(inp.value);
+    if (isNaN(qRcv)) qRcv = 0;
+    
+    updatedItems.push({
+      itemName: oldItem.itemName,
+      quantitySent: oldItem.quantitySent,
+      quantityReceived: qRcv
+    });
+    
+    if (qRcv !== Number(oldItem.quantitySent)) {
+      allMatch = false;
+    }
+  }
+  
+  currentReceiveMove.items = updatedItems;
+  
+  if (allMatch) {
+    if (confirm('ยอดรับตรงกับยอดส่งทั้งหมด ยืนยันการจบงาน?')) {
+      try {
+        var res = await apiPost('/api/pending/complete', { move: currentReceiveMove });
+        showToast(res.message, 'success');
+        closeReceiveModal();
+        loadPending();
+        loadInventory();
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+  } else {
+    // Just save state
+    try {
+      var res = await apiPost('/api/pending/receive', { id: currentReceiveMove.id, items: updatedItems });
+      showToast('บันทึกยอดรับแล้ว (ยอดยังไม่ตรงกัน โปรดให้สโตร์ตรวจสอบ)', 'success');
+      closeReceiveModal();
+      loadPending();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  }
+}
+
+async function forceCompleteReceive() {
+  if (!currentReceiveMove) return;
+  if (!confirm('ยืนยันบังคับจบงาน? ยอดที่ขาดจะถูกบันทึกไปที่ "สูญหาย"')) return;
+  
+  var updatedItems = [];
+  for (var i = 0; i < currentReceiveMove.items.length; i++) {
+    var oldItem = currentReceiveMove.items[i];
+    var inp = document.getElementById('rcvQty_' + i);
+    var qRcv = Number(inp.value);
+    if (isNaN(qRcv)) qRcv = 0;
+    
+    updatedItems.push({
+      itemName: oldItem.itemName,
+      quantitySent: oldItem.quantitySent,
+      quantityReceived: qRcv
+    });
+  }
+  currentReceiveMove.items = updatedItems;
+  
+  try {
+    var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
+    showToast(res.message, 'success');
+    closeReceiveModal();
+    loadPending();
+    loadInventory();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
 }
