@@ -420,11 +420,11 @@
       <button class="sidebar-btn active" id="snav-move" onclick="switchPage('move')">
         <span class="s-icon">🚛</span> ขนย้ายสินค้า
       </button>
-            <button class="sidebar-btn" id="snav-pending" onclick="switchPage('pending')">
-        <span class="s-icon">📥</span> รอรับ <span id="snav-pending-badge" style="display:none; background:#ef4444; color:#fff; border-radius:99px; padding:2px 6px; font-size:10px; margin-left:4px;">0</span>
-      </button>
 <button class="sidebar-btn" id="snav-inventory" onclick="switchPage('inventory')">
         <span class="s-icon">🗂️</span> ทะเบียนวัสดุ
+      </button>
+            <button class="sidebar-btn" id="snav-pending" onclick="switchPage('pending')">
+        <span class="s-icon">📥</span> รอรับ <span id="snav-pending-badge" style="display:none; background:#ef4444; color:#fff; border-radius:99px; padding:2px 6px; font-size:10px; margin-left:4px;">0</span>
       </button>
       <button class="sidebar-btn" id="snav-history" onclick="switchPage('history')">
         <span class="s-icon">📜</span> ประวัติ
@@ -540,11 +540,11 @@
     <button class="nav-btn active" id="nav-move" onclick="switchPage('move')">
       <span class="nav-icon">🚛</span><span class="nav-label">ขนย้าย</span>
     </button>
-        <button class="nav-btn" id="nav-pending" onclick="switchPage('pending')">
-      <span class="nav-icon" style="position:relative;">📥<span id="nav-pending-badge" style="display:none; position:absolute; top:-4px; right:-8px; background:#ef4444; color:#fff; border-radius:99px; padding:0 4px; font-size:9px;">0</span></span><span class="nav-label">รอรับ</span>
-    </button>
 <button class="nav-btn" id="nav-inventory" onclick="switchPage('inventory')">
       <span class="nav-icon">🗂️</span><span class="nav-label">ทะเบียน</span>
+    </button>
+        <button class="nav-btn" id="nav-pending" onclick="switchPage('pending')">
+      <span class="nav-icon" style="position:relative;">📥<span id="nav-pending-badge" style="display:none; position:absolute; top:-4px; right:-8px; background:#ef4444; color:#fff; border-radius:99px; padding:0 4px; font-size:9px;">0</span></span><span class="nav-label">รอรับ</span>
     </button>
     <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
       <span class="nav-icon">📜</span><span class="nav-label">ประวัติ</span>
@@ -582,7 +582,7 @@
     
     <div style="display:flex; gap:10px;">
       <button onclick="confirmReceive()" class="btn-primary" style="flex:1;">✅ ยืนยันการรับของ</button>
-      <button id="forceCompleteBtn" onclick="forceCompleteReceive()" class="btn-primary" style="background:#ef4444; display:none;">🚨 บังคับจบงาน (สูญหาย)</button>
+      <button id="forceCompleteBtn" onclick="forceCompleteReceive()" class="btn-primary" style="background:#ef4444; display:none; flex:1;">🚨 บังคับจบงาน (สูญหาย)</button>
     </div>
     <button onclick="closeReceiveModal()" class="btn-primary btn-ghost" style="margin-top:10px;">ปิด</button>
   </div>
@@ -780,7 +780,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=49"></script>
+<script src="app.js?v=50"></script>
 <script src="sort-mode.js?v=1"></script>
 </body>
 </html>
