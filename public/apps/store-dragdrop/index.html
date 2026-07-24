@@ -8,6 +8,15 @@
   <meta name="description" content="ระบบจัดการสโตร์ ไซต์งาน และวัสดุอุปกรณ์" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      alert("GLOBAL ERROR: " + msg + "\nLine: " + lineNo + "\nCol: " + columnNo);
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+      alert("UNHANDLED PROMISE: " + event.reason);
+    });
+  </script>
   <style>
     :root {
       --bg: #0f172a; --card: #1e293b; --card2: #162032;
@@ -873,7 +882,7 @@
 <!-- SUPABASE JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="app.js?v=28"></script>
+<script src="app.js?v=33"></script>
 <script src="sort-mode.js?v=1"></script>
 </body>
 </html>
