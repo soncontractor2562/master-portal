@@ -518,6 +518,9 @@ function applyUserRole() {
   if (document.getElementById('nav-move')) {
     document.getElementById('nav-move').style.display = isUser ? 'none' : 'flex';
   }
+  if (document.getElementById('snav-move')) {
+    document.getElementById('snav-move').style.display = isUser ? 'none' : 'flex';
+  }
   
   if (isUser && state.currentPage === 'move') {
     switchPage('pending');
@@ -799,6 +802,10 @@ function closeMoveModalDirect() {
 }
 
 async function confirmMove() {
+  if (state.currentUser && state.currentUser.role === 'ผู้ใช้งาน') {
+    showToast('ผู้ใช้งานทั่วไปไม่สามารถทำการขนย้ายได้', 'error');
+    return;
+  }
   var inputs = document.querySelectorAll('.move-bulk-qty');
   var moves = [];
   inputs.forEach(function(inp) {
@@ -849,6 +856,7 @@ async function confirmMove() {
     document.getElementById('moveModal').style.display = 'none';
     cancelMove(); 
     await loadInventory();
+    await loadPending();
   } catch (err) {
     showToast(err.message, 'error');
     btn.disabled = false; btn.textContent = '✅ ยืนยันการขนย้าย';
@@ -1652,6 +1660,10 @@ async function confirmReceive() {
 }
 
 async function forceCompleteReceive() {
+  if (state.currentUser && state.currentUser.role === 'ผู้ใช้งาน') {
+    showToast('ผู้ใช้งานทั่วไปไม่สามารถบังคับจบงานได้', 'error');
+    return;
+  }
   if (!currentReceiveMove) return;
   if (!confirm('ยืนยันบังคับจบงาน? ยอดที่ขาดจะถูกบันทึกไปที่ "สูญหาย"')) return;
   
