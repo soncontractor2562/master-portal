@@ -978,10 +978,9 @@ function renderHistoryList() {
       (h.carrier && h.carrier !== h.reporter ? '<span>🚛 ' + h.carrier + '</span>' : '') +
       (h.remark ? '<span>📝 ' + h.remark + '</span>' : '') +
       '</div>' : '';
-    var undoHtml = isFirst ?
-      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(51,65,85,0.4);">' +
-      '<button onclick="showUndoModal()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:7px 14px;border-radius:10px;cursor:pointer;font-size:12px;font-family:\'Sarabun\',sans-serif;font-weight:600;">🔙 ยกเลิกรายการนี้</button>' +
-      '</div>' : '';
+    var undoHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(51,65,85,0.4);text-align:right;">' +
+      '<button onclick="showUndoModal(\'' + h.id + '\')" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-family:\'Sarabun\',sans-serif;font-weight:600;">🔙 ยกเลิกรายการนี้</button>' +
+      '</div>';
     var routeHtml = isMove ?
       '<div style="display:flex;align-items:center;gap:6px;background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;overflow:hidden;">' +
       '<span style="font-size:12px;color:#60a5fa;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">' + h.fromLocation + '</span>' +
