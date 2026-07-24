@@ -98,7 +98,7 @@
     /* ===== MAIN CONTENT ===== */
     .main-content {
       display: block;
-      padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 8px);
+      padding-bottom: calc(var(--nav-height) + max(env(safe-area-inset-bottom), 34px) + 8px);
     }
 
     /* ===== PAGE HEADER BAR (compact, no sticky overlap) ===== */
@@ -146,7 +146,13 @@
       border-top: 1px solid var(--border);
       display: flex;
       height: var(--nav-height);
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: max(env(safe-area-inset-bottom), 34px);
+    }
+    /* เพิ่ม offset สำหรับ Safari browser mode (มี URL bar ด้านล่าง) */
+    @media not all and (display-mode: standalone) {
+      .navbar {
+        bottom: env(safe-area-inset-bottom, 0px);
+      }
     }
     .nav-btn {
       flex: 1; display: flex; flex-direction: column; align-items: center;
