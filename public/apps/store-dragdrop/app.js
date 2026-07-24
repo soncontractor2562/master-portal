@@ -394,7 +394,7 @@ async function apiPost(pathStr, body) {
       if (err2) throw err2;
       if (items && items.length > 0) {
         const item = items[0];
-        if (last.type === 'ขนย้าย') {
+        if (last.type === 'ขนย้าย' || last.type === 'รับของเข้า' || last.type === 'สูญหาย') {
           const qty = Number(last.quantity) || 0;
           if (last.fromLocation) item.quantities[last.fromLocation] = Number(item.quantities[last.fromLocation] || 0) + qty;
           if (last.toLocation) item.quantities[last.toLocation] = Math.max(0, Number(item.quantities[last.toLocation] || 0) - qty);
