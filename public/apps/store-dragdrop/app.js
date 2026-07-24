@@ -524,6 +524,27 @@ function applyUserRole() {
   } else if (!isUser && state.currentPage === 'pending') {
     // switchPage('move');
   }
+  
+  // Update username UI
+  if (document.getElementById('sidebarUser')) {
+    document.getElementById('sidebarUser').innerText = state.currentUser.name || state.currentUser.username;
+  }
+  if (document.getElementById('headerUser')) {
+    var hu = document.getElementById('headerUser');
+    hu.innerText = state.currentUser.name || state.currentUser.username;
+    hu.style.display = window.innerWidth < 1024 ? 'inline-block' : 'none';
+    
+    // Also attach a window resize listener if not already there to toggle header username
+    if (!window.__headerUserResizeAttached) {
+      window.addEventListener('resize', function() {
+        var el = document.getElementById('headerUser');
+        if (el && state.currentUser) {
+          el.style.display = window.innerWidth < 1024 ? 'inline-block' : 'none';
+        }
+      });
+      window.__headerUserResizeAttached = true;
+    }
+  }
 }
 
 async function refreshAll() {
