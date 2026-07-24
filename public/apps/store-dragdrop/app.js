@@ -117,7 +117,7 @@ async function apiPost(pathStr, body) {
       return { success: true, message: 'ขนย้าย ' + moves.length + ' รายการเรียบร้อย' };
     }
 
-    if (pathStr === '/api/inventory/move') { {
+    if (pathStr === '/api/inventory/move') {
       const { data: items, error: err1 } = await supabaseClient.from('store_items').select('*').eq('name', body.itemName);
       if (err1) throw err1;
       if (!items || items.length === 0) throw new Error('ไม่พบรายการ ' + body.itemName);
