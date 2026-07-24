@@ -953,56 +953,95 @@ function renderHistoryList() {
     if (loadMoreEl) loadMoreEl.style.display = 'none';
     return;
   }
-  container.innerHTML = state.history.map(function(h, idx) {
-    var isMove = h.type === 'ขนย้าย';
+  var groups = [];
+  state.history.forEach(function(h) {
+    if (groups.length === 0) {
+      groups.push([h]);
+      return;
+    }
+    var currentGroup = groups[groups.length - 1];
+    var cgFirst = currentGroup[0];
+    
+    var timeDiff = Math.abs(new Date(h.date || 0) - new Date(cgFirst.date || 0));
+    var isSameLocation = h.fromLocation === cgFirst.fromLocation && h.toLocation === cgFirst.toLocation;
+    var isSameType = h.type === cgFirst.type;
+    var isSameMeta = h.reporter === cgFirst.reporter && h.carrier === cgFirst.carrier && h.remark === cgFirst.remark;
+
+    if (timeDiff <= 60000 && isSameLocation && isSameType && isSameMeta) {
+      currentGroup.push(h);
+    } else {
+      groups.push([h]);
+    }
+  });
+
+  container.innerHTML = groups.map(function(group) {
+    var first = group[0];
+    var isMove = first.type === 'ขนย้าย';
     var dotColor = isMove ? '#3b82f6' : '#f59e0b';
     var dotEmoji = isMove ? '🚛' : '⚖️';
-    var dateStr = h.date ? formatDate(new Date(h.date)) : '-';
-    var hasBalance = h.balanceFrom !== null && h.balanceFrom !== undefined;
-    var hasBothBalance = hasBalance && h.balanceTo !== null && h.balanceTo !== undefined;
-    var balanceHtml = '';
-    if (isMove && hasBothBalance) {
-      balanceHtml = '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">' +
-        '<div style="font-size:11px;background:rgba(15,23,42,0.6);border-radius:8px;padding:4px 10px;color:#94a3b8;"><span style="color:#64748b;">ต้นทาง:</span> <span style="color:#f87171;font-weight:700;">' + h.balanceFrom + '</span></div>' +
-        '<div style="font-size:11px;background:rgba(15,23,42,0.6);border-radius:8px;padding:4px 10px;color:#94a3b8;"><span style="color:#64748b;">ปลายทาง:</span> <span style="color:#4ade80;font-weight:700;">' + h.balanceTo + '</span></div>' +
+    var dateStr = first.date ? formatDate(new Date(first.date)) : '-';
+    
+    var routeHtml = '';
+    if (isMove) {
+      routeHtml = '<div style="display:flex;align-items:center;gap:6px;background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;margin-bottom:12px;overflow:hidden;">' +
+        '<span style="font-size:12px;color:#60a5fa;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">' + first.fromLocation + '</span>' +
+        '<span style="color:#475569;font-size:14px;flex-shrink:0;">→</span>' +
+        '<span style="font-size:12px;color:#4ade80;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">' + first.toLocation + '</span>' +
         '</div>';
-    } else if (!isMove && hasBalance) {
-      balanceHtml = '<div style="margin-top:8px;"><div style="font-size:11px;background:rgba(15,23,42,0.6);border-radius:8px;padding:4px 10px;color:#94a3b8;display:inline-block;">' +
-        '<span style="color:#64748b;">ก่อน:</span> <span style="font-weight:700;">' + h.balanceFrom + '</span>' +
-        '<span style="color:#64748b;"> → หลัง:</span> <span style="color:#fbbf24;font-weight:700;">' + h.balanceTo + '</span>' +
-        '</div></div>';
+    } else {
+      routeHtml = '<div style="background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;margin-bottom:12px;">' +
+        '<span style="font-size:12px;color:#fbbf24;font-weight:600;">' + (first.fromLocation || first.toLocation || '-') + '</span>' +
+        '</div>';
     }
-    var metaHtml = (h.reporter || h.carrier || h.remark) ?
-      '<div style="font-size:11px;color:#64748b;margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;">' +
-      (h.reporter ? '<span>👤 ' + h.reporter + '</span>' : '') +
-      (h.carrier && h.carrier !== h.reporter ? '<span>🚛 ' + h.carrier + '</span>' : '') +
-      (h.remark ? '<span>📝 ' + h.remark + '</span>' : '') +
+      
+    var metaHtml = (first.reporter || first.carrier || first.remark) ?
+      '<div style="font-size:11px;color:#64748b;margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap;">' +
+      (first.reporter ? '<span>👤 ' + first.reporter + '</span>' : '') +
+      (first.carrier && first.carrier !== first.reporter ? '<span>🚛 ' + first.carrier + '</span>' : '') +
+      (first.remark ? '<span>📝 ' + first.remark + '</span>' : '') +
       '</div>' : '';
-    var undoHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(51,65,85,0.4);text-align:right;">' +
-      '<button onclick="showUndoModal(\'' + h.id + '\')" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-family:\'Sarabun\',sans-serif;font-weight:600;">🔙 ยกเลิกรายการนี้</button>' +
-      '</div>';
-    var routeHtml = isMove ?
-      '<div style="display:flex;align-items:center;gap:6px;background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;overflow:hidden;">' +
-      '<span style="font-size:12px;color:#60a5fa;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">' + h.fromLocation + '</span>' +
-      '<span style="color:#475569;font-size:14px;flex-shrink:0;">→</span>' +
-      '<span style="font-size:12px;color:#4ade80;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">' + h.toLocation + '</span>' +
-      '</div>' :
-      '<div style="background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;">' +
-      '<span style="font-size:12px;color:#fbbf24;font-weight:600;">' + (h.fromLocation || h.toLocation || '-') + '</span>' +
-      '</div>';
+
+    var itemsHtml = group.map(function(h) {
+      var hasBalance = h.balanceFrom !== null && h.balanceFrom !== undefined;
+      var hasBothBalance = hasBalance && h.balanceTo !== null && h.balanceTo !== undefined;
+      var balanceHtml = '';
+      if (isMove && hasBothBalance) {
+        balanceHtml = '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">' +
+          '<div style="font-size:10px;background:rgba(15,23,42,0.6);border-radius:6px;padding:2px 8px;color:#94a3b8;"><span style="color:#64748b;">ต้น:</span> <span style="color:#f87171;font-weight:700;">' + h.balanceFrom + '</span></div>' +
+          '<div style="font-size:10px;background:rgba(15,23,42,0.6);border-radius:6px;padding:2px 8px;color:#94a3b8;"><span style="color:#64748b;">ปลาย:</span> <span style="color:#4ade80;font-weight:700;">' + h.balanceTo + '</span></div>' +
+          '</div>';
+      } else if (!isMove && hasBalance) {
+        balanceHtml = '<div style="margin-top:6px;"><div style="font-size:10px;background:rgba(15,23,42,0.6);border-radius:6px;padding:2px 8px;color:#94a3b8;display:inline-block;">' +
+          '<span style="color:#64748b;">ก่อน:</span> <span style="font-weight:700;">' + h.balanceFrom + '</span>' +
+          '<span style="color:#64748b;"> → หลัง:</span> <span style="color:#fbbf24;font-weight:700;">' + h.balanceTo + '</span>' +
+          '</div></div>';
+      }
+
+      var itemUndoHtml = '<button onclick="showUndoModal(\'' + h.id + '\')" style="margin-top:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:10px;font-family:\'Sarabun\',sans-serif;font-weight:600;display:inline-block;">🔙 ยกเลิก</button>';
+
+      return '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:14px;font-weight:700;color:#e2e8f0;word-break:break-word;">' + h.itemName + '</div>' +
+        balanceHtml +
+        '</div>' +
+        '<div style="text-align:right;flex-shrink:0;">' +
+        '<div style="font-size:16px;font-weight:800;color:#e2e8f0;font-family:\'Outfit\',sans-serif;">' + h.quantity + '</div>' +
+        itemUndoHtml +
+        '</div></div></div>';
+    }).join('<div style="height:8px;"></div>');
+
     return '<div class="timeline-item" style="margin-bottom:12px;">' +
       '<div class="timeline-dot" style="background:' + dotColor + '20;color:' + dotColor + ';border:2px solid ' + dotColor + '40;">' + dotEmoji + '</div>' +
       '<div class="glass-card" style="padding:14px;flex:1;min-width:0;">' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">' +
-      '<div style="flex:1;min-width:0;">' +
-      '<span style="font-size:11px;font-weight:700;color:' + dotColor + ';text-transform:uppercase;letter-spacing:.05em;">' + h.type + '</span>' +
-      '<div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + h.itemName + '</div>' +
-      '</div>' +
-      '<div style="text-align:right;flex-shrink:0;">' +
-      '<div style="font-size:18px;font-weight:800;color:#e2e8f0;font-family:\'Outfit\',sans-serif;">' + h.quantity + '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">' +
+      '<span style="font-size:11px;font-weight:700;color:' + dotColor + ';text-transform:uppercase;letter-spacing:.05em;">' + first.type + '</span>' +
       '<div style="font-size:10px;color:#64748b;">' + dateStr + '</div>' +
-      '</div></div>' + routeHtml + balanceHtml + metaHtml + undoHtml +
+      '</div>' +
+      routeHtml + metaHtml +
+      '<div style="display:flex;flex-direction:column;">' + itemsHtml + '</div>' +
       '</div></div>';
+  }).join('');
   }).join('');
   if (loadMoreEl) loadMoreEl.style.display = state.history.length < state.historyTotal ? 'block' : 'none';
 }
