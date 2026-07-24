@@ -611,7 +611,18 @@ async function confirmMove() {
     return;
   }
   
-  var moveDate = document.getElementById('moveDate').value;
+  var moveDateInput = document.getElementById('moveDate').value;
+  var dObj = new Date();
+  if (moveDateInput) {
+    var parts = moveDateInput.split('-');
+    if (parts.length === 3) {
+      dObj.setFullYear(parseInt(parts[0], 10));
+      dObj.setMonth(parseInt(parts[1], 10) - 1);
+      dObj.setDate(parseInt(parts[2], 10));
+    }
+  }
+  var finalDateStr = dObj.toISOString();
+  
   var sender = document.getElementById('moveSender').value;
   var receiver = document.getElementById('moveReceiver').value;
   var carrier = document.getElementById('moveCarrier').value;
@@ -626,7 +637,7 @@ async function confirmMove() {
       moves: moves,
       fromLocation: state.sourceLocation, 
       toLocation: state.destLocation,
-      date: moveDate,
+      date: finalDateStr,
       sender: sender,
       receiver: receiver,
       carrier: carrier, 
