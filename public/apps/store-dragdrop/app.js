@@ -1042,7 +1042,6 @@ function renderHistoryList() {
       '<div style="display:flex;flex-direction:column;">' + itemsHtml + '</div>' +
       '</div></div>';
   }).join('');
-  }).join('');
   if (loadMoreEl) loadMoreEl.style.display = state.history.length < state.historyTotal ? 'block' : 'none';
 }
 
