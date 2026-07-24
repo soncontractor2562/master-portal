@@ -311,24 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
   refreshAll();
 });
 
-// ====== MOUSE WHEEL SCROLL FIX (GAS sandboxed-iframe bug) ======
-// เบราว์เซอร์บางตัวหา scroll container ที่ถูกต้องไม่เจอเมื่อหน้าเว็บถูกเสิร์ฟ
-// ผ่าน iframe แบบ sandbox ของ Google Apps Script ทำให้ mouse wheel ไม่เลื่อนหน้า
-// (แต่ touch และการลาก scrollbar ยังทำงานปกติ เพราะไม่ผ่าน pipeline เดียวกัน)
-// โค้ดนี้ดัก wheel event เองแล้วสั่งเลื่อน #app ด้วยมือแทน
-(function() {
-  var appEl = document.getElementById('app');
-  if (!appEl) return;
 
-  document.addEventListener('wheel', function(e) {
-    // ถ้าเมาส์อยู่เหนือ modal ที่เปิดอยู่ (modal-sheet มี overflow-y:auto ของตัวเอง
-    // และเป็น element ปกตินอก #app) ให้ปล่อยให้เบราว์เซอร์เลื่อน modal ตามปกติ
-    if (e.target.closest && e.target.closest('.modal-sheet')) return;
-
-    appEl.scrollTop += e.deltaY;
-    e.preventDefault();
-  }, { passive: false });
-})();
 
 async function refreshAll() {
   var btn = document.getElementById('refreshBtn');
