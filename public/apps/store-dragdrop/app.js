@@ -98,22 +98,26 @@ async function apiPost(pathStr, body) {
         if (err2) throw err2;
         
         histories.push({
-          date: move.date,
+          date: move.date || new Date().toISOString(),
           type: 'รับของเข้า',
           itemName: m.itemName,
           quantity: Number(m.quantityReceived),
           fromLocation: move.from_location,
           toLocation: move.to_location,
-          carrier: move.carrier,
-          reporter: move.reporter,
-          remark: move.remark,
-          balanceFrom: 0, // Not available easily
+          carrier: move.carrier || '-',
+          reporter: move.reporter || '-',
+          remark: move.remark || '',
+          balanceFrom: 0,
           balanceTo: item.quantities[move.to_location]
         });
       }
       
       if (histories.length > 0) {
-        await supabaseClient.from('store_history').insert(histories);
+        const { error: insErr } = await supabaseClient.from('store_history').insert(histories);
+        if (insErr) {
+          console.error('History insert failed:', insErr);
+          throw new Error('บันทึกประวัติล้มเหลว: ' + insErr.message);
+        }
       }
       
       await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น' }).eq('id', move.id);
@@ -1549,7 +1553,8 @@ let currentReceiveMove = null;
 function openReceiveModal(id) {
   var p = state.pending.find(function(x) { return x.id === id; });
   if (!p) return;
-  currentReceiveMove = p;
+  // Deep copy the entire object to preserve date, carrier, reporter, remark
+  currentReceiveMove = JSON.parse(JSON.stringify(p));
   
   var meta = document.getElementById('receiveMeta');
   meta.innerHTML = 'ต้นทาง: ' + p.from_location + '<br>ปลายทาง: ' + p.to_location + '<br>หมายเหตุ: ' + (p.remark || '-');
