@@ -198,14 +198,38 @@ async function apiPost(pathStr, body) {
       if (err2) throw err2;
       const qs = {};
       if (locs) locs.forEach(l => qs[l.name] = 0);
+      if (body.initLoc && body.initQty > 0) {
+        qs[body.initLoc] = body.initQty;
+      }
       const { data: maxRowItem, error: err3 } = await supabaseClient.from('store_items').select('row').order('row', { ascending: false }).limit(1);
       if (err3) throw err3;
       const nextRow = (maxRowItem && maxRowItem.length > 0 ? maxRowItem[0].row : 0) + 1;
-      const { error: err4 } = await supabaseClient.from('store_items').insert([{
+      const { data: inserted, error: err4 } = await supabaseClient.from('store_items').insert([{
         row: nextRow, category: body.category || 'ทั่วไป', name: body.name, unit: body.unit || 'ชิ้น', quantities: qs, note: body.note || ''
-      }]);
+      }]).select();
       if (err4) throw err4;
+      if (body.initLoc && body.initQty > 0) {
+        await supabaseClient.from('store_history').insert([{
+          date: new Date().toISOString(),
+          type: 'ตั้งยอดยกมา',
+          itemName: body.name,
+          quantity: body.initQty,
+          fromLocation: body.initLoc,
+          toLocation: '',
+          balanceFrom: 0,
+          balanceTo: body.initQty,
+          reporter: 'System',
+          remark: 'ตั้งยอดเริ่มต้น'
+        }]);
+      }
       return { success: true, message: 'เพิ่มรายการ ' + body.name + ' เรียบร้อย' };
+    }
+    
+    if (pathStr === '/api/inventory/change-item-category') {
+      const { itemName, newCategory } = body;
+      const { error: e } = await supabaseClient.from('store_items').update({ category: newCategory }).eq('name', itemName);
+      if (e) throw e;
+      return { success: true, message: 'เปลี่ยนหมวดหมู่เป็น ' + newCategory + ' สำเร็จ' };
     }
 
     if (pathStr === '/api/locations/add') {
@@ -647,9 +671,15 @@ function showAddItemModal(fromMove) {
   fromMove = fromMove || false;
   state.reopenMoveModal = fromMove;
   updateCategoryDatalist();
-  ['newItemName', 'newItemCategory', 'newItemUnit', 'newItemNote'].forEach(function(id) {
-    document.getElementById(id).value = '';
+  ['newItemName', 'newItemCategory', 'newItemUnit', 'newItemNote', 'newItemInitQty', 'newItemInitLoc'].forEach(function(id) {
+    if (document.getElementById(id)) document.getElementById(id).value = '';
   });
+  var locSelect = document.getElementById('newItemInitLoc');
+  if (locSelect) {
+    locSelect.innerHTML = '<option value="">-- ไม่ระบุ --</option>' + state.locations.map(function(l) {
+      return '<option value="' + esc(l.name) + '">' + l.name + '</option>';
+    }).join('');
+  }
   if (fromMove) document.getElementById('moveModal').style.display = 'none';
   document.getElementById('addItemModal').style.display = 'flex';
   setTimeout(function() { document.getElementById('newItemName').focus(); }, 100);
@@ -671,9 +701,11 @@ async function confirmAddItem() {
   var category = document.getElementById('newItemCategory').value.trim();
   var unit = document.getElementById('newItemUnit').value.trim();
   var note = document.getElementById('newItemNote').value.trim();
+  var initLoc = document.getElementById('newItemInitLoc') ? document.getElementById('newItemInitLoc').value : '';
+  var initQty = document.getElementById('newItemInitQty') ? Number(document.getElementById('newItemInitQty').value) : 0;
   if (!name) { showToast('กรุณาระบุชื่อสิ่งของ', 'error'); return; }
   try {
-    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note });
+    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty });
     showToast(res.message, 'success');
     document.getElementById('addItemModal').style.display = 'none';
     await loadInventory();
@@ -862,6 +894,7 @@ function renderInventoryRow(item) {
 function showItemDetail(itemName) {
   var item = state.items.find(function(it) { return it.name === itemName; });
   if (!item) return;
+  state.currentItem = item;
   document.getElementById('detailItemName').textContent = item.name;
   document.getElementById('detailItemCat').textContent = (item.category || '-') + ' · ' + item.unit;
   var total = Object.values(item.quantities).reduce(function(s, q) { return s + Math.max(0, q || 0); }, 0);
@@ -1230,6 +1263,22 @@ function showLocationModal() { showSettingsModal(); }
 function closeLocationModal(e) { closeSettingsModal(e); }
 
 
+
+function startChangeItemCategory() {
+  if (!state.currentItem) return;
+  var oldCat = state.currentItem.category || 'ทั่วไป';
+  var newCat = prompt('เปลี่ยนหมวดหมู่ของ "' + state.currentItem.name + '" เป็น:', oldCat);
+  if (!newCat || newCat.trim() === '' || newCat.trim() === oldCat) return;
+  apiPost('/api/inventory/change-item-category', { itemName: state.currentItem.name, newCategory: newCat.trim() })
+    .then(function(res) {
+      showToast(res.message, 'success');
+      document.getElementById('itemDetailModal').style.display = 'none';
+      return loadInventory();
+    })
+    .catch(function(err) {
+      alert('Error: ' + err.message);
+    });
+}
 
 function startRenameItem() {
   if (!state.currentItem) return;
