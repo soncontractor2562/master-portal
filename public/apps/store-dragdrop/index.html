@@ -420,7 +420,10 @@
       <button class="sidebar-btn active" id="snav-move" onclick="switchPage('move')">
         <span class="s-icon">🚛</span> ขนย้ายสินค้า
       </button>
-      <button class="sidebar-btn" id="snav-inventory" onclick="switchPage('inventory')">
+            <button class="sidebar-btn" id="snav-pending" onclick="switchPage('pending')">
+        <span class="s-icon">📥</span> รอรับ <span id="snav-pending-badge" style="display:none; background:#ef4444; color:#fff; border-radius:99px; padding:2px 6px; font-size:10px; margin-left:4px;">0</span>
+      </button>
+<button class="sidebar-btn" id="snav-inventory" onclick="switchPage('inventory')">
         <span class="s-icon">🗂️</span> ทะเบียนวัสดุ
       </button>
       <button class="sidebar-btn" id="snav-history" onclick="switchPage('history')">
@@ -508,7 +511,7 @@
     </div>
 
     <!-- PAGE: PENDING -->
-    <div class="page" id="page-pending" style="display:none;">
+    <div class="page" id="page-pending">
       <div class="page-header">
         <div class="page-header-title">รอรับของ</div>
         <div style="font-size:12px;color:var(--muted);" id="pendingCount">-</div>
@@ -537,7 +540,10 @@
     <button class="nav-btn active" id="nav-move" onclick="switchPage('move')">
       <span class="nav-icon">🚛</span><span class="nav-label">ขนย้าย</span>
     </button>
-    <button class="nav-btn" id="nav-inventory" onclick="switchPage('inventory')">
+        <button class="nav-btn" id="nav-pending" onclick="switchPage('pending')">
+      <span class="nav-icon" style="position:relative;">📥<span id="nav-pending-badge" style="display:none; position:absolute; top:-4px; right:-8px; background:#ef4444; color:#fff; border-radius:99px; padding:0 4px; font-size:9px;">0</span></span><span class="nav-label">รอรับ</span>
+    </button>
+<button class="nav-btn" id="nav-inventory" onclick="switchPage('inventory')">
       <span class="nav-icon">🗂️</span><span class="nav-label">ทะเบียน</span>
     </button>
     <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
@@ -774,7 +780,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=46"></script>
+<script src="app.js?v=48"></script>
 <script src="sort-mode.js?v=1"></script>
 </body>
 </html>

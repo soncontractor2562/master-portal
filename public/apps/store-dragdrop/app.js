@@ -1502,14 +1502,15 @@ async function loadPending() {
   state.pending = data.pending || [];
   
   // Update badge
-  var badge = document.getElementById('pendingBadge');
-  if (badge) {
-    if (state.pending.length > 0) {
-      badge.style.display = 'inline-block';
-      badge.textContent = state.pending.length;
-    } else {
-      badge.style.display = 'none';
-    }
+  var badge1 = document.getElementById('snav-pending-badge');
+  var badge2 = document.getElementById('nav-pending-badge');
+  if (badge1) {
+    badge1.style.display = state.pending.length > 0 ? 'inline-block' : 'none';
+    badge1.textContent = state.pending.length;
+  }
+  if (badge2) {
+    badge2.style.display = state.pending.length > 0 ? 'inline-block' : 'none';
+    badge2.textContent = state.pending.length;
   }
   
   var countEl = document.getElementById('pendingCount');
