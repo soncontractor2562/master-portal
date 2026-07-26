@@ -1549,13 +1549,13 @@ function renderPendingList() {
     var d = new Date(p.date);
     var dateStr = (d.getDate().toString().padStart(2, '0')) + '/' + ((d.getMonth() + 1).toString().padStart(2, '0')) + '/' + (d.getFullYear() + 543) + ' ' + (d.getHours().toString().padStart(2, '0')) + ':' + (d.getMinutes().toString().padStart(2, '0'));
     
-    return '<div class="timeline-item">' +
-      '<div class="timeline-dot" style="background:#fbbf24;"></div>' +
-      '<div class="glass-card" style="border-left:4px solid #fbbf24; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
+    return '<div class="timeline-item" style="margin-bottom:12px;">' +
+      '<div class="timeline-dot" style="background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:2px solid rgba(251, 191, 36, 0.3); font-size:16px;">📥</div>' +
+      '<div class="glass-card" style="border-left:4px solid #fbbf24; padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
         '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
         '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + p.from_location + ' ➔ ' + p.to_location + '</div>' +
         '<div style="font-size:13px;color:#cbd5e1;">' + p.items.length + ' รายการ</div>' +
-        (p.remark ? '<div style="font-size:12px;color:#fbbf24;margin-top:6px;">' + p.remark + '</div>' : '') +
+        (p.remark ? '<div style="font-size:12px;color:#fbbf24;margin-top:6px;word-break:break-all;">' + p.remark + '</div>' : '') +
       '</div>' +
     '</div>';
   }).join('');
