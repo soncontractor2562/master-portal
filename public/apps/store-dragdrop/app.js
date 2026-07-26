@@ -77,6 +77,27 @@ async function apiPost(pathStr, body) {
     
     if (pathStr === '/api/pending/receive') {
       const { id, items } = body;
+      const { data: oldMoveData } = await supabaseClient.from('store_pending_moves').select('*').eq('id', id);
+      if (oldMoveData && oldMoveData.length > 0) {
+        const oldMove = oldMoveData[0];
+        for (let i = 0; i < items.length; i++) {
+          const newItem = items[i];
+          const oldItem = oldMove.items.find(x => x.itemName === newItem.itemName) || oldMove.items[i];
+          if (oldItem) {
+            const oldSent = Number(oldItem.quantitySent || 0);
+            const newSent = Number(newItem.quantitySent || 0);
+            if (oldSent !== newSent) {
+              const diff = oldSent - newSent;
+              const { data: itemDB } = await supabaseClient.from('store_items').select('*').eq('name', newItem.itemName);
+              if (itemDB && itemDB.length > 0) {
+                const item = itemDB[0];
+                item.quantities[oldMove.from_location] = (item.quantities[oldMove.from_location] || 0) + diff;
+                await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+              }
+            }
+          }
+        }
+      }
       const { error: e } = await supabaseClient.from('store_pending_moves').update({ items }).eq('id', id);
       if (e) throw e;
       return { success: true, message: 'บันทึกยอดรับแล้ว' };
@@ -84,6 +105,29 @@ async function apiPost(pathStr, body) {
     
     if (pathStr === '/api/pending/complete') {
       const { move } = body;
+      
+      // Load old move to adjust source balance if sentQty changed
+      const { data: oldMoveData } = await supabaseClient.from('store_pending_moves').select('*').eq('id', move.id);
+      if (oldMoveData && oldMoveData.length > 0) {
+        const oldMove = oldMoveData[0];
+        for (let i = 0; i < move.items.length; i++) {
+          const newItem = move.items[i];
+          const oldItem = oldMove.items.find(x => x.itemName === newItem.itemName) || oldMove.items[i];
+          if (oldItem) {
+            const oldSent = Number(oldItem.quantitySent || 0);
+            const newSent = Number(newItem.quantitySent || 0);
+            if (oldSent !== newSent) {
+              const diff = oldSent - newSent;
+              const { data: itemDB } = await supabaseClient.from('store_items').select('*').eq('name', newItem.itemName);
+              if (itemDB && itemDB.length > 0) {
+                const item = itemDB[0];
+                item.quantities[oldMove.from_location] = (item.quantities[oldMove.from_location] || 0) + diff;
+                await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+              }
+            }
+          }
+        }
+      }
       
       const histories = [];
       for (const m of move.items) {
@@ -121,13 +165,36 @@ async function apiPost(pathStr, body) {
         }
       }
       
-      await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น' }).eq('id', move.id);
+      await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น', items: move.items }).eq('id', move.id);
       
       return { success: true, message: 'รับของเสร็จสมบูรณ์' };
     }
     
     if (pathStr === '/api/pending/force-complete') {
       const { move } = body;
+      
+      // Load old move to adjust source balance if sentQty changed
+      const { data: oldMoveData } = await supabaseClient.from('store_pending_moves').select('*').eq('id', move.id);
+      if (oldMoveData && oldMoveData.length > 0) {
+        const oldMove = oldMoveData[0];
+        for (let i = 0; i < move.items.length; i++) {
+          const newItem = move.items[i];
+          const oldItem = oldMove.items.find(x => x.itemName === newItem.itemName) || oldMove.items[i];
+          if (oldItem) {
+            const oldSent = Number(oldItem.quantitySent || 0);
+            const newSent = Number(newItem.quantitySent || 0);
+            if (oldSent !== newSent) {
+              const diff = oldSent - newSent;
+              const { data: itemDB } = await supabaseClient.from('store_items').select('*').eq('name', newItem.itemName);
+              if (itemDB && itemDB.length > 0) {
+                const item = itemDB[0];
+                item.quantities[oldMove.from_location] = (item.quantities[oldMove.from_location] || 0) + diff;
+                await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+              }
+            }
+          }
+        }
+      }
       
       // Ensure "สูญหาย" location exists
       const { data: locs } = await supabaseClient.from('store_locations').select('*').eq('name', 'สูญหาย');
@@ -187,7 +254,7 @@ async function apiPost(pathStr, body) {
         await supabaseClient.from('store_history').insert(histories);
       }
       
-      await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น' }).eq('id', move.id);
+      await supabaseClient.from('store_pending_moves').update({ status: 'เสร็จสิ้น', items: move.items }).eq('id', move.id);
       
       return { success: true, message: 'จบงานสำเร็จ (บันทึกส่วนที่หายลง สูญหาย แล้ว)' };
     }
@@ -832,6 +899,23 @@ async function confirmMove() {
   var reporter = document.getElementById('moveReporter').value;
   var remark = document.getElementById('moveRemark').value;
   
+  if (!moveDateInput) {
+    showToast('กรุณาระบุวันที่ขนของ', 'error');
+    return;
+  }
+  if (!reporter.trim()) {
+    showToast('กรุณาระบุชื่อผู้บันทึก', 'error');
+    return;
+  }
+  if (!sender.trim()) {
+    showToast('กรุณาระบุชื่อผู้ส่ง', 'error');
+    return;
+  }
+  if (!carrier.trim()) {
+    showToast('กรุณาระบุชื่อผู้ขนของ', 'error');
+    return;
+  }
+  
   if (moveDateInput) {
     var parts = moveDateInput.split('-');
     if (parts.length === 3) {
@@ -904,6 +988,8 @@ async function confirmAddItem() {
   var initLoc = document.getElementById('newItemInitLoc') ? document.getElementById('newItemInitLoc').value : '';
   var initQty = document.getElementById('newItemInitQty') ? Number(document.getElementById('newItemInitQty').value) : 0;
   if (!name) { showToast('กรุณาระบุชื่อสิ่งของ', 'error'); return; }
+  if (!category) { showToast('กรุณาระบุหมวดหมู่', 'error'); return; }
+  if (!unit) { showToast('กรุณาระบุหน่วยนับ', 'error'); return; }
   try {
     var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty });
     showToast(res.message, 'success');
@@ -1578,14 +1664,23 @@ function openReceiveModal(id) {
   var list = document.getElementById('receiveItemsList');
   var canEdit = (state.currentUser.role !== 'ผู้ดูแลสโตร์'); // Admin or User can edit
   
+  var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
+  
   list.innerHTML = p.items.map(function(item, idx) {
+    var sentQtyHtml = '';
+    if (isStoreOrAdmin) {
+      sentQtyHtml = 'ยอดส่ง: <input type="number" id="sentQty_' + idx + '" class="form-input" style="width:75px; padding:4px; text-align:center; display:inline-block;" value="' + item.quantitySent + '" min="0">';
+    } else {
+      sentQtyHtml = 'ยอดส่ง: <span style="font-weight:700; color:#38bdf8;">' + item.quantitySent + '</span>';
+    }
+    
     return '<div style="background:rgba(30,41,59,0.5); padding:10px; border-radius:8px;">' +
       '<div style="font-weight:700; color:#e2e8f0; margin-bottom:6px;">' + item.itemName + '</div>' +
       '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-        '<div style="font-size:12px; color:#cbd5e1;">ยอดส่ง: <span style="font-weight:700; color:#38bdf8;">' + item.quantitySent + '</span></div>' +
+        '<div style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:4px;">' + sentQtyHtml + '</div>' +
         '<div style="display:flex; align-items:center; gap:6px;">' +
           '<span style="font-size:12px; color:#cbd5e1;">ยอดรับ:</span>' +
-          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:60px; padding:4px; text-align:center;" value="' + (item.quantityReceived || item.quantitySent) + '" ' + (canEdit ? '' : 'disabled') + ' min="0">' +
+          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:60px; padding:4px; text-align:center;" value="' + (item.quantityReceived !== undefined ? item.quantityReceived : item.quantitySent) + '" ' + (canEdit ? '' : 'disabled') + ' min="0">' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -1638,13 +1733,17 @@ async function confirmReceive() {
     var qRcv = Number(inp.value);
     if (isNaN(qRcv)) qRcv = 0;
     
+    var sentInp = document.getElementById('sentQty_' + i);
+    var qSent = sentInp ? Number(sentInp.value) : Number(oldItem.quantitySent);
+    if (isNaN(qSent)) qSent = Number(oldItem.quantitySent);
+    
     updatedItems.push({
       itemName: oldItem.itemName,
-      quantitySent: oldItem.quantitySent,
+      quantitySent: qSent,
       quantityReceived: qRcv
     });
     
-    if (qRcv !== Number(oldItem.quantitySent)) {
+    if (qRcv !== qSent) {
       allMatch = false;
     }
   }
@@ -1704,9 +1803,13 @@ async function forceCompleteReceive() {
     var qRcv = Number(inp.value);
     if (isNaN(qRcv)) qRcv = 0;
     
+    var sentInp = document.getElementById('sentQty_' + i);
+    var qSent = sentInp ? Number(sentInp.value) : Number(oldItem.quantitySent);
+    if (isNaN(qSent)) qSent = Number(oldItem.quantitySent);
+    
     updatedItems.push({
       itemName: oldItem.itemName,
-      quantitySent: oldItem.quantitySent,
+      quantitySent: qSent,
       quantityReceived: qRcv
     });
   }
