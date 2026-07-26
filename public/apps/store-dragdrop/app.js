@@ -1672,10 +1672,33 @@ function renderPendingList() {
       cancelBtnHtml = '<button onclick="cancelPendingMove(\'' + p.id + '\', event)" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:11px; font-family:\'Sarabun\',sans-serif; line-height:1; flex-shrink:0;">❌ ยกเลิก</button>';
     }
 
+    var hasReceiver = p.items.every(function(it) {
+      return it.receiver !== undefined && it.receiver !== null && it.receiver.trim() !== '';
+    });
+    var hasMismatch = false;
+    if (hasReceiver) {
+      hasMismatch = p.items.some(function(it) {
+        return Number(it.quantitySent) !== Number(it.quantityReceived);
+      });
+    }
+
+    var dotStyle = '';
+    var cardStyle = '';
+    var warningHtml = '';
+    if (hasReceiver && hasMismatch) {
+      dotStyle = 'background:rgba(239, 68, 68, 0.15); color:#f87171; border:2px solid rgba(239, 68, 68, 0.3);';
+      cardStyle = 'border-left:4px solid #ef4444;';
+      warningHtml = '<div style="font-size:11px; color:#f87171; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px;">⚠️ ยอดรับไม่ตรงกัน! รอสโตร์ตรวจสอบ (ผู้รับ: ' + (p.items[0].receiver || '-') + ')</div>';
+    } else {
+      dotStyle = 'background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:2px solid rgba(251, 191, 36, 0.3);';
+      cardStyle = 'border-left:4px solid #fbbf24;';
+    }
+
     return '<div class="timeline-item" style="margin-bottom:12px;">' +
-      '<div class="timeline-dot" style="background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:2px solid rgba(251, 191, 36, 0.3); font-size:16px;">📥</div>' +
-      '<div class="glass-card" style="border-left:4px solid #fbbf24; padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
+      '<div class="timeline-dot" style="' + dotStyle + ' font-size:16px;">📥</div>' +
+      '<div class="glass-card" style="' + cardStyle + ' padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
         '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
+        warningHtml +
         '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + p.from_location + ' ➔ ' + p.to_location + '</div>' +
         '<div style="font-size:13px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">' +
           '<span>' + p.items.length + ' รายการ</span>' +
