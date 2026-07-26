@@ -99,7 +99,7 @@ async function apiPost(pathStr, body) {
         
         histories.push({
           date: move.receiveDate || move.date || new Date().toISOString(),
-          type: 'รับของเข้า',
+          type: 'ขนย้าย',
           itemName: m.itemName,
           quantity: Number(m.quantityReceived),
           fromLocation: move.from_location,
@@ -108,8 +108,8 @@ async function apiPost(pathStr, body) {
           receiver: move.receiver || '-',
           reporter: move.reporter || '-',
           remark: move.remark || '',
-          balanceFrom: 0,
-          balanceTo: item.quantities[move.to_location]
+          balanceFrom: item.quantities[move.from_location] || 0,
+          balanceTo: item.quantities[move.to_location] || 0
         });
       }
       
@@ -150,7 +150,7 @@ async function apiPost(pathStr, body) {
           item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + qRcv;
           histories.push({
             date: move.receiveDate || move.date || new Date().toISOString(),
-            type: 'รับของเข้า',
+            type: 'ขนย้าย',
             itemName: m.itemName,
             quantity: qRcv,
             fromLocation: move.from_location,
@@ -158,8 +158,8 @@ async function apiPost(pathStr, body) {
             receiver: move.receiver || '-',
             reporter: move.reporter,
             remark: move.remark,
-            balanceFrom: 0,
-            balanceTo: item.quantities[move.to_location]
+            balanceFrom: item.quantities[move.from_location] || 0,
+            balanceTo: item.quantities[move.to_location] || 0
           });
         }
         
@@ -175,8 +175,8 @@ async function apiPost(pathStr, body) {
             receiver: move.receiver || '-',
             reporter: move.reporter,
             remark: 'ยอดขาดจากการส่ง',
-            balanceFrom: 0,
-            balanceTo: item.quantities['สูญหาย']
+            balanceFrom: (item.quantities['สูญหาย'] || 0) - diff,
+            balanceTo: item.quantities['สูญหาย'] || 0
           });
         }
         
