@@ -698,15 +698,17 @@
   <div class="modal-sheet move-modal-sheet" style="max-width: 600px; display: flex; flex-direction: column; max-height: 95vh; padding-bottom: 20px;">
     <div class="modal-handle"></div>
     <div class="modal-title">🚛 บันทึกการขนย้าย</div>
-    <div id="modalRouteInfo" style="background:rgba(15,23,42,0.7);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#60a5fa;text-align:center;flex-shrink:0;"></div>
     
     <!-- Wrapping container for columns -->
     <div class="modal-columns-container">
       
       <!-- COLUMN 1: Move Details -->
       <div class="modal-column-left">
-        <!-- Move Details Form -->
-        <div class="move-details-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;flex-shrink:0;">
+        <!-- Move route info placed on left column top -->
+        <div id="modalRouteInfo" style="background:rgba(15,23,42,0.7);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#60a5fa;text-align:center;flex-shrink:0;"></div>
+        
+        <!-- Move Details Form (Stacked vertically for layout cleanlines) -->
+        <div class="move-details-form" style="display:flex; flex-direction:column; gap:12px; margin-bottom:12px; flex-shrink:0;">
           <div>
             <label class="form-label">วันที่ขนของ</label>
             <input type="date" id="moveDate" class="form-input" />
@@ -723,11 +725,11 @@
             <label class="form-label">ผู้ขนของ</label>
             <input type="text" id="moveCarrier" class="form-input" placeholder="ชื่อผู้ขนของ..." />
           </div>
-          <input type="hidden" id="moveReceiver" value="-" />
-          <div style="grid-column: span 2;">
+          <div>
             <label class="form-label">หมายเหตุ</label>
             <input type="text" id="moveRemark" class="form-input" placeholder="หมายเหตุเพิ่มเติม..." />
           </div>
+          <input type="hidden" id="moveReceiver" value="-" />
         </div>
       </div>
       
@@ -742,9 +744,9 @@
           <!-- items will be rendered here -->
         </div>
         
-        <div style="flex-shrink:0;">
-          <button id="confirmMoveBtn" class="btn-primary btn-success" onclick="confirmMove()">✅ ยืนยันการขนย้าย</button>
-          <button onclick="closeMoveModalDirect()" class="btn-primary btn-ghost" style="margin-top:10px;">ยกเลิก</button>
+        <div style="display:flex; gap:10px; flex-shrink:0;">
+          <button id="confirmMoveBtn" class="btn-primary btn-success" onclick="confirmMove()" style="flex:1; margin-top:0;">✅ ยืนยันการขนย้าย</button>
+          <button onclick="closeMoveModalDirect()" class="btn-primary btn-ghost" style="flex:1; margin-top:0;">ยกเลิก</button>
         </div>
       </div>
       
