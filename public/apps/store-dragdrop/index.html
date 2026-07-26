@@ -404,6 +404,24 @@
     @media (min-width: 1280px) {
       #locGridContent { grid-template-columns: repeat(5, 1fr); gap: 16px; }
     }
+    /* Common layout for mobile/small screens (vertical fallback) */
+    .modal-columns-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+    .modal-column-left, .modal-column-right {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+    }
+    .modal-column-left {
+      flex-shrink: 0;
+    }
+
     /* ===== DESKTOP RESPONSIVE LAYOUT OPTIMIZATIONS ===== */
     @media (min-width: 1024px) {
       /* Grid columns for Inventory List */
@@ -459,7 +477,7 @@
       }
       .modal-columns-container {
         display: flex;
-        flex-direction: row;
+        flex-direction: row !important;
         gap: 24px;
         flex: 1;
         min-height: 0;
@@ -478,21 +496,6 @@
       #moveItemsContainer {
         height: 350px !important;
       }
-    }
-
-    /* Common layout for mobile/small screens (vertical fallback) */
-    .modal-columns-container {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      flex: 1;
-      min-height: 0;
-    }
-    .modal-column-left, .modal-column-right {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0;
     }
   </style>
 </head>
