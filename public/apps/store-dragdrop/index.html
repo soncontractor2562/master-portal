@@ -668,7 +668,19 @@
     <div class="modal-handle"></div>
     <div class="modal-title">📥 ตรวจรับของ</div>
     <div style="font-size:13px; color:var(--muted); margin-bottom:12px;" id="receiveMeta"></div>
-    <div id="receiveItemsList" style="flex:1; overflow-y:auto; margin-bottom:16px; padding-right:4px; display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="receiveItemsList" style="flex:1; overflow-y:auto; margin-bottom:12px; padding-right:4px; display:flex; flex-direction:column; gap:8px;"></div>
+    
+    <!-- Receive Details Form -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; flex-shrink:0;">
+      <div>
+        <label class="form-label">วันที่รับของ</label>
+        <input type="date" id="receiveDate" class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">ชื่อผู้รับของ *</label>
+        <input type="text" id="receiveReceiver" class="form-input" placeholder="ชื่อผู้รับของ..." />
+      </div>
+    </div>
     
     <div style="display:flex; gap:10px;">
       <button onclick="confirmReceive()" class="btn-primary" style="flex:1;">✅ ยืนยันการรับของ</button>
@@ -705,13 +717,10 @@
             <input type="text" id="moveSender" class="form-input" placeholder="ผู้ส่ง..." />
           </div>
           <div>
-            <label class="form-label">ระบุชื่อผู้รับ</label>
-            <input type="text" id="moveReceiver" class="form-input" placeholder="ผู้รับ..." />
-          </div>
-          <div style="grid-column: span 2;">
             <label class="form-label">ผู้ขนของ</label>
             <input type="text" id="moveCarrier" class="form-input" placeholder="ชื่อผู้ขนของ..." />
           </div>
+          <input type="hidden" id="moveReceiver" value="-" />
           <div style="grid-column: span 2;">
             <label class="form-label">หมายเหตุ</label>
             <input type="text" id="moveRemark" class="form-input" placeholder="หมายเหตุเพิ่มเติม..." />

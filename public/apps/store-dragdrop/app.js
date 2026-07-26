@@ -98,13 +98,14 @@ async function apiPost(pathStr, body) {
         if (err2) throw err2;
         
         histories.push({
-          date: move.date || new Date().toISOString(),
+          date: move.receiveDate || move.date || new Date().toISOString(),
           type: 'รับของเข้า',
           itemName: m.itemName,
           quantity: Number(m.quantityReceived),
           fromLocation: move.from_location,
           toLocation: move.to_location,
           carrier: move.carrier || '-',
+          receiver: move.receiver || '-',
           reporter: move.reporter || '-',
           remark: move.remark || '',
           balanceFrom: 0,
@@ -148,12 +149,13 @@ async function apiPost(pathStr, body) {
         if (qRcv > 0) {
           item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + qRcv;
           histories.push({
-            date: move.date,
+            date: move.receiveDate || move.date || new Date().toISOString(),
             type: 'รับของเข้า',
             itemName: m.itemName,
             quantity: qRcv,
             fromLocation: move.from_location,
             toLocation: move.to_location,
+            receiver: move.receiver || '-',
             reporter: move.reporter,
             remark: move.remark,
             balanceFrom: 0,
@@ -164,12 +166,13 @@ async function apiPost(pathStr, body) {
         if (diff > 0) {
           item.quantities['สูญหาย'] = (item.quantities['สูญหาย'] || 0) + diff;
           histories.push({
-            date: new Date().toISOString(),
+            date: move.receiveDate || new Date().toISOString(),
             type: 'สูญหาย',
             itemName: m.itemName,
             quantity: diff,
             fromLocation: move.from_location,
             toLocation: 'สูญหาย',
+            receiver: move.receiver || '-',
             reporter: move.reporter,
             remark: 'ยอดขาดจากการส่ง',
             balanceFrom: 0,
@@ -1596,6 +1599,20 @@ function openReceiveModal(id) {
     forceBtn.style.display = 'none';
   }
   
+  // Initialize receive details
+  var dateInput = document.getElementById('receiveDate');
+  if (dateInput) {
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = yyyy + '-' + mm + '-' + dd;
+  }
+  var receiverInput = document.getElementById('receiveReceiver');
+  if (receiverInput) {
+    receiverInput.value = state.currentUser.name || state.currentUser.username || '';
+  }
+
   document.getElementById('receiveModal').style.display = 'flex';
 }
 
@@ -1633,6 +1650,19 @@ async function confirmReceive() {
   }
   
   currentReceiveMove.items = updatedItems;
+  
+  var rcvDate = document.getElementById('receiveDate').value;
+  var rcvReceiver = document.getElementById('receiveReceiver').value;
+  if (!rcvReceiver.trim()) {
+    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
+    return;
+  }
+  if (!rcvDate) {
+    showToast('กรุณาระบุวันที่รับของ', 'error');
+    return;
+  }
+  currentReceiveMove.receiveDate = rcvDate;
+  currentReceiveMove.receiver = rcvReceiver;
   
   if (allMatch) {
     if (confirm('ยอดรับตรงกับยอดส่งทั้งหมด ยืนยันการจบงาน?')) {
@@ -1681,6 +1711,19 @@ async function forceCompleteReceive() {
     });
   }
   currentReceiveMove.items = updatedItems;
+  
+  var rcvDate = document.getElementById('receiveDate').value;
+  var rcvReceiver = document.getElementById('receiveReceiver').value;
+  if (!rcvReceiver.trim()) {
+    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
+    return;
+  }
+  if (!rcvDate) {
+    showToast('กรุณาระบุวันที่รับของ', 'error');
+    return;
+  }
+  currentReceiveMove.receiveDate = rcvDate;
+  currentReceiveMove.receiver = rcvReceiver;
   
   try {
     var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
