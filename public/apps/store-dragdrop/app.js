@@ -1013,7 +1013,7 @@ function renderInventoryList() {
       '</div>' +
       '<span class="group-chevron ' + (collapsed ? 'collapsed' : '') + '">▼</span>' +
       '</div>' +
-      '<div class="glass-card" id="group-' + encId(cat) + '" style="' + (collapsed ? 'display:none;' : '') + '">' +
+      '<div class="glass-card inv-items-container" id="group-' + encId(cat) + '" style="' + (collapsed ? 'display:none;' : '') + '">' +
       catItems.map(function(it) { return renderInventoryRow(it); }).join('') +
       '</div></div>';
   }).join('');

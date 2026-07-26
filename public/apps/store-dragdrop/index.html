@@ -404,6 +404,54 @@
     @media (min-width: 1280px) {
       #locGridContent { grid-template-columns: repeat(5, 1fr); gap: 16px; }
     }
+    /* ===== DESKTOP RESPONSIVE LAYOUT OPTIMIZATIONS ===== */
+    @media (min-width: 1024px) {
+      /* Grid columns for Inventory List */
+      .inv-items-container {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+        background: transparent !important;
+        border: none !important;
+        gap: 14px !important;
+        padding: 4px 0 !important;
+      }
+      .inv-items-container .inv-row {
+        background: rgba(30,41,59,0.7) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        padding: 14px 16px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        transition: transform 0.2s, border-color 0.2s !important;
+      }
+      .inv-items-container .inv-row:hover {
+        transform: translateY(-2px);
+        border-color: rgba(59,130,246,0.4) !important;
+        background: rgba(30,41,59,0.9) !important;
+      }
+      .inv-items-container .inv-row:last-child {
+        border-bottom: 1px solid var(--border) !important;
+      }
+
+      /* Max width & centering for History page */
+      #page-history .page-body,
+      #page-pending .page-body {
+        max-width: 900px !important;
+        margin: 0 auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      #page-history .page-header,
+      #page-pending .page-header {
+        max-width: 900px !important;
+        margin: 0 auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      #historyLoadMore {
+        max-width: 900px !important;
+        margin: 16px auto 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
