@@ -284,8 +284,7 @@ async function apiPost(pathStr, body) {
         
         pendingItems.push({
           itemName: m.itemName,
-          quantitySent: qty,
-          quantityReceived: qty // default equal
+          quantitySent: qty
         });
       }
       
@@ -1674,13 +1673,16 @@ function openReceiveModal(id) {
       sentQtyHtml = 'ยอดส่ง: <span style="font-weight:700; color:#38bdf8;">' + item.quantitySent + '</span>';
     }
     
+    var hasBeenReported = item.receiver !== undefined && item.receiver !== null && item.receiver.trim() !== '';
+    var rcvValue = hasBeenReported ? item.quantityReceived : '';
+
     return '<div style="background:rgba(30,41,59,0.5); padding:10px; border-radius:8px;">' +
       '<div style="font-weight:700; color:#e2e8f0; margin-bottom:6px;">' + item.itemName + '</div>' +
       '<div style="display:flex; justify-content:space-between; align-items:center;">' +
         '<div style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:4px;">' + sentQtyHtml + '</div>' +
         '<div style="display:flex; align-items:center; gap:6px;">' +
           '<span style="font-size:12px; color:#cbd5e1;">ยอดรับ:</span>' +
-          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:60px; padding:4px; text-align:center;" value="' + (item.quantityReceived !== undefined ? item.quantityReceived : item.quantitySent) + '" ' + (canEdit ? '' : 'disabled') + ' min="0">' +
+          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:60px; padding:4px; text-align:center;" value="' + rcvValue + '" ' + (canEdit ? '' : 'disabled') + ' min="0" placeholder="ระบุ...">' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -1751,8 +1753,18 @@ async function confirmReceive() {
   for (var i = 0; i < currentReceiveMove.items.length; i++) {
     var oldItem = currentReceiveMove.items[i];
     var inp = document.getElementById('rcvQty_' + i);
-    var qRcv = Number(inp.value);
-    if (isNaN(qRcv)) qRcv = 0;
+    
+    var rcvVal = inp.value.trim();
+    if (rcvVal === '') {
+      showToast('กรุณาระบุยอดรับของให้ครบทุกรายการ', 'error');
+      return;
+    }
+    
+    var qRcv = Number(rcvVal);
+    if (isNaN(qRcv) || qRcv < 0) {
+      showToast('กรุณาระบุยอดรับของให้ถูกต้อง', 'error');
+      return;
+    }
     
     var sentInp = document.getElementById('sentQty_' + i);
     var qSent = sentInp ? Number(sentInp.value) : Number(oldItem.quantitySent);
