@@ -75,6 +75,36 @@ async function apiPost(pathStr, body) {
     if (!supabaseClient) throw new Error("Supabase is not initialized.");
     // (Omitted other post commands for brevity in this fallback testing, wait no, I MUST include them all!)
     
+    if (pathStr === '/api/pending/cancel') {
+      const { id } = body;
+      const { data: moves, error: err1 } = await supabaseClient.from('store_pending_moves').select('*').eq('id', id);
+      if (err1) throw err1;
+      if (!moves || moves.length === 0) throw new Error('ไม่พบรายการรอรับนี้');
+      const move = moves[0];
+      
+      if (move.status !== 'รอรับ') {
+        throw new Error('รายการนี้ไม่อยู่ในสถานะรอรับแล้ว');
+      }
+      
+      for (const m of move.items) {
+        const { data: itemsDB, error: err2 } = await supabaseClient.from('store_items').select('*').eq('name', m.itemName);
+        if (err2) throw err2;
+        if (!itemsDB || itemsDB.length === 0) continue;
+        const item = itemsDB[0];
+        
+        const qSent = Number(m.quantitySent || 0);
+        item.quantities[move.from_location] = (item.quantities[move.from_location] || 0) + qSent;
+        
+        const { error: err3 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+        if (err3) throw err3;
+      }
+      
+      const { error: err4 } = await supabaseClient.from('store_pending_moves').delete().eq('id', id);
+      if (err4) throw err4;
+      
+      return { success: true, message: 'ยกเลิกรายการขนย้ายสำเร็จ (คืนยอดกลับต้นทาง)' };
+    }
+
     if (pathStr === '/api/pending/receive') {
       const { id, items } = body;
       const { data: oldMoveData } = await supabaseClient.from('store_pending_moves').select('*').eq('id', id);
@@ -1637,12 +1667,20 @@ function renderPendingList() {
     var d = new Date(p.date);
     var dateStr = (d.getDate().toString().padStart(2, '0')) + '/' + ((d.getMonth() + 1).toString().padStart(2, '0')) + '/' + (d.getFullYear() + 543) + ' ' + (d.getHours().toString().padStart(2, '0')) + ':' + (d.getMinutes().toString().padStart(2, '0'));
     
+    var cancelBtnHtml = '';
+    if (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') {
+      cancelBtnHtml = '<button onclick="cancelPendingMove(\'' + p.id + '\', event)" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:11px; font-family:\'Sarabun\',sans-serif; line-height:1; flex-shrink:0;">❌ ยกเลิก</button>';
+    }
+
     return '<div class="timeline-item" style="margin-bottom:12px;">' +
       '<div class="timeline-dot" style="background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:2px solid rgba(251, 191, 36, 0.3); font-size:16px;">📥</div>' +
       '<div class="glass-card" style="border-left:4px solid #fbbf24; padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
         '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
         '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + p.from_location + ' ➔ ' + p.to_location + '</div>' +
-        '<div style="font-size:13px;color:#cbd5e1;">' + p.items.length + ' รายการ</div>' +
+        '<div style="font-size:13px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">' +
+          '<span>' + p.items.length + ' รายการ</span>' +
+          cancelBtnHtml +
+        '</div>' +
         (p.remark ? '<div style="font-size:12px;color:#fbbf24;margin-top:6px;word-break:break-all;">' + p.remark + '</div>' : '') +
       '</div>' +
     '</div>';
@@ -1731,6 +1769,21 @@ function closeReceiveModal(e) {
   if (e && e.target !== document.getElementById('receiveModal')) return;
   document.getElementById('receiveModal').style.display = 'none';
   currentReceiveMove = null;
+}
+
+async function cancelPendingMove(id, event) {
+  if (event) event.stopPropagation(); // Prevent opening receive modal
+  
+  if (!confirm('ยืนยันยกเลิกรายการรอรับนี้? ยอดวัสดุทั้งหมดจะถูกโอนกลับเข้าต้นทาง')) return;
+  
+  try {
+    var res = await apiPost('/api/pending/cancel', { id: id });
+    showToast(res.message, 'success');
+    loadPending();
+    loadInventory();
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 async function confirmReceive() {
