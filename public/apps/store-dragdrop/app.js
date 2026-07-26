@@ -1686,26 +1686,40 @@ function openReceiveModal(id) {
     '</div>';
   }).join('');
   
-  // Force complete button for Admin / Store
+  // Force complete button for Admin / Store (ONLY after recipient reported count)
   var forceBtn = document.getElementById('forceCompleteBtn');
-  if (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') {
+  var hasReceiver = p.items.every(function(it) {
+    return it.receiver !== undefined && it.receiver !== null && it.receiver.trim() !== '';
+  });
+  if ((state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') && hasReceiver) {
     forceBtn.style.display = 'block';
   } else {
     forceBtn.style.display = 'none';
   }
   
   // Initialize receive details
+  var savedReceiver = p.items[0] && p.items[0].receiver;
+  var savedDate = p.items[0] && p.items[0].receiveDate;
+  
   var dateInput = document.getElementById('receiveDate');
   if (dateInput) {
-    var today = new Date();
-    var yyyy = today.getFullYear();
-    var mm = String(today.getMonth() + 1).padStart(2, '0');
-    var dd = String(today.getDate()).padStart(2, '0');
-    dateInput.value = yyyy + '-' + mm + '-' + dd;
+    if (savedDate) {
+      dateInput.value = savedDate;
+    } else {
+      var today = new Date();
+      var yyyy = today.getFullYear();
+      var mm = String(today.getMonth() + 1).padStart(2, '0');
+      var dd = String(today.getDate()).padStart(2, '0');
+      dateInput.value = yyyy + '-' + mm + '-' + dd;
+    }
   }
   var receiverInput = document.getElementById('receiveReceiver');
   if (receiverInput) {
-    receiverInput.value = state.currentUser.name || state.currentUser.username || '';
+    if (savedReceiver) {
+      receiverInput.value = savedReceiver;
+    } else {
+      receiverInput.value = state.currentUser.name || state.currentUser.username || '';
+    }
   }
 
   document.getElementById('receiveModal').style.display = 'flex';
@@ -1719,11 +1733,18 @@ function closeReceiveModal(e) {
 
 async function confirmReceive() {
   if (!currentReceiveMove) return;
-  if (state.currentUser.role === 'ผู้ดูแลสโตร์') {
-    showToast('สโตร์ไม่สามารถกดรับของได้', 'error');
+  
+  var rcvDate = document.getElementById('receiveDate').value;
+  var rcvReceiver = document.getElementById('receiveReceiver').value;
+  if (!rcvReceiver.trim()) {
+    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
     return;
   }
-  
+  if (!rcvDate) {
+    showToast('กรุณาระบุวันที่รับของ', 'error');
+    return;
+  }
+
   // Read inputs
   var updatedItems = [];
   var allMatch = true;
@@ -1740,7 +1761,9 @@ async function confirmReceive() {
     updatedItems.push({
       itemName: oldItem.itemName,
       quantitySent: qSent,
-      quantityReceived: qRcv
+      quantityReceived: qRcv,
+      receiver: rcvReceiver,
+      receiveDate: rcvDate
     });
     
     if (qRcv !== qSent) {
@@ -1749,17 +1772,6 @@ async function confirmReceive() {
   }
   
   currentReceiveMove.items = updatedItems;
-  
-  var rcvDate = document.getElementById('receiveDate').value;
-  var rcvReceiver = document.getElementById('receiveReceiver').value;
-  if (!rcvReceiver.trim()) {
-    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
-    return;
-  }
-  if (!rcvDate) {
-    showToast('กรุณาระบุวันที่รับของ', 'error');
-    return;
-  }
   currentReceiveMove.receiveDate = rcvDate;
   currentReceiveMove.receiver = rcvReceiver;
   
@@ -1794,8 +1806,29 @@ async function forceCompleteReceive() {
     return;
   }
   if (!currentReceiveMove) return;
+
+  // Enforce validation that recipient must have reported first
+  var hasReceiver = currentReceiveMove.items.every(function(it) {
+    return it.receiver !== undefined && it.receiver !== null && it.receiver.trim() !== '';
+  });
+  if (!hasReceiver) {
+    showToast('ไม่สามารถบังคับจบงานได้ เนื่องจากผู้รับของยังไม่ได้แจ้งยอดรับ', 'error');
+    return;
+  }
+
   if (!confirm('ยืนยันบังคับจบงาน? ยอดที่ขาดจะถูกบันทึกไปที่ "สูญหาย"')) return;
   
+  var rcvDate = document.getElementById('receiveDate').value;
+  var rcvReceiver = document.getElementById('receiveReceiver').value;
+  if (!rcvReceiver.trim()) {
+    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
+    return;
+  }
+  if (!rcvDate) {
+    showToast('กรุณาระบุวันที่รับของ', 'error');
+    return;
+  }
+
   var updatedItems = [];
   for (var i = 0; i < currentReceiveMove.items.length; i++) {
     var oldItem = currentReceiveMove.items[i];
@@ -1810,21 +1843,12 @@ async function forceCompleteReceive() {
     updatedItems.push({
       itemName: oldItem.itemName,
       quantitySent: qSent,
-      quantityReceived: qRcv
+      quantityReceived: qRcv,
+      receiver: rcvReceiver,
+      receiveDate: rcvDate
     });
   }
   currentReceiveMove.items = updatedItems;
-  
-  var rcvDate = document.getElementById('receiveDate').value;
-  var rcvReceiver = document.getElementById('receiveReceiver').value;
-  if (!rcvReceiver.trim()) {
-    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
-    return;
-  }
-  if (!rcvDate) {
-    showToast('กรุณาระบุวันที่รับของ', 'error');
-    return;
-  }
   currentReceiveMove.receiveDate = rcvDate;
   currentReceiveMove.receiver = rcvReceiver;
   
