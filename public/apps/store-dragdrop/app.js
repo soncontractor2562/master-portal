@@ -1753,7 +1753,7 @@ function openReceiveModal(id) {
         '<div style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:4px;">' + sentQtyHtml + '</div>' +
         '<div style="display:flex; align-items:center; gap:6px;">' +
           '<span style="font-size:12px; color:#cbd5e1;">ยอดรับ:</span>' +
-          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:60px; padding:4px; text-align:center;" value="' + rcvValue + '" ' + (canEdit ? '' : 'disabled') + ' min="0" placeholder="ระบุ...">' +
+          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:75px; padding:6px; text-align:center; font-size:16px !important;" value="' + rcvValue + '" ' + (canEdit ? '' : 'disabled') + ' min="0" placeholder="ระบุ...">' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -2095,6 +2095,16 @@ document.addEventListener('focusout', function(e) {
 
 /* ===== FIX MOBILE IOS KEYBOARD FOCUSOUT SCROLL RESET ===== */
 document.addEventListener('focusout', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    setTimeout(function() {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+    }, 50);
+  }
+});
+
+/* ===== FIX MOBILE MODAL INPUT FOCUS SCROLL RESET ===== */
+document.addEventListener('focusin', function(e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
     setTimeout(function() {
       window.scrollTo(0, 0);
