@@ -41,33 +41,49 @@ function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const hasFetchedRef = useRef(false);
 
-  // Fetch initial data from Supabase
+  // Fetch initial data from Supabase with retry
   useEffect(() => {
-    const fetchBoard = async () => {
+    let isMounted = true;
+    
+    const fetchBoard = async (retries = 3) => {
       try {
-        const { data: boardData, error } = await supabase
+        const { data: boardRows, error } = await supabase
           .from('boards')
           .select('state')
-          .eq('id', 'main')
-          .single();
+          .eq('id', 'main');
         
-        // PGRST116 is "No rows found"
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Error fetching board:', error);
+          if (retries > 0 && isMounted) {
+            setTimeout(() => fetchBoard(retries - 1), 1000);
+            return;
+          }
         }
         
-        if (boardData && boardData.state && Object.keys(boardData.state).length > 0) {
-          setData(sanitizeBoardData(boardData.state));
+        if (boardRows && boardRows.length > 0 && boardRows[0].state) {
+          if (isMounted) {
+            setData(sanitizeBoardData(boardRows[0].state));
+          }
+        } else if (retries > 0 && isMounted) {
+          setTimeout(() => fetchBoard(retries - 1), 1000);
+          return;
         }
       } catch (err) {
         console.error('Unexpected error fetching board:', err);
+        if (retries > 0 && isMounted) {
+          setTimeout(() => fetchBoard(retries - 1), 1000);
+          return;
+        }
       } finally {
-        hasFetchedRef.current = true;
-        setIsLoaded(true);
+        if (isMounted) {
+          hasFetchedRef.current = true;
+          setIsLoaded(true);
+        }
       }
     };
     
     fetchBoard();
+    return () => { isMounted = false; };
   }, []);
 
   // Save data to Supabase whenever it changes (after initial load and fetch)
