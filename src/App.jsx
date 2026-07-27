@@ -14,6 +14,31 @@ export default function App() {
       if (e.key === 'Escape') setSidebarOpen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
+  useEffect(() => {
+    const resetScroll = () => {
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+      }, 50);
+    };
+
+    window.addEventListener('focusout', resetScroll);
+    window.addEventListener('blur', resetScroll);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', resetScroll);
+      window.visualViewport.addEventListener('scroll', resetScroll);
+    }
+
+    return () => {
+      window.removeEventListener('focusout', resetScroll);
+      window.removeEventListener('blur', resetScroll);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', resetScroll);
+        window.visualViewport.removeEventListener('scroll', resetScroll);
+      }
+    };
+  }, []);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 

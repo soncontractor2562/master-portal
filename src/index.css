@@ -198,3 +198,10 @@ body {
 .animate-pulse-glow {
   animation: pulseGlow 4s infinite ease-in-out;
 }
+
+/* Fix iOS Safari mobile input auto-zoom and page push-up for all modules */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}

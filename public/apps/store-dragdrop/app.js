@@ -1816,7 +1816,7 @@ function closeReceiveModal(e) {
   document.body.classList.remove('modal-open');
   document.getElementById('receiveModal').style.display = 'none';
   currentReceiveMove = null;
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
 }
 
 async function cancelPendingMove(id, event) {
@@ -2003,7 +2003,7 @@ async function forceCompleteReceive() {
 document.addEventListener('focusout', function(e) {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
     setTimeout(function() {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
     }, 100);
   }
 });
@@ -2079,7 +2079,7 @@ document.addEventListener('focusout', function(e) {
           overlay.style.display = 'none';
           document.body.classList.remove('modal-open');
           if (typeof currentReceiveMove !== 'undefined') currentReceiveMove = null;
-          window.scrollTo(0, 0);
+          window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
         }, 180);
       } else {
         // Snap back up
@@ -2097,7 +2097,7 @@ document.addEventListener('focusout', function(e) {
 document.addEventListener('focusout', function(e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
     setTimeout(function() {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
       document.body.scrollTop = 0;
     }, 50);
   }
@@ -2107,7 +2107,7 @@ document.addEventListener('focusout', function(e) {
 document.addEventListener('focusin', function(e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
     setTimeout(function() {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
       document.body.scrollTop = 0;
     }, 50);
   }
@@ -2117,13 +2117,13 @@ document.addEventListener('focusin', function(e) {
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', function() {
     if (document.body.classList.contains('modal-open')) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
       document.body.scrollTop = 0;
     }
   });
   window.visualViewport.addEventListener('scroll', function() {
     if (document.body.classList.contains('modal-open')) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
       document.body.scrollTop = 0;
     }
   });
