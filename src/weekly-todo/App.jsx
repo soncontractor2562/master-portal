@@ -38,6 +38,7 @@ const sanitizeBoardData = (rawState) => {
 
 function App() {
   const [data, setData] = useState(() => sanitizeBoardData(initialData));
+  const [fetchError, setFetchError] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const hasFetchedRef = useRef(false);
 
@@ -58,15 +59,14 @@ function App() {
             setTimeout(() => fetchBoard(retries - 1), 1000);
             return;
           }
-        }
-        
-        if (boardRows && boardRows.length > 0 && boardRows[0].state) {
+          if (isMounted) setFetchError(error.message || 'Unknown fetch error');
+        } else if (boardRows && boardRows.length > 0 && boardRows[0].state) {
           if (isMounted) {
             setData(sanitizeBoardData(boardRows[0].state));
+            setFetchError(null);
           }
-        } else if (retries > 0 && isMounted) {
-          setTimeout(() => fetchBoard(retries - 1), 1000);
-          return;
+        } else {
+           if (isMounted) setFetchError('No data found in Supabase');
         }
       } catch (err) {
         console.error('Unexpected error fetching board:', err);
@@ -74,6 +74,7 @@ function App() {
           setTimeout(() => fetchBoard(retries - 1), 1000);
           return;
         }
+        if (isMounted) setFetchError(err.message || 'Unexpected fetch error');
       } finally {
         if (isMounted) {
           hasFetchedRef.current = true;
@@ -368,6 +369,11 @@ function App() {
 
   return (
     <div className="app-container">
+      {fetchError && (
+        <div style={{ backgroundColor: '#ef4444', color: 'white', padding: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
+          Database Connection Error: {fetchError}. Falling back to sample data.
+        </div>
+      )}
       <header className="app-header">
         <div className="header-top">
           <div className="title-and-add">
