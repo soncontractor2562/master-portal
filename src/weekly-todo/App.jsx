@@ -17,7 +17,17 @@ const getProjectColor = (projectName) => {
 
 import { supabase } from './supabaseClient';
 
-const sanitizeBoardData = (rawState) => {
+const sanitizeBoardData = (rawStateInput) => {
+  let rawState = rawStateInput;
+  if (typeof rawStateInput === 'string') {
+    try {
+      rawState = JSON.parse(rawStateInput);
+    } catch (e) {
+      console.error('Failed to parse state string:', e);
+      return initialData;
+    }
+  }
+
   if (!rawState || typeof rawState !== 'object') return initialData;
   
   const tasks = (rawState.tasks && typeof rawState.tasks === 'object') ? rawState.tasks : initialData.tasks;
