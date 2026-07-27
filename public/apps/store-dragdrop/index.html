@@ -227,7 +227,24 @@
       overflow-y: auto; animation: slideUp .3s ease;
     }
     @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+    .modal-handle {
+      width: 44px;
+      height: 5px;
+      background: rgba(148, 163, 184, 0.6);
+      border-radius: 99px;
+      margin: 0 auto 16px;
+      cursor: grab;
+      position: relative;
+      touch-action: none;
+    }
+    .modal-handle::after {
+      content: '';
+      position: absolute;
+      top: -14px;
+      bottom: -14px;
+      left: -24px;
+      right: -24px;
+    }
     .modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
     .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; display: block; }
     .form-input {
@@ -931,7 +948,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=52"></script>
+<script src="app.js?v=53"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>

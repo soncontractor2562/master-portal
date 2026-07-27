@@ -2007,3 +2007,88 @@ document.addEventListener('focusout', function(e) {
     }, 100);
   }
 });
+
+/* ===== SWIPE DOWN TO CLOSE MODAL SHEET ===== */
+(function initSwipeToClose() {
+  var startY = 0;
+  var currentDeltaY = 0;
+  var isDragging = false;
+  var activeSheet = null;
+  var activeOverlay = null;
+
+  document.addEventListener('touchstart', function(e) {
+    var handle = e.target.closest('.modal-handle');
+    var sheet = e.target.closest('.modal-sheet');
+    var overlay = e.target.closest('.modal-overlay');
+
+    if (!sheet || !overlay) return;
+
+    // Allow swipe down if handle touched OR if sheet is scrolled at top
+    if (handle || sheet.scrollTop <= 0) {
+      startY = e.touches[0].clientY;
+      currentDeltaY = 0;
+      activeSheet = sheet;
+      activeOverlay = overlay;
+      isDragging = false;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!activeSheet || !activeOverlay) return;
+
+    var currentY = e.touches[0].clientY;
+    var deltaY = currentY - startY;
+
+    // Only drag down if moving downwards and at top of scroll
+    if (deltaY > 0 && activeSheet.scrollTop <= 0) {
+      if (!isDragging && deltaY > 4) {
+        isDragging = true;
+      }
+      if (isDragging) {
+        currentDeltaY = deltaY;
+        activeSheet.style.transition = 'none';
+        activeSheet.style.transform = 'translateY(' + deltaY + 'px)';
+        if (e.cancelable) e.preventDefault();
+      }
+    } else {
+      if (isDragging) {
+        activeSheet.style.transform = '';
+        isDragging = false;
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(e) {
+    if (!activeSheet || !activeOverlay) return;
+
+    var sheet = activeSheet;
+    var overlay = activeOverlay;
+    var deltaY = currentDeltaY;
+
+    activeSheet = null;
+    activeOverlay = null;
+
+    if (isDragging) {
+      sheet.style.transition = 'transform 0.2s ease-out';
+      if (deltaY > 80) {
+        // Swipe down threshold reached -> close modal
+        sheet.style.transform = 'translateY(100%)';
+        setTimeout(function() {
+          sheet.style.transform = '';
+          sheet.style.transition = '';
+          overlay.style.display = 'none';
+          document.body.classList.remove('modal-open');
+          if (typeof currentReceiveMove !== 'undefined') currentReceiveMove = null;
+          window.scrollTo(0, 0);
+        }, 180);
+      } else {
+        // Snap back up
+        sheet.style.transform = 'translateY(0)';
+        setTimeout(function() {
+          sheet.style.transform = '';
+          sheet.style.transition = '';
+        }, 220);
+      }
+    }
+  });
+})();
