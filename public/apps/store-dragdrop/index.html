@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Store Manager V1</title>
   <meta name="description" content="ระบบจัดการสโตร์ ไซต์งาน และวัสดุอุปกรณ์" />
@@ -542,6 +542,16 @@
       height: 100%;
       overflow: hidden;
     }
+  
+    /* ===== FIX MOBILE IOS SAFARI AUTO-ZOOM & PUSHUP BUG ===== */
+    @media screen and (max-width: 768px) {
+      input, select, textarea, .form-input {
+        font-size: 16px !important;
+      }
+    }
+    body.modal-open {
+      touch-action: manipulation;
+    }
   </style>
 </head>
 <body>
@@ -948,7 +958,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=53"></script>
+<script src="app.js?v=54"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>

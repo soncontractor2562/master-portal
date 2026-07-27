@@ -2092,3 +2092,13 @@ document.addEventListener('focusout', function(e) {
     }
   });
 })();
+
+/* ===== FIX MOBILE IOS KEYBOARD FOCUSOUT SCROLL RESET ===== */
+document.addEventListener('focusout', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    setTimeout(function() {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+    }, 50);
+  }
+});
