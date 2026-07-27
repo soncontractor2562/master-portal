@@ -549,21 +549,24 @@
       border-radius: 12px !important;
       display: block !important;
     }
-    body.modal-open {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-  
     /* ===== FIX MOBILE IOS SAFARI AUTO-ZOOM & PUSHUP BUG ===== */
     @media screen and (max-width: 768px) {
       input, select, textarea, .form-input {
         font-size: 16px !important;
       }
     }
+    html.modal-open,
     body.modal-open {
-      touch-action: manipulation;
+      overflow: hidden !important;
+      touch-action: pan-x pan-y;
+    }
+    /* Hide floating navbar & menu button when any modal is open to prevent overlapping */
+    body.modal-open .navbar,
+    body.modal-open .mobile-menu-btn,
+    body.modal-open #mobileMenuBtn {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity 0.2s ease;
     }
   </style>
 </head>
@@ -971,7 +974,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=56"></script>
+<script src="app.js?v=57"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>

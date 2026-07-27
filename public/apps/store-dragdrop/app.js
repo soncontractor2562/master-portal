@@ -2112,3 +2112,19 @@ document.addEventListener('focusin', function(e) {
     }, 50);
   }
 });
+
+/* ===== VISUAL VIEWPORT SCROLL RESET FOR MOBILE MODALS ===== */
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    if (document.body.classList.contains('modal-open')) {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+    }
+  });
+  window.visualViewport.addEventListener('scroll', function() {
+    if (document.body.classList.contains('modal-open')) {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+    }
+  });
+}
