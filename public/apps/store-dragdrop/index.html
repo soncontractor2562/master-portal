@@ -225,6 +225,7 @@
       border: 1px solid var(--border); border-bottom: none;
       padding: 20px 20px 44px; max-height: 92vh;
       overflow-y: auto; animation: slideUp .3s ease;
+      will-change: transform;
     }
     @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
     .modal-handle {
@@ -569,18 +570,6 @@
       transition: opacity 0.2s ease;
     }
   
-    /* ===== PIN MODAL SHEET HEADER & PREVENT SHEET INTERNAL SCROLL ===== */
-    .modal-sheet {
-      overflow: hidden !important;
-      display: flex !important;
-      flex-direction: column !important;
-    }
-    .modal-title, .modal-handle, #receiveMeta {
-      flex-shrink: 0 !important;
-    }
-    .receive-details-grid, .modal-actions {
-      flex-shrink: 0 !important;
-    }
   </style>
 </head>
 <body>
@@ -987,7 +976,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=61"></script>
+<script src="app.js?v=62"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>

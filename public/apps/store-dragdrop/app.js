@@ -2094,59 +2094,45 @@ document.addEventListener('focusout', function(e) {
 })();
 
 
-/* ===== SMOOTH SCROLL FOR MODAL INPUTS & CLEAN FOCUSOUT RESET ===== */
-document.addEventListener('focusin', function(e) {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-    var sheet = e.target.closest('.modal-sheet');
-    if (sheet) {
-      setTimeout(function() {
-        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 250);
-    }
-  }
-});
 
 
+/* ===== KEYBOARD VIEWPORT FIX (VisualViewport API) ===== */
+// The CORRECT approach: when keyboard opens inside a modal, use VisualViewport
+// to MOVE the modal sheet UP so input is visible — without scrolling the parent window
+(function initKeyboardViewportFix() {
+  if (!window.visualViewport) return;
 
-/* ===== SMOOTH RESTORE SCROLL WHEN KEYBOARD CLOSES ===== */
-(function initKeyboardCloseRestore() {
-  let initialH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  var activeSheet = null;
+  var originalBottom = 0;
 
-  function doRestore() {
-    setTimeout(function() {
-      var active = document.activeElement;
-      if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT')) {
-        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-        document.body.scrollTop = 0;
-        if (window.parent && window.parent !== window) {
-          try { window.parent.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); } catch(e){}
+  function adjustForKeyboard() {
+    var vv = window.visualViewport;
+    var windowH = window.innerHeight;
+    var vvBottom = windowH - (vv.offsetTop + vv.height);
+    var keyboardH = Math.max(0, vvBottom);
+
+    // Find any open modal overlay
+    var overlays = document.querySelectorAll('.modal-overlay');
+    overlays.forEach(function(overlay) {
+      if (overlay.style.display !== 'none') {
+        var sheet = overlay.querySelector('.modal-sheet');
+        if (sheet) {
+          if (keyboardH > 50) {
+            // Keyboard is open — lift sheet above keyboard
+            sheet.style.transform = 'translateY(-' + keyboardH + 'px)';
+            sheet.style.transition = 'transform 0.2s ease-out';
+            sheet.style.maxHeight = (vv.height - 20) + 'px';
+          } else {
+            // Keyboard closed — restore sheet to original position
+            sheet.style.transform = 'translateY(0)';
+            sheet.style.transition = 'transform 0.25s ease-out';
+            sheet.style.maxHeight = '';
+          }
         }
-      }
-    }, 150);
-  }
-
-  document.addEventListener('focusout', doRestore);
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', function() {
-      if (window.visualViewport.height >= initialH - 60) {
-        doRestore();
       }
     });
   }
-})();
 
-/* ===== RESET MODAL SHEET SCROLLTOP ON FOCUSOUT ===== */
-document.addEventListener('focusout', function(e) {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-    var sheet = e.target.closest('.modal-sheet');
-    if (sheet) {
-      setTimeout(function() {
-        var active = document.activeElement;
-        if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT')) {
-          sheet.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 100);
-    }
-  }
-});
+  window.visualViewport.addEventListener('resize', adjustForKeyboard);
+  window.visualViewport.addEventListener('scroll', adjustForKeyboard);
+})();
