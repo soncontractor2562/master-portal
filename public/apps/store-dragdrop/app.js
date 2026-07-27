@@ -1726,6 +1726,16 @@ function openReceiveModal(id) {
   
   var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
   
+  // Set confirm button text based on role
+  var confirmBtn = document.getElementById('confirmReceiveBtn');
+  if (confirmBtn) {
+    if (state.currentUser.role === 'ผู้ใช้งาน') {
+      confirmBtn.innerHTML = '✅ ยืนยันการรับของ';
+    } else {
+      confirmBtn.innerHTML = '🔄 ยืนยันการส่งใหม่';
+    }
+  }
+  
   list.innerHTML = p.items.map(function(item, idx) {
     var sentQtyHtml = '';
     if (isStoreOrAdmin) {
@@ -1841,13 +1851,14 @@ async function confirmReceive() {
     var inp = document.getElementById('rcvQty_' + i);
     
     var rcvVal = inp.value.trim();
-    if (rcvVal === '') {
+    // Allow Store/Admin to leave receive quantity empty when updating sent quantity
+    if (rcvVal === '' && state.currentUser.role === 'ผู้ใช้งาน') {
       showToast('กรุณาระบุยอดรับของให้ครบทุกรายการ', 'error');
       return;
     }
     
-    var qRcv = Number(rcvVal);
-    if (isNaN(qRcv) || qRcv < 0) {
+    var qRcv = rcvVal === '' ? null : Number(rcvVal);
+    if (rcvVal !== '' && (isNaN(qRcv) || qRcv < 0)) {
       showToast('กรุณาระบุยอดรับของให้ถูกต้อง', 'error');
       return;
     }
@@ -1856,15 +1867,18 @@ async function confirmReceive() {
     var qSent = sentInp ? Number(sentInp.value) : Number(oldItem.quantitySent);
     if (isNaN(qSent)) qSent = Number(oldItem.quantitySent);
     
-    updatedItems.push({
+    var newItem = {
       itemName: oldItem.itemName,
       quantitySent: qSent,
-      quantityReceived: qRcv,
       receiver: rcvReceiver,
       receiveDate: rcvDate
-    });
+    };
+    if (qRcv !== null) {
+      newItem.quantityReceived = qRcv;
+    }
+    updatedItems.push(newItem);
     
-    if (qRcv !== qSent) {
+    if (qRcv === null || qRcv !== qSent) {
       allMatch = false;
     }
   }
@@ -1960,3 +1974,12 @@ async function forceCompleteReceive() {
     showToast('Error: ' + e.message, 'error');
   }
 }
+
+// Fix iOS Safari keyboard push-up bug
+document.addEventListener('focusout', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    setTimeout(function() {
+      window.scrollTo(0, 0);
+    }, 100);
+  }
+});

@@ -498,7 +498,7 @@
       }
     }
 
-    /* Receive details grid styles (responsive) */
+    /* Receive details grid styles */
     .receive-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -506,11 +506,13 @@
       margin-bottom: 16px;
       flex-shrink: 0;
     }
-    @media (max-width: 640px) {
-      .receive-details-grid {
-        grid-template-columns: 1fr !important;
-        gap: 8px;
-      }
+    .receive-details-grid > div {
+      min-width: 0;
+    }
+    .receive-details-grid input {
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -918,7 +920,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=50"></script>
-<script src="sort-mode.js?v=1"></script>
+<script src="app.js?v=51"></script>
+<script src="sort-mode.js?v=2"></script>
 </body>
 </html>
