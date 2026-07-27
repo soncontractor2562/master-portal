@@ -1714,7 +1714,7 @@ function renderPendingList() {
 
 let currentReceiveMove = null;
 
-function openReceiveModal() {
+function openReceiveModal(id) {
   notifyParentModalState(true);
   var p = state.pending.find(function(x) { return x.id === id; });
   if (!p) return;
