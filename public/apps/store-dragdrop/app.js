@@ -1760,6 +1760,16 @@ function openReceiveModal(id) {
     forceBtn.style.display = 'none';
   }
   
+  // Set confirm button text dynamically based on role
+  var confirmBtn = document.getElementById('confirmReceiveBtn');
+  if (confirmBtn) {
+    if (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') {
+      confirmBtn.innerHTML = '✅ ยืนยันการส่งใหม่';
+    } else {
+      confirmBtn.innerHTML = '✅ ยืนยันการรับของ';
+    }
+  }
+
   // Initialize receive details
   var savedReceiver = p.items[0] && p.items[0].receiver;
   var savedDate = p.items[0] && p.items[0].receiveDate;
