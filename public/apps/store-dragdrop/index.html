@@ -532,13 +532,22 @@
       min-width: 0 !important;
       width: 100% !important;
     }
-    .receive-details-grid input {
+    .receive-details-grid input,
+    #receiveDate,
+    #receiveReceiver {
+      -webkit-appearance: none !important;
+      appearance: none !important;
       min-width: 0 !important;
       width: 100% !important;
-      height: 44px !important;
+      height: 48px !important;
+      min-height: 48px !important;
+      max-height: 48px !important;
       padding: 10px 14px !important;
       font-size: 16px !important;
+      line-height: 1.4 !important;
       box-sizing: border-box !important;
+      border-radius: 12px !important;
+      display: block !important;
     }
     body.modal-open {
       position: fixed;
@@ -744,11 +753,11 @@
       </div>
     </div>
     
-    <div style="display:flex; gap:10px;">
-      <button id="confirmReceiveBtn" onclick="confirmReceive()" class="btn-primary" style="flex:1;">✅ ยืนยันการรับของ</button>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button id="confirmReceiveBtn" onclick="confirmReceive()" class="btn-primary" style="flex:1.2;">✅ ยืนยันการรับของ</button>
       <button id="forceCompleteBtn" onclick="forceCompleteReceive()" class="btn-primary" style="background:#ef4444; display:none; flex:1;">🚨 บังคับจบงาน (สูญหาย)</button>
+      <button onclick="closeReceiveModal()" class="btn-primary btn-ghost" style="flex:0.8;">ปิด</button>
     </div>
-    <button onclick="closeReceiveModal()" class="btn-primary btn-ghost" style="margin-top:10px;">ปิด</button>
   </div>
 </div>
 
@@ -962,7 +971,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=55"></script>
+<script src="app.js?v=56"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>
