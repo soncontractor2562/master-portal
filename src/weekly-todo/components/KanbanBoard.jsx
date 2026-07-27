@@ -66,7 +66,23 @@ const KanbanBoard = ({ data, setData, filterProject, filterAssignee, weekOffset,
               .filter(task => {
                 // 1. Filter by Week
                 const taskWeek = getTaskWeekOffset(task.dueDate);
-                if (taskWeek !== weekOffset) return false;
+                const completedWeek = task.completedDate ? getTaskWeekOffset(task.completedDate) : taskWeek;
+
+                if (weekOffset === 0) { // CURRENT WEEK
+                  if (column.id === 'column-in-progress') {
+                    // Show all active In Progress tasks (past or present due dates)
+                    if (taskWeek > 0) return false;
+                  } else if (column.id === 'column-done') {
+                    // Show tasks completed this week or originally for this week
+                    if (completedWeek !== 0 && taskWeek !== 0) return false;
+                  } else if (column.id === 'column-todo') {
+                    // Show To Do tasks for this week OR overdue tasks from past weeks
+                    if (taskWeek > 0) return false;
+                  }
+                } else { // PAST OR FUTURE WEEKS
+                  const effectiveWeek = (column.id === 'column-done' && task.completedDate) ? completedWeek : taskWeek;
+                  if (effectiveWeek !== weekOffset) return false;
+                }
 
                 // 2. Filter by Project & Assignee
                 const matchesProject = filterProject === '' || task.project === filterProject;
