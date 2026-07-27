@@ -34,22 +34,29 @@ const KanbanBoard = ({ data, setData, filterProject, filterAssignee, weekOffset,
             const column = data.columns.find(c => c.id === columnId);
             const hasNextColumn = index < data.columnOrder.length - 1;
             
-            // Date parsing helper
+            // Date parsing helper relative to current week
             const getTaskWeekOffset = (dueDateStr) => {
-              if (!dueDateStr) return 0; // Default to current week
+              if (!dueDateStr || typeof dueDateStr !== 'string') return 0;
               const parts = dueDateStr.split('/');
               if (parts.length !== 3) return 0;
               
               const d = parseInt(parts[0], 10);
               const m = parseInt(parts[1], 10) - 1;
               const y = parseInt(parts[2], 10);
+              if (isNaN(d) || isNaN(m) || isNaN(y)) return 0;
               
               const taskDate = new Date(y, m, d);
-              const anchorDate = new Date(2026, 6, 20); // 20 July 2026
-              
-              const diffTime = taskDate.getTime() - anchorDate.getTime();
-              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-              
+              if (isNaN(taskDate.getTime())) return 0;
+
+              const now = new Date();
+              const dayOfWeek = now.getDay();
+              const distanceToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+              const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distanceToMonday);
+
+              const tTime = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate()).getTime();
+              const mTime = new Date(currentMonday.getFullYear(), currentMonday.getMonth(), currentMonday.getDate()).getTime();
+
+              const diffDays = Math.floor((tTime - mTime) / (1000 * 60 * 60 * 24));
               return Math.floor(diffDays / 7);
             };
 

@@ -113,11 +113,31 @@ function App() {
     setWeekOffset(prev => prev + offset);
   };
 
+  const getWeekRange = (offset = 0) => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const distanceToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+    
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distanceToMonday + (offset * 7));
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+    
+    return { monday, sunday };
+  };
+
+  const formatShortDate = (date) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${date.getDate()} ${months[date.getMonth()]}`;
+  };
+
   const getWeekString = () => {
-    if (weekOffset === 0) return 'This Week (20-26 Jul)';
-    if (weekOffset === -1) return 'Last Week (13-19 Jul)';
-    if (weekOffset === 1) return 'Next Week (27 Jul - 2 Aug)';
-    return `Week offset: ${weekOffset}`;
+    const { monday, sunday } = getWeekRange(weekOffset);
+    const startStr = formatShortDate(monday);
+    const endStr = formatShortDate(sunday);
+    
+    if (weekOffset === 0) return `This Week (${startStr} - ${endStr})`;
+    if (weekOffset === -1) return `Last Week (${startStr} - ${endStr})`;
+    if (weekOffset === 1) return `Next Week (${startStr} - ${endStr})`;
+    return `${startStr} - ${endStr}`;
   };
 
   const getTodayString = () => {
