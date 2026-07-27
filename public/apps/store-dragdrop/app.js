@@ -845,7 +845,8 @@ function updateMoveStepBar() {
 }
 
 // ====== MOVE MODAL ======
-function openMoveModal() {
+function openMoveModal(itemIndex) {
+  notifyParentModalState(true);
   document.getElementById('modalRouteInfo').textContent = state.sourceLocation + ' → ' + state.destLocation;
   updateMoveStepBar();
   
@@ -891,7 +892,8 @@ function onMoveItemChange() {
   // Not used in bulk move
 }
 
-function closeMoveModal(e) {
+function closeMoveModal() {
+  notifyParentModalState(false);
   if (e && e.target !== document.getElementById('moveModal')) return;
   closeMoveModalDirect();
 }
@@ -1712,7 +1714,8 @@ function renderPendingList() {
 
 let currentReceiveMove = null;
 
-function openReceiveModal(id) {
+function openReceiveModal() {
+  notifyParentModalState(true);
   var p = state.pending.find(function(x) { return x.id === id; });
   if (!p) return;
   // Deep copy the entire object to preserve date, carrier, reporter, remark
@@ -1812,6 +1815,7 @@ function openReceiveModal(id) {
 }
 
 function closeReceiveModal(e) {
+  notifyParentModalState(false);
   if (e && e.target !== document.getElementById('receiveModal')) return;
   document.body.classList.remove('modal-open');
   document.getElementById('receiveModal').style.display = 'none';
@@ -2210,3 +2214,17 @@ document.addEventListener('blur', function(e) {
 
   window.triggerModalLayoutUpdate = updateModalLayouts;
 })();
+
+/* ===== NOTIFY PARENT WINDOW ON MODAL OPEN / CLOSE ===== */
+function notifyParentModalState(isOpen) {
+  if (isOpen) {
+    document.body.classList.add('modal-open');
+  } else {
+    document.body.classList.remove('modal-open');
+  }
+  if (window.parent && window.parent !== window) {
+    try {
+      window.parent.postMessage({ type: 'MODAL_STATE', open: isOpen }, '*');
+    } catch(e){}
+  }
+}

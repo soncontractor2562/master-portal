@@ -281,3 +281,24 @@ body {
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch !important;
     }
+
+
+/* ===== HIDE PARENT HAMBURGER BUTTON WHEN MODAL IS OPEN ===== */
+body.modal-open button,
+body.modal-open .sidebar-toggle,
+body.modal-open [class*="sidebar"],
+body.modal-open [class*="toggle"],
+body.modal-open [class*="hamburger"],
+body.modal-open [class*="menu-btn"] {
+  z-index: 10 !important;
+}
+body.modal-open .glow-ambient-1,
+body.modal-open .glow-ambient-2 {
+  opacity: 0.2 !important;
+}
+/* Specifically hide fixed/floating buttons in parent when modal is open */
+body.modal-open > div > div > button,
+body.modal-open button[style*="fixed"],
+body.modal-open button[style*="absolute"] {
+  display: none !important;
+}

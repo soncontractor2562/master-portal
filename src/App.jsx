@@ -17,6 +17,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const handleMessage = (e) => {
+      if (e.data && e.data.type === 'MODAL_STATE') {
+        if (e.data.open) {
+          document.body.classList.add('modal-open');
+        } else {
+          document.body.classList.remove('modal-open');
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+
+  useEffect(() => {
     const handleBlur = (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
         setTimeout(() => {
