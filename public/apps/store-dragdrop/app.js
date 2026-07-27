@@ -2106,17 +2106,4 @@ document.addEventListener('focusin', function(e) {
   }
 });
 
-document.addEventListener('focusout', function(e) {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-    setTimeout(function() {
-      var activeEl = document.activeElement;
-      if (!activeEl || (activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'TEXTAREA' && activeEl.tagName !== 'SELECT')) {
-        window.scrollTo(0, 0);
-        if (window.parent && window.parent !== window) {
-          try { window.parent.scrollTo(0, 0); } catch(err){}
-        }
-        document.body.scrollTop = 0;
-      }
-    }, 150);
-  }
-});
+

@@ -16,25 +16,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-    useEffect(() => {
-    const resetScroll = () => {
-      setTimeout(() => {
-        const activeEl = document.activeElement;
-        if (!activeEl || (activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'TEXTAREA' && activeEl.tagName !== 'SELECT')) {
-          window.scrollTo(0, 0);
-          document.body.scrollTop = 0;
-        }
-      }, 150);
-    };
-
-    window.addEventListener('focusout', resetScroll);
-    window.addEventListener('blur', resetScroll);
-
-    return () => {
-      window.removeEventListener('focusout', resetScroll);
-      window.removeEventListener('blur', resetScroll);
-    };
-  }, []);
+    
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
