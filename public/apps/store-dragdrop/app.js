@@ -1761,10 +1761,10 @@ function openReceiveModal(id) {
   
   // Force complete button for Admin / Store (ONLY after recipient reported count)
   var forceBtn = document.getElementById('forceCompleteBtn');
-  var hasReceiver = p.items.every(function(it) {
-    return it.receiver !== undefined && it.receiver !== null && it.receiver.trim() !== '';
+  var hasReported = p.items.every(function(it) {
+    return it.quantityReceived !== undefined && it.quantityReceived !== null && it.receiver && it.receiver.trim() !== '';
   });
-  if ((state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') && hasReceiver) {
+  if ((state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') && hasReported) {
     forceBtn.style.display = 'block';
   } else {
     forceBtn.style.display = 'none';
@@ -1774,7 +1774,7 @@ function openReceiveModal(id) {
   var confirmBtn = document.getElementById('confirmReceiveBtn');
   if (confirmBtn) {
     if (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') {
-      confirmBtn.innerHTML = '✅ ยืนยันการส่งใหม่';
+      confirmBtn.innerHTML = '🔄 ยืนยันการส่งใหม่';
     } else {
       confirmBtn.innerHTML = '✅ ยืนยันการรับของ';
     }
@@ -1800,18 +1800,23 @@ function openReceiveModal(id) {
   if (receiverInput) {
     if (savedReceiver) {
       receiverInput.value = savedReceiver;
-    } else {
+    } else if (state.currentUser.role === 'ผู้ใช้งาน') {
       receiverInput.value = state.currentUser.name || state.currentUser.username || '';
+    } else {
+      receiverInput.value = '';
     }
   }
 
+  document.body.classList.add('modal-open');
   document.getElementById('receiveModal').style.display = 'flex';
 }
 
 function closeReceiveModal(e) {
   if (e && e.target !== document.getElementById('receiveModal')) return;
+  document.body.classList.remove('modal-open');
   document.getElementById('receiveModal').style.display = 'none';
   currentReceiveMove = null;
+  window.scrollTo(0, 0);
 }
 
 async function cancelPendingMove(id, event) {
@@ -1832,15 +1837,30 @@ async function cancelPendingMove(id, event) {
 async function confirmReceive() {
   if (!currentReceiveMove) return;
   
+  var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
   var rcvDate = document.getElementById('receiveDate').value;
-  var rcvReceiver = document.getElementById('receiveReceiver').value;
-  if (!rcvReceiver.trim()) {
-    showToast('กรุณาระบุชื่อผู้รับของ', 'error');
-    return;
+  var rcvReceiver = document.getElementById('receiveReceiver').value.trim();
+
+  // Check if any receive quantity is entered
+  var anyReceiveEntered = false;
+  for (var i = 0; i < currentReceiveMove.items.length; i++) {
+    var inp = document.getElementById('rcvQty_' + i);
+    if (inp && inp.value.trim() !== '') {
+      anyReceiveEntered = true;
+      break;
+    }
   }
-  if (!rcvDate) {
-    showToast('กรุณาระบุวันที่รับของ', 'error');
-    return;
+
+  // Receiver name and date are required ONLY IF regular user OR if receive quantities are entered
+  if (!isStoreOrAdmin || anyReceiveEntered) {
+    if (!rcvReceiver) {
+      showToast('กรุณาระบุชื่อผู้รับของ', 'error');
+      return;
+    }
+    if (!rcvDate) {
+      showToast('กรุณาระบุวันที่รับของ', 'error');
+      return;
+    }
   }
 
   // Read inputs
@@ -1851,7 +1871,6 @@ async function confirmReceive() {
     var inp = document.getElementById('rcvQty_' + i);
     
     var rcvVal = inp.value.trim();
-    // Allow Store/Admin to leave receive quantity empty when updating sent quantity
     if (rcvVal === '' && state.currentUser.role === 'ผู้ใช้งาน') {
       showToast('กรุณาระบุยอดรับของให้ครบทุกรายการ', 'error');
       return;
@@ -1869,13 +1888,18 @@ async function confirmReceive() {
     
     var newItem = {
       itemName: oldItem.itemName,
-      quantitySent: qSent,
-      receiver: rcvReceiver,
-      receiveDate: rcvDate
+      quantitySent: qSent
     };
-    if (qRcv !== null) {
-      newItem.quantityReceived = qRcv;
+    if (rcvReceiver) newItem.receiver = rcvReceiver;
+    if (rcvDate) newItem.receiveDate = rcvDate;
+    if (qRcv !== null) newItem.quantityReceived = qRcv;
+
+    if (!newItem.receiver && oldItem.receiver) newItem.receiver = oldItem.receiver;
+    if (!newItem.receiveDate && oldItem.receiveDate) newItem.receiveDate = oldItem.receiveDate;
+    if (newItem.quantityReceived === undefined && oldItem.quantityReceived !== undefined) {
+      newItem.quantityReceived = oldItem.quantityReceived;
     }
+    
     updatedItems.push(newItem);
     
     if (qRcv === null || qRcv !== qSent) {
