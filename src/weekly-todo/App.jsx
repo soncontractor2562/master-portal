@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import KanbanBoard from './components/KanbanBoard';
 import { initialData } from './data/mockData';
 import { CalendarDays, LayoutDashboard, Plus, Sun, Moon, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
@@ -39,6 +39,7 @@ const sanitizeBoardData = (rawState) => {
 function App() {
   const [data, setData] = useState(() => sanitizeBoardData(initialData));
   const [isLoaded, setIsLoaded] = useState(false);
+  const hasFetchedRef = useRef(false);
 
   // Fetch initial data from Supabase
   useEffect(() => {
@@ -61,6 +62,7 @@ function App() {
       } catch (err) {
         console.error('Unexpected error fetching board:', err);
       } finally {
+        hasFetchedRef.current = true;
         setIsLoaded(true);
       }
     };
@@ -68,9 +70,9 @@ function App() {
     fetchBoard();
   }, []);
 
-  // Save data to Supabase whenever it changes (after initial load)
+  // Save data to Supabase whenever it changes (after initial load and fetch)
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !hasFetchedRef.current) return;
     
     const saveBoard = async () => {
       try {
@@ -97,8 +99,8 @@ function App() {
   const [filterAssignee, setFilterAssignee] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   
-  // Week state (mock)
-  const [weekOffset, setWeekOffset] = useState(0);
+  // Default to weekOffset = -1 (20-26 Jul week) so all user tasks are immediately visible
+  const [weekOffset, setWeekOffset] = useState(-1);
 
   // Edit State
   const [editingTask, setEditingTask] = useState(null);
