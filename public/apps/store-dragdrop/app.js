@@ -1807,7 +1807,7 @@ function openReceiveModal(id) {
     }
   }
 
-  document.body.classList.add('modal-open');
+  document.body.classList.add('modal-open'); if (window.triggerModalLayoutUpdate) window.triggerModalLayoutUpdate();
   document.getElementById('receiveModal').style.display = 'flex';
 }
 
@@ -2149,3 +2149,64 @@ document.addEventListener('blur', function(e) {
     }, 100);
   }
 }, true);
+
+/* ===== COMPREHENSIVE REAL-TIME VISUAL VIEWPORT & MODAL MANAGER ===== */
+(function initComprehensiveViewportManager() {
+  function updateModalLayouts() {
+    var vv = window.visualViewport;
+    var isModalOpen = document.body.classList.contains('modal-open');
+
+    var overlays = document.querySelectorAll('.modal-overlay');
+    overlays.forEach(function(overlay) {
+      if (overlay.style.display !== 'none' && overlay.style.display !== '') {
+        if (vv) {
+          overlay.style.height = vv.height + 'px';
+          overlay.style.top = vv.offsetTop + 'px';
+          var sheet = overlay.querySelector('.modal-sheet');
+          if (sheet) {
+            sheet.style.maxHeight = Math.min(vv.height - 12, vv.height * 0.90) + 'px';
+          }
+        }
+      } else {
+        overlay.style.height = '';
+        overlay.style.top = '';
+        var sheet = overlay.querySelector('.modal-sheet');
+        if (sheet) sheet.style.maxHeight = '';
+      }
+    });
+
+    if (!isModalOpen) {
+      window.scrollTo(0, 0);
+      if (window.parent && window.parent !== window) {
+        try { window.parent.scrollTo(0, 0); } catch(e){}
+      }
+    }
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateModalLayouts);
+    window.visualViewport.addEventListener('scroll', updateModalLayouts);
+  }
+
+  document.addEventListener('focusin', function(e) {
+    if (document.body.classList.contains('modal-open')) {
+      setTimeout(updateModalLayouts, 50);
+      setTimeout(updateModalLayouts, 250);
+    }
+  });
+
+  document.addEventListener('focusout', function(e) {
+    if (document.body.classList.contains('modal-open')) {
+      setTimeout(updateModalLayouts, 50);
+      setTimeout(updateModalLayouts, 250);
+      setTimeout(function() {
+        window.scrollTo(0, 0);
+        if (window.parent && window.parent !== window) {
+          try { window.parent.scrollTo(0, 0); } catch(err){}
+        }
+      }, 150);
+    }
+  });
+
+  window.triggerModalLayoutUpdate = updateModalLayouts;
+})();

@@ -570,6 +570,69 @@
       transition: opacity 0.2s ease;
     }
   
+  
+    /* ===== COMPREHENSIVE MOBILE MODAL & VIEWPORT FIXES ===== */
+    html.modal-open, body.modal-open {
+      overflow: hidden !important;
+      height: 100dvh !important;
+      touch-action: none !important;
+    }
+
+    /* Hide floating action / hamburger buttons when modal is open */
+    body.modal-open .hamburger-btn,
+    body.modal-open .floating-btn,
+    body.modal-open .mobile-menu-btn,
+    body.modal-open #mobileMenuBtn,
+    body.modal-open nav,
+    body.modal-open .navbar {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
+      height: 100dvh;
+      width: 100vw;
+      z-index: 9999;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 540px;
+      background: #1a2840;
+      border-radius: 24px 24px 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      padding: 20px 20px 24px;
+      max-height: 88dvh;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      animation: slideUp .3s ease;
+      will-change: transform, height, max-height;
+      box-sizing: border-box;
+    }
+
+    .modal-title, .modal-handle, #receiveMeta, .receive-details-grid, .modal-actions, .modal-footer {
+      flex-shrink: 0 !important;
+    }
+
+    /* Scrollable middle container inside modal */
+    #receiveItemsList, #moveItemsContainer, .modal-body-scroll {
+      flex: 1 1 auto !important;
+      min-height: 60px !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
   </style>
 </head>
 <body>
@@ -976,7 +1039,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=63"></script>
+<script src="app.js?v=64"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>
