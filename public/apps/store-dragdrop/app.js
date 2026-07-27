@@ -2093,38 +2093,30 @@ document.addEventListener('focusout', function(e) {
   });
 })();
 
-/* ===== FIX MOBILE IOS KEYBOARD FOCUSOUT SCROLL RESET ===== */
+
+/* ===== SMOOTH SCROLL FOR MODAL INPUTS & CLEAN FOCUSOUT RESET ===== */
+document.addEventListener('focusin', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    var sheet = e.target.closest('.modal-sheet');
+    if (sheet) {
+      setTimeout(function() {
+        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 250);
+    }
+  }
+});
+
 document.addEventListener('focusout', function(e) {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
     setTimeout(function() {
-      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
-      document.body.scrollTop = 0;
-    }, 50);
+      var activeEl = document.activeElement;
+      if (!activeEl || (activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'TEXTAREA' && activeEl.tagName !== 'SELECT')) {
+        window.scrollTo(0, 0);
+        if (window.parent && window.parent !== window) {
+          try { window.parent.scrollTo(0, 0); } catch(err){}
+        }
+        document.body.scrollTop = 0;
+      }
+    }, 150);
   }
 });
-
-/* ===== FIX MOBILE MODAL INPUT FOCUS SCROLL RESET ===== */
-document.addEventListener('focusin', function(e) {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-    setTimeout(function() {
-      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
-      document.body.scrollTop = 0;
-    }, 50);
-  }
-});
-
-/* ===== VISUAL VIEWPORT SCROLL RESET FOR MOBILE MODALS ===== */
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', function() {
-    if (document.body.classList.contains('modal-open')) {
-      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
-      document.body.scrollTop = 0;
-    }
-  });
-  window.visualViewport.addEventListener('scroll', function() {
-    if (document.body.classList.contains('modal-open')) {
-      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
-      document.body.scrollTop = 0;
-    }
-  });
-}

@@ -16,29 +16,23 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  useEffect(() => {
+    useEffect(() => {
     const resetScroll = () => {
       setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.body.scrollTop = 0;
-      }, 50);
+        const activeEl = document.activeElement;
+        if (!activeEl || (activeEl.tagName !== 'INPUT' && activeEl.tagName !== 'TEXTAREA' && activeEl.tagName !== 'SELECT')) {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+        }
+      }, 150);
     };
 
     window.addEventListener('focusout', resetScroll);
     window.addEventListener('blur', resetScroll);
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', resetScroll);
-      window.visualViewport.addEventListener('scroll', resetScroll);
-    }
-
     return () => {
       window.removeEventListener('focusout', resetScroll);
       window.removeEventListener('blur', resetScroll);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', resetScroll);
-        window.visualViewport.removeEventListener('scroll', resetScroll);
-      }
     };
   }, []);
 
