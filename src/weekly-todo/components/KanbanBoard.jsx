@@ -53,8 +53,9 @@ const KanbanBoard = ({ data, setData, filterProject, filterAssignee, weekOffset,
               return Math.floor(diffDays / 7);
             };
 
-            const tasks = column.taskIds
-              .map(taskId => data.tasks[taskId])
+            const tasks = (column.taskIds || [])
+              .map(taskId => data.tasks && data.tasks[taskId])
+              .filter(Boolean)
               .filter(task => {
                 // 1. Filter by Week
                 const taskWeek = getTaskWeekOffset(task.dueDate);
@@ -74,10 +75,15 @@ const KanbanBoard = ({ data, setData, filterProject, filterAssignee, weekOffset,
               })
               .sort((a, b) => {
                 const parseDateForSort = (dateStr) => {
-                  if (!dateStr) return Infinity;
+                  if (!dateStr || typeof dateStr !== 'string') return Infinity;
                   const parts = dateStr.split('/');
                   if (parts.length !== 3) return Infinity;
-                  return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+                  const d = parseInt(parts[0], 10);
+                  const m = parseInt(parts[1], 10) - 1;
+                  const y = parseInt(parts[2], 10);
+                  if (isNaN(d) || isNaN(m) || isNaN(y)) return Infinity;
+                  const time = new Date(y, m, d).getTime();
+                  return isNaN(time) ? Infinity : time;
                 };
                 return parseDateForSort(a.dueDate) - parseDateForSort(b.dueDate);
               });

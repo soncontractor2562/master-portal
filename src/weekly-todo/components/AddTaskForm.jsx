@@ -4,6 +4,15 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 
+const formatSafeDate = (dateObj) => {
+  if (!dateObj || isNaN(dateObj.getTime())) return '';
+  try {
+    return format(dateObj, "dd/MM/yyyy");
+  } catch (e) {
+    return '';
+  }
+};
+
 const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees = [] }) => {
   const [formData, setFormData] = useState({
     project: '',
@@ -21,11 +30,7 @@ const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees 
     e.preventDefault();
     if (!formData.taskName.trim()) return;
     
-    let formattedDate = '';
-    if (selectedDate) {
-       formattedDate = format(selectedDate, "dd/MM/yyyy");
-    }
-    
+    const formattedDate = formatSafeDate(selectedDate);
     onAdd({ ...formData, dueDate: formattedDate });
   };
 

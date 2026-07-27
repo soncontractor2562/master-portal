@@ -17,8 +17,27 @@ const getProjectColor = (projectName) => {
 
 import { supabase } from './supabaseClient';
 
+const sanitizeBoardData = (rawState) => {
+  if (!rawState || typeof rawState !== 'object') return initialData;
+  
+  const tasks = (rawState.tasks && typeof rawState.tasks === 'object') ? rawState.tasks : initialData.tasks;
+  const columns = (Array.isArray(rawState.columns) && rawState.columns.length > 0) ? rawState.columns : initialData.columns;
+  const columnOrder = (Array.isArray(rawState.columnOrder) && rawState.columnOrder.length > 0) ? rawState.columnOrder : initialData.columnOrder;
+  
+  const sanitizedColumns = columns.map(col => ({
+    ...col,
+    taskIds: Array.isArray(col.taskIds) ? col.taskIds : []
+  }));
+
+  return {
+    tasks,
+    columns: sanitizedColumns,
+    columnOrder
+  };
+};
+
 function App() {
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(() => sanitizeBoardData(initialData));
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Fetch initial data from Supabase
@@ -37,10 +56,10 @@ function App() {
         }
         
         if (boardData && boardData.state && Object.keys(boardData.state).length > 0) {
-          setData(boardData.state);
+          setData(sanitizeBoardData(boardData.state));
         }
       } catch (err) {
-        console.error('Unexpected error:', err);
+        console.error('Unexpected error fetching board:', err);
       } finally {
         setIsLoaded(true);
       }
@@ -109,7 +128,7 @@ function App() {
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
 
-    if (!destination) return;
+    if (!destination || !data || !data.columns) return;
 
     if (destination.droppableId === source.droppableId && destination.index === source.index) {
       return;
@@ -118,13 +137,16 @@ function App() {
     const startColumn = data.columns.find(col => col.id === source.droppableId);
     const finishColumn = data.columns.find(col => col.id === destination.droppableId);
 
+    if (!startColumn || !finishColumn) return;
+
     if (startColumn === finishColumn) {
-      const newTaskIds = Array.from(startColumn.taskIds);
+      const newTaskIds = Array.from(startColumn.taskIds || []);
       
       const isFiltered = filterProject.trim() !== '' || filterAssignee.trim() !== '';
       if (isFiltered || weekOffset !== 0) {
          // Fallback relative ordering for filtered views
-         newTaskIds.splice(newTaskIds.indexOf(draggableId), 1);
+         const idx = newTaskIds.indexOf(draggableId);
+         if (idx !== -1) newTaskIds.splice(idx, 1);
          newTaskIds.splice(destination.index, 0, draggableId); 
       } else {
         newTaskIds.splice(source.index, 1);
@@ -139,11 +161,12 @@ function App() {
       return;
     }
 
-    const startTaskIds = Array.from(startColumn.taskIds);
-    startTaskIds.splice(startTaskIds.indexOf(draggableId), 1);
+    const startTaskIds = Array.from(startColumn.taskIds || []);
+    const idx = startTaskIds.indexOf(draggableId);
+    if (idx !== -1) startTaskIds.splice(idx, 1);
     const newStart = { ...startColumn, taskIds: startTaskIds };
 
-    const finishTaskIds = Array.from(finishColumn.taskIds);
+    const finishTaskIds = Array.from(finishColumn.taskIds || []);
     
     const isFiltered = filterProject.trim() !== '' || filterAssignee.trim() !== '' || weekOffset !== 0;
     if (isFiltered) {
@@ -155,16 +178,18 @@ function App() {
     const newFinish = { ...finishColumn, taskIds: finishTaskIds };
 
     // Auto set completedDate if moving to Done
-    let updatedTasks = { ...data.tasks };
-    if (finishColumn.id === 'column-done') {
-       updatedTasks[draggableId] = { 
-         ...updatedTasks[draggableId], 
-         completedDate: getTodayString() 
-       };
-    } else if (updatedTasks[draggableId].completedDate) {
-       const taskCopy = { ...updatedTasks[draggableId] };
-       delete taskCopy.completedDate;
-       updatedTasks[draggableId] = taskCopy;
+    let updatedTasks = { ...(data.tasks || {}) };
+    if (updatedTasks[draggableId]) {
+      if (finishColumn.id === 'column-done') {
+         updatedTasks[draggableId] = { 
+           ...updatedTasks[draggableId], 
+           completedDate: getTodayString() 
+         };
+      } else if (updatedTasks[draggableId].completedDate) {
+         const taskCopy = { ...updatedTasks[draggableId] };
+         delete taskCopy.completedDate;
+         updatedTasks[draggableId] = taskCopy;
+      }
     }
 
     setData({
@@ -179,12 +204,13 @@ function App() {
   };
 
   const handleAddTask = (newTask) => {
-    const todoColumnId = data.columnOrder[0];
+    const todoColumnId = (data.columnOrder && data.columnOrder[0]) || 'column-todo';
     const newTaskWithId = { ...newTask, id: `task-${Date.now()}` };
     
-    const newTasks = { ...data.tasks, [newTaskWithId.id]: newTaskWithId };
-    const column = data.columns.find(col => col.id === todoColumnId);
-    const newTaskIds = Array.from(column.taskIds);
+    const newTasks = { ...(data.tasks || {}), [newTaskWithId.id]: newTaskWithId };
+    const columns = data.columns || initialData.columns;
+    const column = columns.find(col => col.id === todoColumnId) || columns[0];
+    const newTaskIds = Array.from(column.taskIds || []);
     newTaskIds.unshift(newTaskWithId.id); // Add to top
     
     const newColumn = { ...column, taskIds: newTaskIds };
@@ -192,17 +218,24 @@ function App() {
     setData({
       ...data,
       tasks: newTasks,
-      columns: data.columns.map(col => col.id === newColumn.id ? newColumn : col)
+      columns: columns.map(col => col.id === newColumn.id ? newColumn : col)
     });
     
     setIsAddModalOpen(false);
   };
   
   const handleEditTask = (updatedTask, newStatusColumnId) => {
+    if (!updatedTask || !updatedTask.id) {
+      setEditingTask(null);
+      setEditingTaskColumn(null);
+      return;
+    }
+
     let finalTask = { ...updatedTask };
+    const columns = data.columns || initialData.columns;
     
     // Check if status changed
-    const currentColumn = data.columns.find(col => col.taskIds.includes(updatedTask.id));
+    const currentColumn = columns.find(col => (col.taskIds || []).includes(updatedTask.id));
     const statusChanged = currentColumn && currentColumn.id !== newStatusColumnId;
     
     if (statusChanged) {
@@ -213,21 +246,26 @@ function App() {
       }
     }
     
-    const newTasks = { ...data.tasks, [finalTask.id]: finalTask };
-    let newColumns = [...data.columns];
+    const newTasks = { ...(data.tasks || {}), [finalTask.id]: finalTask };
+    let newColumns = [...columns];
     
-    if (statusChanged) {
+    if (statusChanged && currentColumn) {
       // Remove from old column
       const oldColIndex = newColumns.findIndex(c => c.id === currentColumn.id);
-      const newTaskIds = Array.from(newColumns[oldColIndex].taskIds);
-      newTaskIds.splice(newTaskIds.indexOf(finalTask.id), 1);
-      newColumns[oldColIndex] = { ...newColumns[oldColIndex], taskIds: newTaskIds };
+      if (oldColIndex !== -1) {
+        const newTaskIds = Array.from(newColumns[oldColIndex].taskIds || []);
+        const idx = newTaskIds.indexOf(finalTask.id);
+        if (idx !== -1) newTaskIds.splice(idx, 1);
+        newColumns[oldColIndex] = { ...newColumns[oldColIndex], taskIds: newTaskIds };
+      }
       
       // Add to new column (top)
       const newColIndex = newColumns.findIndex(c => c.id === newStatusColumnId);
-      const newDestTaskIds = Array.from(newColumns[newColIndex].taskIds);
-      newDestTaskIds.unshift(finalTask.id);
-      newColumns[newColIndex] = { ...newColumns[newColIndex], taskIds: newDestTaskIds };
+      if (newColIndex !== -1) {
+        const newDestTaskIds = Array.from(newColumns[newColIndex].taskIds || []);
+        newDestTaskIds.unshift(finalTask.id);
+        newColumns[newColIndex] = { ...newColumns[newColIndex], taskIds: newDestTaskIds };
+      }
     }
     
     setData({
@@ -241,14 +279,14 @@ function App() {
   };
 
   const handleDeleteTask = (taskId) => {
-    if (!data.tasks[taskId]) return;
+    if (!data || !data.tasks || !data.tasks[taskId]) return;
     
     const newTasks = { ...data.tasks };
     delete newTasks[taskId];
     
-    const newColumns = data.columns.map(col => ({
+    const newColumns = (data.columns || []).map(col => ({
       ...col,
-      taskIds: col.taskIds.filter(id => id !== taskId)
+      taskIds: (col.taskIds || []).filter(id => id !== taskId)
     }));
     
     setData({
@@ -268,14 +306,19 @@ function App() {
 
   // Derive unique projects and assignees for dropdowns
   const uniqueProjects = useMemo(() => {
-    const projects = Object.values(data.tasks).map(t => t.project).filter(Boolean);
+    if (!data || !data.tasks) return [];
+    const projects = Object.values(data.tasks)
+      .filter(Boolean)
+      .map(t => t.project)
+      .filter(Boolean);
     return Array.from(new Set(projects));
-  }, [data.tasks]);
+  }, [data]);
 
   const uniqueAssignees = useMemo(() => {
+    if (!data || !data.tasks) return [];
     const assigneesSet = new Set();
     Object.values(data.tasks).forEach(t => {
-      if (t.assignee) {
+      if (t && t.assignee) {
         t.assignee.split(',').forEach(a => {
           const trimmed = a.trim();
           if (trimmed) assigneesSet.add(trimmed);
@@ -283,7 +326,7 @@ function App() {
       }
     });
     return Array.from(assigneesSet);
-  }, [data.tasks]);
+  }, [data]);
 
   return (
     <div className="app-container">
@@ -294,31 +337,31 @@ function App() {
               <LayoutDashboard size={28} />
               <h1>Weekly Todo List</h1>
             </div>
-            <button className="add-btn mobile-add-btn" onClick={() => setIsAddModalOpen(true)}>
+            <button type="button" className="add-btn mobile-add-btn" onClick={() => setIsAddModalOpen(true)}>
               <Plus size={18} />
               New Task
             </button>
           </div>
           
           <div className="header-actions">
-            <button className="icon-btn" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle Theme">
+            <button type="button" className="icon-btn" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle Theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             
-            <button className="icon-btn mobile-filter-btn" onClick={() => setShowFilters(!showFilters)} title="Toggle Filters">
+            <button type="button" className="icon-btn mobile-filter-btn" onClick={() => setShowFilters(!showFilters)} title="Toggle Filters">
               <Filter size={18} />
             </button>
 
             <div className="week-selector">
-              <button className="icon-btn" onClick={() => handleWeekChange(-1)}><ChevronLeft size={18}/></button>
+              <button type="button" className="icon-btn" onClick={() => handleWeekChange(-1)}><ChevronLeft size={18}/></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
                 <CalendarDays size={16} />
                 <span className="week-text">{getWeekString()}</span>
               </div>
-              <button className="icon-btn" onClick={() => handleWeekChange(1)}><ChevronRight size={18}/></button>
+              <button type="button" className="icon-btn" onClick={() => handleWeekChange(1)}><ChevronRight size={18}/></button>
             </div>
             
-            <button className="add-btn desktop-add-btn" onClick={() => setIsAddModalOpen(true)}>
+            <button type="button" className="add-btn desktop-add-btn" onClick={() => setIsAddModalOpen(true)}>
               <Plus size={18} />
               New Task
             </button>

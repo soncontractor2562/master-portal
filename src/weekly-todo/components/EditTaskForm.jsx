@@ -4,20 +4,47 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { parse, format } from "date-fns";
 
-const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelete, existingProjects = [], existingAssignees = [] }) => {
-  let initialDateObj = null;
-  if (task.dueDate) {
-     try {
-       initialDateObj = parse(task.dueDate, "dd/MM/yyyy", new Date());
-     } catch (e) {}
+const parseSafeDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const cleanStr = dateStr.trim();
+  if (cleanStr.includes('/')) {
+    const parts = cleanStr.split('/');
+    if (parts.length === 3) {
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+        const date = new Date(y, m, d);
+        if (!isNaN(date.getTime())) return date;
+      }
+    }
   }
+  try {
+    const parsed = parse(cleanStr, "dd/MM/yyyy", new Date());
+    if (!isNaN(parsed.getTime())) return parsed;
+  } catch (e) {}
+  const d = new Date(cleanStr);
+  return !isNaN(d.getTime()) ? d : null;
+};
+
+const formatSafeDate = (dateObj) => {
+  if (!dateObj || isNaN(dateObj.getTime())) return '';
+  try {
+    return format(dateObj, "dd/MM/yyyy");
+  } catch (e) {
+    return '';
+  }
+};
+
+const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelete, existingProjects = [], existingAssignees = [] }) => {
+  const initialDateObj = parseSafeDate(task ? task.dueDate : null);
   const [selectedDate, setSelectedDate] = useState(initialDateObj);
 
   const [formData, setFormData] = useState({
-    id: task.id,
-    project: task.project,
-    taskName: task.taskName,
-    assignee: task.assignee || ''
+    id: task ? task.id : '',
+    project: task ? (task.project || '') : '',
+    taskName: task ? (task.taskName || '') : '',
+    assignee: task ? (task.assignee || '') : ''
   });
   
   const [status, setStatus] = useState(currentColumnId);
@@ -31,11 +58,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
     e.preventDefault();
     if (!formData.taskName.trim()) return;
     
-    let formattedDate = '';
-    if (selectedDate) {
-       formattedDate = format(selectedDate, "dd/MM/yyyy");
-    }
-    
+    const formattedDate = formatSafeDate(selectedDate);
     onSave({ ...formData, dueDate: formattedDate }, status);
   };
 
