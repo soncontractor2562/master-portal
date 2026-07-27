@@ -16,6 +16,38 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    let initialH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    
+    const smoothRestore = () => {
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT')) {
+          window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          document.body.scrollTop = 0;
+        }
+      }, 150);
+    };
+
+    const handleResize = () => {
+      if (window.visualViewport && window.visualViewport.height >= initialH - 60) {
+        smoothRestore();
+      }
+    };
+
+    window.addEventListener('focusout', smoothRestore);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      window.removeEventListener('focusout', smoothRestore);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, []);
+
     
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);

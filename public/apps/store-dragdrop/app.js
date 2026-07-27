@@ -2107,3 +2107,31 @@ document.addEventListener('focusin', function(e) {
 });
 
 
+
+/* ===== SMOOTH RESTORE SCROLL WHEN KEYBOARD CLOSES ===== */
+(function initKeyboardCloseRestore() {
+  let initialH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+  function doRestore() {
+    setTimeout(function() {
+      var active = document.activeElement;
+      if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT')) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        document.body.scrollTop = 0;
+        if (window.parent && window.parent !== window) {
+          try { window.parent.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); } catch(e){}
+        }
+      }
+    }, 150);
+  }
+
+  document.addEventListener('focusout', doRestore);
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function() {
+      if (window.visualViewport.height >= initialH - 60) {
+        doRestore();
+      }
+    });
+  }
+})();
