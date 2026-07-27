@@ -892,7 +892,7 @@ function onMoveItemChange() {
   // Not used in bulk move
 }
 
-function closeMoveModal() {
+function closeMoveModal(e) {
   notifyParentModalState(false);
   if (e && e.target !== document.getElementById('moveModal')) return;
   closeMoveModalDirect();
