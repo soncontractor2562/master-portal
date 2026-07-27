@@ -5,7 +5,6 @@ import StoreDragDropView from './components/StoreDragDropView.jsx';
 import PrPoView from './components/PrPoView.jsx';
 
 export default function App() {
-  // เริ่มที่ 'todo' โดยตรง ไม่มีหน้า overview แล้ว
   const [activeTab, setActiveTab] = useState('todo');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -14,6 +13,9 @@ export default function App() {
       if (e.key === 'Escape') setSidebarOpen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     const resetScroll = () => {
       setTimeout(() => {
@@ -39,8 +41,6 @@ export default function App() {
       }
     };
   }, []);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -65,7 +65,6 @@ export default function App() {
           setSidebarOpen={setSidebarOpen}
         />
 
-        {/* คอลัมน์ขวา — ไม่มี Header แล้ว */}
         <div className="master-content-col">
           <div className="main-iframe-area">
             {activeTab === 'todo'  && <WeeklyTodoView />}
