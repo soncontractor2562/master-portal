@@ -205,3 +205,17 @@ body {
     font-size: 16px !important;
   }
 }
+
+
+    /* ===== PIN MODAL SHEET HEADER & PREVENT SHEET INTERNAL SCROLL ===== */
+    .modal-sheet {
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .modal-title, .modal-handle, #receiveMeta {
+      flex-shrink: 0 !important;
+    }
+    .receive-details-grid, .modal-actions {
+      flex-shrink: 0 !important;
+    }

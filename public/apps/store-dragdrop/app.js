@@ -2135,3 +2135,18 @@ document.addEventListener('focusin', function(e) {
     });
   }
 })();
+
+/* ===== RESET MODAL SHEET SCROLLTOP ON FOCUSOUT ===== */
+document.addEventListener('focusout', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    var sheet = e.target.closest('.modal-sheet');
+    if (sheet) {
+      setTimeout(function() {
+        var active = document.activeElement;
+        if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA' && active.tagName !== 'SELECT')) {
+          sheet.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }
+});
