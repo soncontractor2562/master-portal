@@ -2136,3 +2136,16 @@ document.addEventListener('focusout', function(e) {
   window.visualViewport.addEventListener('resize', adjustForKeyboard);
   window.visualViewport.addEventListener('scroll', adjustForKeyboard);
 })();
+
+/* ===== GLOBAL ONBLUR KEYBOARD SCROLL RESET (EVENT CAPTURE) ===== */
+document.addEventListener('blur', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    setTimeout(function() {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      if (window.parent && window.parent !== window) {
+        try { window.parent.scrollTo(0, 0); } catch(err){}
+      }
+    }, 100);
+  }
+}, true);

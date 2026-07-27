@@ -16,6 +16,21 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    const handleBlur = (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+        }, 100);
+      }
+    };
+
+    window.addEventListener('blur', handleBlur, true);
+    return () => window.removeEventListener('blur', handleBlur, true);
+  }, []);
+
+
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   return (
