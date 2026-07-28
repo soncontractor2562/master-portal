@@ -626,8 +626,15 @@
       </div>
       
       <div style="padding: 0 20px; display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-        <input type="text" id="histFilterLoc" placeholder="ค้นหาสถานที่..." oninput="filterHistory()" class="form-input" style="flex:1; min-width: 120px; padding: 10px; border-radius: 10px;">
-        <input type="text" id="histFilterItem" placeholder="ค้นหาชื่อวัสดุ..." oninput="filterHistory()" class="form-input" style="flex:1; min-width: 120px; padding: 10px; border-radius: 10px;">
+        <select id="histFilterDir" onchange="filterHistory()" class="form-input form-select" style="flex:1; min-width: 100px; padding: 10px; border-radius: 10px;">
+          <option value="">ทั้งหมด (All)</option>
+          <option value="in">ขาเข้าสถานที่ (Inbound)</option>
+          <option value="out">ขาออกสถานที่ (Outbound)</option>
+        </select>
+        <input list="histLocList" id="histFilterLoc" placeholder="ค้นหาสถานที่..." oninput="filterHistory()" class="form-input" style="flex:1; min-width: 120px; padding: 10px; border-radius: 10px;">
+        <input list="histItemList" id="histFilterItem" placeholder="ค้นหาชื่อวัสดุ..." oninput="filterHistory()" class="form-input" style="flex:1; min-width: 120px; padding: 10px; border-radius: 10px;">
+        <datalist id="histLocList"></datalist>
+        <datalist id="histItemList"></datalist>
       </div>
         
       <div class="page-body">
@@ -913,7 +920,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=1.5"></script>
+<script src="app.js?v=1.6"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>

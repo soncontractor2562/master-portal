@@ -57,13 +57,22 @@ async function apiGet(pathStr) {
       const limit = parseInt(params.get('limit')) || 30;
       const loc = params.get('loc') || '';
       const item = params.get('item') || '';
+      const dir = params.get('dir') || '';
       
       let countQuery = supabaseClient.from('store_history').select('*', { count: 'exact', head: true });
       let dataQuery = supabaseClient.from('store_history').select('*').order('date', { ascending: false });
       
       if (loc) {
-        countQuery = countQuery.or(`fromLocation.ilike.%${loc}%,toLocation.ilike.%${loc}%`);
-        dataQuery = dataQuery.or(`fromLocation.ilike.%${loc}%,toLocation.ilike.%${loc}%`);
+        if (dir === 'in') {
+          countQuery = countQuery.ilike('toLocation', `%${loc}%`);
+          dataQuery = dataQuery.ilike('toLocation', `%${loc}%`);
+        } else if (dir === 'out') {
+          countQuery = countQuery.ilike('fromLocation', `%${loc}%`);
+          dataQuery = dataQuery.ilike('fromLocation', `%${loc}%`);
+        } else {
+          countQuery = countQuery.or(`fromLocation.ilike.%${loc}%,toLocation.ilike.%${loc}%`);
+          dataQuery = dataQuery.or(`fromLocation.ilike.%${loc}%,toLocation.ilike.%${loc}%`);
+        }
       }
       if (item) {
         countQuery = countQuery.ilike('itemName', `%${item}%`);
@@ -411,7 +420,23 @@ async function apiPost(pathStr, body) {
       return { success: true, message: 'ขนย้าย ' + body.itemName + ' จำนวน ' + qty + ' เรียบร้อย' };
     }
 
-    if (pathStr === '/api/inventory/adjust') {
+    if (pathStr === '/api/pending/create-adjust') {
+        const d = new Date().toISOString();
+        const { error: err3 } = await supabaseClient.from('store_pending_moves').insert([{
+          date: d,
+          from_location: 'ปรับยอด',
+          to_location: body.location,
+          reporter: body.adjusterName,
+          carrier: '-',
+          remark: body.remark || 'รอการอนุมัติปรับยอด',
+          items: [{ itemName: body.itemName, quantitySent: body.newQuantity, quantityReceived: body.newQuantity, currentQty: body.currentQty }],
+          status: 'รอรับ'
+        }]);
+        if (err3) throw err3;
+        return { success: true, message: 'ส่งคำขอปรับยอดไปที่รอรับแล้ว' };
+      }
+      
+      if (pathStr === '/api/inventory/adjust') {
       const { data: items, error: err1 } = await supabaseClient.from('store_items').select('*').eq('name', body.itemName);
       if (err1) throw err1;
       if (!items || items.length === 0) throw new Error('ไม่พบรายการ ' + body.itemName);
@@ -749,9 +774,12 @@ async function loadHistory(reset) {
   var loc = document.getElementById('histFilterLoc') ? document.getElementById('histFilterLoc').value.trim() : '';
   var item = document.getElementById('histFilterItem') ? document.getElementById('histFilterItem').value.trim() : '';
   
+  var dir = document.getElementById('histFilterDir') ? document.getElementById('histFilterDir').value : '';
+  
   var url = '/api/history?page=' + state.historyPage + '&limit=30';
   if (loc) url += '&loc=' + encodeURIComponent(loc);
   if (item) url += '&item=' + encodeURIComponent(item);
+  if (dir) url += '&dir=' + encodeURIComponent(dir);
   
   var data = await apiGet(url);
   state.historyTotal = data.total || 0;
@@ -776,7 +804,10 @@ function switchPage(page) {
   var sBtn = document.getElementById('snav-' + page);
   if (sBtn) sBtn.classList.add('active');
   state.currentPage = page;
-  if (page === 'history') loadHistory(true);
+  if (page === 'history') {
+      updateHistoryDatalists();
+      loadHistory(true);
+    }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -785,7 +816,7 @@ function getLocIcon(loc) {
   if (!loc) return '📦';
   var name = typeof loc === 'string' ? loc : loc.name;
   var type = typeof loc === 'object' ? loc.type : null;
-  if (name.includes('ร้านค้า') || name.includes('เช่า')) return '🏪';
+  if (name.includes('ร้านค้า')) return '🏪';
   if (name.includes('ร้านซ่อม') || name.includes('ซ่อม')) return '🔧';
   if (name.includes('สูญหาย') || name.includes('หาย')) return '🚫';
   if (name.includes('จำหน่าย') || name.includes('ทิ้ง') || name.includes('ตัดออก')) return '🗑️';
@@ -1444,7 +1475,7 @@ function renderHistoryList() {
           '</div></div>';
       }
 
-      var itemUndoHtml = '<button onclick="showUndoModal(\'' + h.id + '\')" style="margin-top:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:10px;font-family:\'Sarabun\',sans-serif;font-weight:600;display:inline-block;">🔙 ยกเลิก</button>';
+      var itemUndoHtml = state.currentUser.role === 'ผู้ใช้งาน' ? '' : '<button onclick="showUndoModal(\'' + h.id + '\')" style="margin-top:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:10px;font-family:\'Sarabun\',sans-serif;font-weight:600;display:inline-block;">🔙 ยกเลิก</button>';
 
       return '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
@@ -2309,3 +2340,14 @@ function notifyParentModalState(isOpen) {
     } catch(e){}
   }
 }
+
+  function updateHistoryDatalists() {
+    var locDl = document.getElementById('histLocList');
+    var itemDl = document.getElementById('histItemList');
+    if (locDl && state.locations) {
+      locDl.innerHTML = state.locations.map(function(l) { return '<option value="' + esc(l.name) + '"></option>'; }).join('');
+    }
+    if (itemDl && state.items) {
+      itemDl.innerHTML = state.items.map(function(i) { return '<option value="' + esc(i.name) + '"></option>'; }).join('');
+    }
+  }
