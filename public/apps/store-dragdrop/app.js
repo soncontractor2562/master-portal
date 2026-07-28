@@ -1861,99 +1861,92 @@ function openReceiveModal(id) {
   notifyParentModalState(true);
   var p = state.pending.find(function(x) { return x.id === id; });
   if (!p) return;
-  // Deep copy the entire object to preserve date, carrier, reporter, remark
   currentReceiveMove = JSON.parse(JSON.stringify(p));
   
   var meta = document.getElementById('receiveMeta');
-  meta.innerHTML = 'ต้นทาง: ' + p.from_location + '<br>ปลายทาง: ' + p.to_location + '<br>หมายเหตุ: ' + (p.remark || '-');
-  
   var list = document.getElementById('receiveItemsList');
-  var canEdit = (state.currentUser.role !== 'ผู้ดูแลสโตร์'); // Admin or User can edit
-  
-  var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
-  
-  // Set confirm button text based on role
   var confirmBtn = document.getElementById('confirmReceiveBtn');
-  if (confirmBtn) {
-    if (state.currentUser.role === 'ผู้ใช้งาน') {
-      confirmBtn.innerHTML = '✅ ยืนยันการรับของ';
-    } else {
-      confirmBtn.innerHTML = '🔄 ยืนยันการส่งใหม่';
-    }
-  }
-  
-  list.innerHTML = p.items.map(function(item, idx) {
-    var sentQtyHtml = '';
-    if (isStoreOrAdmin) {
-      sentQtyHtml = 'ยอดส่ง: <input type="number" id="sentQty_' + idx + '" class="form-input" style="width:75px; padding:4px; text-align:center; display:inline-block;" value="' + item.quantitySent + '" min="0">';
-    } else {
-      sentQtyHtml = 'ยอดส่ง: <span style="font-weight:700; color:#38bdf8;">' + item.quantitySent + '</span>';
-    }
-    
-    var hasBeenReported = item.receiver !== undefined && item.receiver !== null && item.receiver.trim() !== '';
-    var rcvValue = hasBeenReported ? item.quantityReceived : '';
-
-    return '<div style="background:rgba(30,41,59,0.5); padding:10px; border-radius:8px;">' +
-      '<div style="font-weight:700; color:#e2e8f0; margin-bottom:6px;">' + item.itemName + '</div>' +
-      '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-        '<div style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:4px;">' + sentQtyHtml + '</div>' +
-        '<div style="display:flex; align-items:center; gap:6px;">' +
-          '<span style="font-size:12px; color:#cbd5e1;">ยอดรับ:</span>' +
-          '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:75px; padding:6px; text-align:center; font-size:16px !important;" value="' + rcvValue + '" ' + (canEdit ? '' : 'disabled') + ' min="0" placeholder="ระบุ...">' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  
-  // Force complete button for Admin / Store (ONLY after recipient reported count)
   var forceBtn = document.getElementById('forceCompleteBtn');
-  var hasReported = p.items.every(function(it) {
-    return it.quantityReceived !== undefined && it.quantityReceived !== null && it.receiver && it.receiver.trim() !== '';
-  });
-  if ((state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') && hasReported) {
-    forceBtn.style.display = 'block';
+  var adjustConfirmBtn = document.getElementById('confirmAdjustReceiveBtn');
+  var detailsGrid = document.getElementById('receiveDetailsGrid');
+
+  if (p.from_location === 'ปรับยอด') {
+    meta.innerHTML = 'ประเภท: <b>ขอปรับยอด</b><br>สถานที่: ' + p.to_location + '<br>ผู้ขอปรับ: ' + (p.reporter || '-') + '<br>หมายเหตุ: ' + (p.remark || '-');
+    list.innerHTML = p.items.map(function(item) {
+      return '<div style="background:rgba(30,41,59,0.5); padding:14px; border-radius:8px; text-align:center;">' +
+        '<div style="font-weight:700; color:#e2e8f0; margin-bottom:10px; font-size:16px;">' + item.itemName + '</div>' +
+        '<div style="font-size:14px; color:#cbd5e1;">ยอดใหม่ที่ต้องการปรับ: <span style="font-size:24px; color:#38bdf8; font-weight:800; margin-left:8px;">' + item.quantitySent + '</span></div>' +
+        '</div>';
+    }).join('');
+    
+    if (detailsGrid) detailsGrid.style.display = 'none';
+    if (confirmBtn) confirmBtn.style.display = 'none';
+    if (forceBtn) forceBtn.style.display = 'none';
+    if (adjustConfirmBtn) {
+      adjustConfirmBtn.style.display = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') ? 'block' : 'none';
+    }
   } else {
-    forceBtn.style.display = 'none';
-  }
-  
-  // Set confirm button text dynamically based on role
-  var confirmBtn = document.getElementById('confirmReceiveBtn');
-  if (confirmBtn) {
-    if (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน') {
-      confirmBtn.innerHTML = '🔄 ยืนยันการส่งใหม่';
-    } else {
-      confirmBtn.innerHTML = '✅ ยืนยันการรับของ';
+    meta.innerHTML = 'ต้นทาง: ' + p.from_location + '<br>ปลายทาง: ' + p.to_location + '<br>หมายเหตุ: ' + (p.remark || '-');
+    var canEdit = (state.currentUser.role !== 'ผู้ดูแลสโตร์');
+    var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
+    
+    list.innerHTML = p.items.map(function(item, idx) {
+      var sentQtyHtml = isStoreOrAdmin ? 
+        'ยอดส่ง: <input type="number" id="sentQty_' + idx + '" class="form-input" style="width:75px; padding:4px; text-align:center; display:inline-block;" value="' + item.quantitySent + '" min="0">' : 
+        'ยอดส่ง: <span style="font-weight:700; color:#38bdf8;">' + item.quantitySent + '</span>';
+      
+      var hasBeenReported = item.receiver !== undefined && item.receiver !== null && item.receiver.trim() !== '';
+      var rcvValue = hasBeenReported ? item.quantityReceived : '';
+
+      return '<div style="background:rgba(30,41,59,0.5); padding:10px; border-radius:8px;">' +
+        '<div style="font-weight:700; color:#e2e8f0; margin-bottom:6px;">' + item.itemName + '</div>' +
+        '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+          '<div style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:4px;">' + sentQtyHtml + '</div>' +
+          '<div style="display:flex; align-items:center; gap:6px;">' +
+            '<span style="font-size:12px; color:#cbd5e1;">ยอดรับ:</span>' +
+            '<input type="number" id="rcvQty_' + idx + '" class="form-input" style="width:75px; padding:6px; text-align:center; font-size:16px !important;" value="' + rcvValue + '" ' + (canEdit ? '' : 'disabled') + ' min="0" placeholder="ระบุ...">' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    
+    if (detailsGrid) detailsGrid.style.display = 'grid'; // .receive-details-grid uses grid
+    
+    var hasReported = p.items.every(function(it) {
+      return it.quantityReceived !== undefined && it.quantityReceived !== null && it.receiver && it.receiver.trim() !== '';
+    });
+    
+    if (forceBtn) {
+      forceBtn.style.display = (isStoreOrAdmin && hasReported) ? 'block' : 'none';
+      forceBtn.innerHTML = '🚨 บังคับจบงาน (สูญหาย)';
+    }
+    if (confirmBtn) {
+      confirmBtn.style.display = 'block';
+      confirmBtn.innerHTML = isStoreOrAdmin ? '🔄 ยืนยันการส่งใหม่' : '✅ ยืนยันการรับของ';
+    }
+    if (adjustConfirmBtn) adjustConfirmBtn.style.display = 'none';
+
+    // Initialize date and receiver inputs
+    var savedReceiver = p.items[0] && p.items[0].receiver;
+    var savedDate = p.items[0] && p.items[0].receiveDate;
+    var dateInput = document.getElementById('receiveDate');
+    if (dateInput) {
+      if (savedDate) dateInput.value = savedDate;
+      else {
+        var today = new Date();
+        dateInput.value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+      }
+    }
+    var receiverInput = document.getElementById('receiveReceiver');
+    if (receiverInput) {
+      if (savedReceiver) receiverInput.value = savedReceiver;
+      else if (state.currentUser.role === 'ผู้ใช้งาน') receiverInput.value = state.currentUser.name || state.currentUser.username || '';
+      else receiverInput.value = '';
     }
   }
 
-  // Initialize receive details
-  var savedReceiver = p.items[0] && p.items[0].receiver;
-  var savedDate = p.items[0] && p.items[0].receiveDate;
-  
-  var dateInput = document.getElementById('receiveDate');
-  if (dateInput) {
-    if (savedDate) {
-      dateInput.value = savedDate;
-    } else {
-      var today = new Date();
-      var yyyy = today.getFullYear();
-      var mm = String(today.getMonth() + 1).padStart(2, '0');
-      var dd = String(today.getDate()).padStart(2, '0');
-      dateInput.value = yyyy + '-' + mm + '-' + dd;
-    }
-  }
-  var receiverInput = document.getElementById('receiveReceiver');
-  if (receiverInput) {
-    if (savedReceiver) {
-      receiverInput.value = savedReceiver;
-    } else if (state.currentUser.role === 'ผู้ใช้งาน') {
-      receiverInput.value = state.currentUser.name || state.currentUser.username || '';
-    } else {
-      receiverInput.value = '';
-    }
-  }
-
-  document.body.classList.add('modal-open'); if (window.triggerModalLayoutUpdate) window.triggerModalLayoutUpdate();
+  document.body.classList.add('modal-open'); 
+  if (window.triggerModalLayoutUpdate) window.triggerModalLayoutUpdate();
   document.getElementById('receiveModal').style.display = 'flex';
 }
 
