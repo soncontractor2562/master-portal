@@ -268,38 +268,56 @@ async function apiPost(pathStr, body) {
         const qSent = Number(m.quantitySent || 0);
         const diff = qSent - qRcv;
         
-        if (qRcv > 0) {
-          item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + qRcv;
+        if (move.from_location === 'ปรับยอด') {
+          const prev = item.quantities[move.to_location] || 0;
+          item.quantities[move.to_location] = qRcv;
           histories.push({
             date: new Date().toISOString(),
-            type: 'ขนย้าย',
+            type: 'ปรับยอด',
             itemName: m.itemName,
-            quantity: qRcv,
-            fromLocation: move.from_location,
+            quantity: Math.abs(qRcv - prev),
+            fromLocation: move.to_location,
             toLocation: move.to_location,
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + (move.receiver && move.receiver !== '-' ? ' โดย ' + move.receiver : '') + ']' : ''),
-            balanceFrom: item.quantities[move.from_location] || 0,
-            balanceTo: item.quantities[move.to_location] || 0
+            remark: (move.remark || '') + ' [ยืนยันการปรับ]',
+            balanceFrom: prev,
+            balanceTo: qRcv
           });
-        }
-        
-        if (diff > 0) {
-          item.quantities['สูญหาย'] = (item.quantities['สูญหาย'] || 0) + diff;
-          histories.push({
-            date: new Date().toISOString(),
-            type: 'สูญหาย',
-            itemName: m.itemName,
-            quantity: diff,
-            fromLocation: move.from_location,
-            toLocation: 'สูญหาย',
-            receiver: move.receiver || '-',
-            reporter: move.reporter,
-            remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + (move.receiver && move.receiver !== '-' ? ' โดย ' + move.receiver : '') + ']' : ''),
-            balanceFrom: (item.quantities['สูญหาย'] || 0) - diff,
-            balanceTo: item.quantities['สูญหาย'] || 0
-          });
+        } else {
+          if (qRcv > 0) {
+            item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + qRcv;
+            histories.push({
+              date: new Date().toISOString(),
+              type: 'ขนย้าย',
+              itemName: m.itemName,
+              quantity: qRcv,
+              fromLocation: move.from_location,
+              toLocation: move.to_location,
+              receiver: move.receiver || '-',
+              reporter: move.reporter,
+              remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + (move.receiver && move.receiver !== '-' ? ' โดย ' + move.receiver : '') + ']' : ''),
+              balanceFrom: item.quantities[move.from_location] || 0,
+              balanceTo: item.quantities[move.to_location] || 0
+            });
+          }
+          
+          if (diff > 0) {
+            item.quantities['สูญหาย'] = (item.quantities['สูญหาย'] || 0) + diff;
+            histories.push({
+              date: new Date().toISOString(),
+              type: 'สูญหาย',
+              itemName: m.itemName,
+              quantity: diff,
+              fromLocation: move.from_location,
+              toLocation: 'สูญหาย',
+              receiver: move.receiver || '-',
+              reporter: move.reporter,
+              remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + (move.receiver && move.receiver !== '-' ? ' โดย ' + move.receiver : '') + ']' : ''),
+              balanceFrom: (item.quantities['สูญหาย'] || 0) - diff,
+              balanceTo: item.quantities['สูญหาย'] || 0
+            });
+          }
         }
         
         await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
