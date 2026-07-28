@@ -112,6 +112,8 @@ async function apiPost(pathStr, body) {
       }
       
       for (const m of move.items) {
+        if (move.from_location === 'ปรับยอด') continue; // Do not refund adjustments to dummy location
+        
         const { data: itemsDB, error: err2 } = await supabaseClient.from('store_items').select('*').eq('name', m.itemName);
         if (err2) throw err2;
         if (!itemsDB || itemsDB.length === 0) continue;
