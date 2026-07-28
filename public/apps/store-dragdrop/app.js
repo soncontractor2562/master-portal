@@ -51,15 +51,31 @@ async function apiGet(pathStr) {
       return { success: true, settings: { appTitle: 'Store Manager V1' } };
     }
     if (pathStr.startsWith('/api/history')) {
-      const page = parseInt(pathStr.split('page=')[1]) || 1;
-      const limit = parseInt(pathStr.split('limit=')[1]) || 30;
-      const { count, error: countErr } = await supabaseClient.from('store_history').select('*', { count: 'exact', head: true });
+      const qsStr = pathStr.split('?')[1] || '';
+      const params = new URLSearchParams(qsStr);
+      const page = parseInt(params.get('page')) || 1;
+      const limit = parseInt(params.get('limit')) || 30;
+      const loc = params.get('loc') || '';
+      const item = params.get('item') || '';
+      
+      let countQuery = supabaseClient.from('store_history').select('*', { count: 'exact', head: true });
+      let dataQuery = supabaseClient.from('store_history').select('*').order('date', { ascending: false });
+      
+      if (loc) {
+        countQuery = countQuery.or(`fromLocation.ilike.%${loc}%,toLocation.ilike.%${loc}%`);
+        dataQuery = dataQuery.or(`fromLocation.ilike.%${loc}%,toLocation.ilike.%${loc}%`);
+      }
+      if (item) {
+        countQuery = countQuery.ilike('itemName', `%${item}%`);
+        dataQuery = dataQuery.ilike('itemName', `%${item}%`);
+      }
+      
+      const { count, error: countErr } = await countQuery;
       if (countErr) throw countErr;
-      const histRes = await supabaseClient.from('store_history')
-        .select('*')
-        .order('date', { ascending: false })
-        .range((page-1)*limit, (page*limit)-1);
+      
+      const histRes = await dataQuery.range((page-1)*limit, (page*limit)-1);
       if (histRes.error) throw histRes.error;
+      
       return { success: true, total: count || 0, history: histRes.data || [] };
     }
     return { success: true };
@@ -172,7 +188,7 @@ async function apiPost(pathStr, body) {
         if (err2) throw err2;
         
         histories.push({
-          date: move.receiveDate || move.date || new Date().toISOString(),
+          date: new Date().toISOString(),
           type: 'ขนย้าย',
           itemName: m.itemName,
           quantity: Number(m.quantityReceived),
@@ -246,7 +262,7 @@ async function apiPost(pathStr, body) {
         if (qRcv > 0) {
           item.quantities[move.to_location] = (item.quantities[move.to_location] || 0) + qRcv;
           histories.push({
-            date: move.receiveDate || move.date || new Date().toISOString(),
+            date: new Date().toISOString(),
             type: 'ขนย้าย',
             itemName: m.itemName,
             quantity: qRcv,
@@ -254,7 +270,7 @@ async function apiPost(pathStr, body) {
             toLocation: move.to_location,
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: move.remark,
+            remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + new Date(move.receiveDate).toLocaleDateString('th-TH') + ']' : ''),
             balanceFrom: item.quantities[move.from_location] || 0,
             balanceTo: item.quantities[move.to_location] || 0
           });
@@ -263,7 +279,7 @@ async function apiPost(pathStr, body) {
         if (diff > 0) {
           item.quantities['สูญหาย'] = (item.quantities['สูญหาย'] || 0) + diff;
           histories.push({
-            date: move.receiveDate || new Date().toISOString(),
+            date: new Date().toISOString(),
             type: 'สูญหาย',
             itemName: m.itemName,
             quantity: diff,
@@ -271,7 +287,7 @@ async function apiPost(pathStr, body) {
             toLocation: 'สูญหาย',
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: 'ยอดขาดจากการส่ง',
+            remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + new Date(move.receiveDate).toLocaleDateString('th-TH') + ']' : ''),
             balanceFrom: (item.quantities['สูญหาย'] || 0) - diff,
             balanceTo: item.quantities['สูญหาย'] || 0
           });
@@ -292,8 +308,19 @@ async function apiPost(pathStr, body) {
       const moves = body.moves;
       if (!moves || moves.length === 0) throw new Error('ไม่มีรายการขนย้าย');
       
-      const d = body.date ? new Date(body.date).toISOString() : new Date().toISOString();
+      let fullRemark = body.remark || '';
+      if (body.sender) fullRemark = '[ผู้ส่ง: ' + body.sender + '] ' + fullRemark;
+      if (body.date) fullRemark += ' [รับจริง: ' + new Date(body.date).toLocaleDateString('th-TH') + ']';
+      
+      const d = new Date().toISOString(); // ALWAYS use current timestamp for history and pending
+      
+      // เช็คว่าปลายทางเป็นไซต์งานหรือไม่
+      const { data: locs, error: locErr } = await supabaseClient.from('store_locations').select('*').eq('name', body.toLocation);
+      if (locErr) throw locErr;
+      const isSite = locs && locs.length > 0 && locs[0].type === 'ไซต์งาน';
+      
       const pendingItems = [];
+      const histories = [];
       
       for (let i = 0; i < moves.length; i++) {
         const m = moves[i];
@@ -308,33 +335,58 @@ async function apiPost(pathStr, body) {
         
         item.quantities[body.fromLocation] = cf - qty;
         
-        // 1. ตัดสต็อกต้นทางอย่างเดียว
-        const { error: err2 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
-        if (err2) throw err2;
-        
-        pendingItems.push({
-          itemName: m.itemName,
-          quantitySent: qty
-        });
+        if (isSite) {
+          // ถ้าเป็นไซต์งาน ให้ไปรอรับ (Pending)
+          const { error: err2 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+          if (err2) throw err2;
+          
+          pendingItems.push({
+            itemName: m.itemName,
+            quantitySent: qty
+          });
+        } else {
+          // ถ้าไม่ใช่ไซต์งาน บวกปลายทางทันที
+          item.quantities[body.toLocation] = (item.quantities[body.toLocation] || 0) + qty;
+          const { error: err2 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+          if (err2) throw err2;
+          
+          histories.push({
+            date: d,
+            type: 'ขนย้าย',
+            itemName: m.itemName,
+            quantity: qty,
+            fromLocation: body.fromLocation,
+            toLocation: body.toLocation,
+            carrier: body.carrier || '',
+            receiver: body.receiver || '',
+            reporter: body.reporter || '',
+            remark: fullRemark,
+            balanceFrom: cf - qty,
+            balanceTo: item.quantities[body.toLocation]
+          });
+        }
       }
       
-      let fullRemark = body.remark || '';
-      if (body.sender) fullRemark = '[ผู้ส่ง: ' + body.sender + '] ' + fullRemark;
-      
-      // 2. สร้าง record ใน store_pending_moves
-      const { error: err3 } = await supabaseClient.from('store_pending_moves').insert([{
-        date: d,
-        from_location: body.fromLocation,
-        to_location: body.toLocation,
-        reporter: body.reporter || '',
-        carrier: body.carrier || '',
-        remark: fullRemark,
-        items: pendingItems,
-        status: 'รอรับ'
-      }]);
-      if (err3) throw err3;
-      
-      return { success: true, message: 'ส่งรายการ ' + moves.length + ' ชิ้นไปที่รอรับแล้ว' };
+      if (isSite) {
+        const { error: err3 } = await supabaseClient.from('store_pending_moves').insert([{
+          date: d,
+          from_location: body.fromLocation,
+          to_location: body.toLocation,
+          reporter: body.reporter || '',
+          carrier: body.carrier || '',
+          remark: fullRemark,
+          items: pendingItems,
+          status: 'รอรับ'
+        }]);
+        if (err3) throw err3;
+        return { success: true, message: 'ส่งรายการ ' + moves.length + ' ชิ้นไปที่รอรับแล้ว' };
+      } else {
+        if (histories.length > 0) {
+          const { error: err3 } = await supabaseClient.from('store_history').insert(histories);
+          if (err3) throw err3;
+        }
+        return { success: true, message: 'ขนย้าย ' + moves.length + ' ชิ้นเสร็จสมบูรณ์' };
+      }
     }
 
     if (pathStr === '/api/inventory/move') {
@@ -682,10 +734,26 @@ async function loadInventory() {
   renderInventoryLocationFilter();
 }
 
+let histFilterTimeout = null;
+function filterHistory() {
+  if (histFilterTimeout) clearTimeout(histFilterTimeout);
+  histFilterTimeout = setTimeout(function() {
+    loadHistory(true);
+  }, 500);
+}
+
 async function loadHistory(reset) {
   if (reset === undefined) reset = true;
   if (reset) { state.historyPage = 1; state.history = []; }
-  var data = await apiGet('/api/history?page=' + state.historyPage + '&limit=30');
+  
+  var loc = document.getElementById('histFilterLoc') ? document.getElementById('histFilterLoc').value.trim() : '';
+  var item = document.getElementById('histFilterItem') ? document.getElementById('histFilterItem').value.trim() : '';
+  
+  var url = '/api/history?page=' + state.historyPage + '&limit=30';
+  if (loc) url += '&loc=' + encodeURIComponent(loc);
+  if (item) url += '&item=' + encodeURIComponent(item);
+  
+  var data = await apiGet(url);
   state.historyTotal = data.total || 0;
   state.history = reset ? (data.history || []) : state.history.concat(data.history || []);
   renderHistoryList();

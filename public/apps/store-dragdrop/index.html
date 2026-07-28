@@ -624,6 +624,12 @@
         <div class="page-header-title">ประวัติ</div>
         <div style="font-size:12px;color:var(--muted);" id="historyCount">-</div>
       </div>
+      
+      <div style="padding: 0 20px; display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+        <input type="text" id="histFilterLoc" placeholder="ค้นหาสถานที่..." oninput="filterHistory()" class="form-input" style="flex:1; min-width: 120px; padding: 10px; border-radius: 10px;">
+        <input type="text" id="histFilterItem" placeholder="ค้นหาชื่อวัสดุ..." oninput="filterHistory()" class="form-input" style="flex:1; min-width: 120px; padding: 10px; border-radius: 10px;">
+      </div>
+        
       <div class="page-body">
         <div id="historyList"></div>
         <button id="historyLoadMore" onclick="loadMoreHistory()" style="display:none;width:100%;margin-top:12px;padding:12px;background:rgba(30,41,59,0.7);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;">โหลดเพิ่มเติม...</button>
@@ -907,7 +913,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=1.4"></script>
+<script src="app.js?v=1.5"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>
