@@ -35,14 +35,19 @@ export default function App() {
     const handleBlur = (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
         setTimeout(() => {
+          const active = document.activeElement;
+          // If the next focused element is still an input, don't reset the scroll
+          if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+            return;
+          }
           window.scrollTo(0, 0);
           document.body.scrollTop = 0;
-        }, 100);
+        }, 150);
       }
     };
 
-    window.addEventListener('blur', handleBlur, true);
-    return () => window.removeEventListener('blur', handleBlur, true);
+    window.addEventListener('focusout', handleBlur, true);
+    return () => window.removeEventListener('focusout', handleBlur, true);
   }, []);
 
 
