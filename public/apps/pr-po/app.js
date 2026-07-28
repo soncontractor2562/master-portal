@@ -1091,3 +1091,16 @@ window.onload = function() {
     // Set custom styles and load icons
     lucide.createIcons();
 };
+
+
+/* Fix Mobile Keyboard Push-up */
+document.addEventListener('focusout', function(e) {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+    setTimeout(function() {
+      const active = document.activeElement;
+      if (active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)) return;
+      window.scrollTo(0, 0);
+      if (window.parent) window.parent.scrollTo(0, 0);
+    }, 150);
+  }
+});
