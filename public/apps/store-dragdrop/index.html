@@ -403,8 +403,8 @@
       .page-body { padding: 18px 20px; }
     }
 
-    /* ===== RESPONSIVE: Desktop (768px+) ===== */
-    @media (min-width: 768px) {
+    /* ===== RESPONSIVE: Desktop (500px+) ===== */
+    @media (min-width: 500px) {
       .sidebar { display: flex; }
       .navbar { display: none; }
       .main-content { margin-left: var(--sidebar-width); padding-bottom: 0; }
@@ -442,7 +442,7 @@
     }
 
     /* ===== DESKTOP RESPONSIVE LAYOUT OPTIMIZATIONS ===== */
-    @media (min-width: 768px) {
+    @media (min-width: 500px) {
       /* Grid columns for Inventory List */
       .inv-items-container {
         display: grid !important;
@@ -826,7 +826,7 @@
 
 <!-- ========== MODAL: RECEIVE ========== -->
 <div class="modal-overlay" id="receiveModal" onclick="closeReceiveModal(event)">
-  <div class="modal-sheet" style="display: flex; flex-direction: column; padding-bottom: 20px;">
+  <div class="modal-sheet" style="padding-bottom: 20px;">
     <div class="modal-handle"></div>
     <div class="modal-title">📥 ตรวจรับของ</div>
     <div style="font-size:13px; color:var(--muted); margin-bottom:12px;" id="receiveMeta"></div>
@@ -854,7 +854,7 @@
 
 <!-- ========== MODAL: MOVE ========== -->
 <div class="modal-overlay" id="moveModal" onclick="closeMoveModal(event)">
-  <div class="modal-sheet move-modal-sheet" style="display: flex; flex-direction: column; padding-bottom: 20px;">
+  <div class="modal-sheet move-modal-sheet" style="padding-bottom: 20px;">
     <div class="modal-handle"></div>
     <div class="modal-title">🚛 บันทึกการขนย้าย</div>
     
