@@ -1327,8 +1327,9 @@ function renderHistoryList() {
   container.innerHTML = groups.map(function(group) {
     var first = group[0];
     var isMove = first.type === 'ขนย้าย';
-    var dotColor = isMove ? '#3b82f6' : '#f59e0b';
-    var dotEmoji = isMove ? '🚛' : '⚖️';
+    var isLost = first.type === 'สูญหาย';
+    var dotColor = isMove ? '#3b82f6' : (isLost ? '#ef4444' : '#f59e0b');
+    var dotEmoji = isMove ? '🚛' : (isLost ? '🚫' : '⚖️');
     var dateStr = first.date ? formatDate(new Date(first.date)) : '-';
     
     var routeHtml = '';
@@ -1339,9 +1340,17 @@ function renderHistoryList() {
         '<span style="font-size:12px;color:#4ade80;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">' + first.toLocation + '</span>' +
         '</div>';
     } else {
-      routeHtml = '<div style="background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;margin-bottom:12px;">' +
-        '<span style="font-size:12px;color:#fbbf24;font-weight:600;">' + (first.fromLocation || first.toLocation || '-') + '</span>' +
-        '</div>';
+      if (isLost) {
+        routeHtml = '<div style="background:rgba(239,68,68,0.1);border-radius:10px;padding:8px 12px;margin-bottom:12px;border:1px solid rgba(239,68,68,0.2);">' +
+          '<span style="font-size:12px;color:#f87171;font-weight:700;">' + (first.fromLocation || '-') + '</span>' +
+          '<span style="color:#ef4444;font-size:14px;margin:0 8px;">→</span>' +
+          '<span style="font-size:12px;color:#f87171;font-weight:700;">สูญหาย (ยอดขาด)</span>' +
+          '</div>';
+      } else {
+        routeHtml = '<div style="background:rgba(15,23,42,0.5);border-radius:10px;padding:8px 12px;margin-bottom:12px;">' +
+          '<span style="font-size:12px;color:#fbbf24;font-weight:600;">' + (first.fromLocation || first.toLocation || '-') + '</span>' +
+          '</div>';
+      }
     }
       
     var metaHtml = (first.reporter || first.carrier || first.remark) ?
@@ -1376,7 +1385,11 @@ function renderHistoryList() {
         balanceHtml +
         '</div>' +
         '<div style="text-align:right;flex-shrink:0;">' +
-        '<div style="font-size:16px;font-weight:800;color:#e2e8f0;font-family:\'Outfit\',sans-serif;">' + h.quantity + '</div>' +
+        (() => {
+            var qtyDisplay = (h.type === 'สูญหาย' || h.type === 'นำออก' || h.type === 'ทิ้ง') ? ('-' + h.quantity) : (h.type === 'นำเข้า' ? ('+' + h.quantity) : h.quantity);
+            var qtyColor = (h.type === 'สูญหาย' || h.type === 'นำออก' || h.type === 'ทิ้ง') ? '#ef4444' : (h.type === 'นำเข้า' ? '#4ade80' : '#e2e8f0');
+            return '<div style="font-size:16px;font-weight:800;color:' + qtyColor + ';font-family:\'Outfit\',sans-serif;">' + qtyDisplay + '</div>';
+          })() +
         itemUndoHtml +
         '</div></div></div>';
     }).join('<div style="height:8px;"></div>');
