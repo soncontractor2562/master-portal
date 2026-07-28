@@ -279,7 +279,7 @@ async function apiPost(pathStr, body) {
             toLocation: move.to_location,
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + ']' : ''),
+            remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + (move.receiver && move.receiver !== '-' ? ' โดย ' + move.receiver : '') + ']' : ''),
             balanceFrom: item.quantities[move.from_location] || 0,
             balanceTo: item.quantities[move.to_location] || 0
           });
@@ -296,7 +296,7 @@ async function apiPost(pathStr, body) {
             toLocation: 'สูญหาย',
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + ']' : ''),
+            remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + (move.receiver && move.receiver !== '-' ? ' โดย ' + move.receiver : '') + ']' : ''),
             balanceFrom: (item.quantities['สูญหาย'] || 0) - diff,
             balanceTo: item.quantities['สูญหาย'] || 0
           });
@@ -319,7 +319,7 @@ async function apiPost(pathStr, body) {
       
       let fullRemark = body.remark || '';
       if (body.sender) fullRemark = '[ผู้ส่ง: ' + body.sender + '] ' + fullRemark;
-      if (body.date) fullRemark += ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(body.date) + ']';
+      if (body.date) fullRemark += ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(body.date) + (body.receiver && body.receiver !== '-' ? ' โดย ' + body.receiver : '') + ']';
       
       const d = new Date().toISOString(); // ALWAYS use current timestamp for history and pending
       
@@ -1380,6 +1380,31 @@ async function confirmAdjust() {
   var remark = document.getElementById('adjustRemark').value.trim();
   if (newQty === '' || Number(newQty) < 0) { showToast('กรุณาระบุจำนวน', 'error'); return; }
   if (!adjuster) { showToast('กรุณาระบุชื่อผู้ปรับยอด', 'error'); return; }
+  
+  if (state.currentUser.role === 'ผู้ใช้งาน') {
+    var locObj = state.locations.find(function(l) { return l.name === state.adjustLocation; });
+    var isSite = locObj && locObj.type === 'ไซต์งาน' && !locObj.name.includes('เช่า');
+    if (!isSite) {
+      showToast('ผู้ใช้งานปรับยอดได้เฉพาะในไซต์งานเท่านั้น', 'error');
+      return;
+    }
+    
+    try {
+      var res = await apiPost('/api/pending/create-adjust', {
+        itemName: state.adjustItem, location: state.adjustLocation,
+        newQuantity: Number(newQty), currentQty: state.adjustCurrentQty,
+        adjusterName: adjuster, remark: remark
+      });
+      showToast(res.message, 'success');
+      document.getElementById('adjustModal').style.display = 'none';
+      await loadInventory();
+      return;
+    } catch (err) {
+      showToast(err.message, 'error');
+      return;
+    }
+  }
+
   try {
     var res = await apiPost('/api/inventory/adjust', {
       itemName: state.adjustItem, location: state.adjustLocation,
