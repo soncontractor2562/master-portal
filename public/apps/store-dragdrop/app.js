@@ -1530,8 +1530,16 @@ function renderHistoryList() {
         '</div>' +
         '<div style="text-align:right;flex-shrink:0;">' +
         (() => {
-            var qtyDisplay = (h.type === 'สูญหาย' || h.type === 'นำออก' || h.type === 'ทิ้ง') ? ('-' + h.quantity) : (h.type === 'นำเข้า' ? ('+' + h.quantity) : h.quantity);
-            var qtyColor = (h.type === 'สูญหาย' || h.type === 'นำออก' || h.type === 'ทิ้ง') ? '#ef4444' : (h.type === 'นำเข้า' ? '#4ade80' : '#e2e8f0');
+            var isAdj = h.type === 'ปรับยอด';
+            var adjDiff = isAdj ? (h.balanceTo - h.balanceFrom) : 0;
+            var isLoss = h.type === 'สูญหาย' || h.type === 'นำออก' || h.type === 'ทิ้ง' || (isAdj && adjDiff < 0);
+            var isGain = h.type === 'นำเข้า' || (isAdj && adjDiff > 0);
+            
+            var qtyPrefix = isLoss ? '-' : (isGain ? '+' : '');
+            var qtyDisplay = isAdj ? (qtyPrefix + Math.abs(adjDiff)) : (qtyPrefix + h.quantity);
+            var qtyColor = isLoss ? '#ef4444' : (isGain ? '#4ade80' : '#e2e8f0');
+            if (isAdj && adjDiff === 0) qtyColor = '#94a3b8';
+            
             return '<div style="font-size:16px;font-weight:800;color:' + qtyColor + ';font-family:\'Outfit\',sans-serif;">' + qtyDisplay + '</div>';
           })() +
         itemUndoHtml +
