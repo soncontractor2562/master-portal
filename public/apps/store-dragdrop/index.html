@@ -397,52 +397,35 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    /* ===== RESPONSIVE: Tablet (640px+) ===== */
+    
+    /* ===== RESPONSIVE: Tablet & iPad (640px+) ===== */
     @media (min-width: 640px) {
       #locGridContent { grid-template-columns: repeat(3, 1fr); }
       .page-body { padding: 18px 20px; }
+      
+      /* Make modals float in center instead of bottom sheet on iPad/Tablet */
+      .modal-overlay { align-items: center; justify-content: center; padding: 20px; }
+      .modal-sheet { 
+        border-radius: 24px; 
+        border: 1px solid var(--border); 
+        max-height: 90vh; 
+        max-width: 600px; 
+        margin: auto; 
+        padding: 32px; 
+      }
+      .modal-handle { display: none; }
     }
 
-    /* ===== RESPONSIVE: Desktop (500px+) ===== */
-    @media (min-width: 500px) {
+    /* ===== RESPONSIVE: Desktop & iPad Landscape (900px+ OR scaled PC) ===== */
+    @media (min-width: 900px), (min-width: 500px) and (pointer: fine) {
       .sidebar { display: flex; }
       .navbar { display: none; }
       .main-content { margin-left: var(--sidebar-width); padding-bottom: 0; }
       #locGridContent { grid-template-columns: repeat(4, 1fr); gap: 14px; }
-      .modal-overlay { align-items: center; justify-content: center; }
-      .modal-sheet { border-radius: 24px; border: 1px solid var(--border); max-height: 92vh; max-width: 750px; margin: 20px; padding: 32px; }
-      .modal-handle { display: none; }
       .top-bar { padding: 18px 24px 14px; }
       .page-body { padding: 20px 24px; }
-      
-      /* ให้สถานที่ห่อบรรทัด (Wrap) บนจอคอมเพื่อการใช้งานที่ง่ายขึ้น */
       .filter-row { flex-wrap: wrap; overflow-x: visible; }
-    }
 
-    /* ===== RESPONSIVE: Large Desktop (1280px+) ===== */
-    @media (min-width: 1280px) {
-      #locGridContent { grid-template-columns: repeat(5, 1fr); gap: 16px; }
-    }
-    /* Common layout for mobile/small screens (vertical fallback) */
-    .modal-columns-container {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      flex: 1;
-      min-height: 0;
-    }
-    .modal-column-left, .modal-column-right {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0;
-    }
-    .modal-column-left {
-      flex-shrink: 0;
-    }
-
-    /* ===== DESKTOP RESPONSIVE LAYOUT OPTIMIZATIONS ===== */
-    @media (min-width: 500px) {
       /* Grid columns for Inventory List */
       .inv-items-container {
         display: grid !important;
@@ -491,9 +474,9 @@
 
       /* Multi column move modal on desktop */
       .move-modal-sheet {
-        max-width: 1100px !important;
+        max-width: 1000px !important;
         width: 100% !important;
-        max-height: 95vh !important;
+        max-height: 90vh !important;
       }
       .modal-columns-container {
         display: flex;
@@ -516,144 +499,6 @@
       #moveItemsContainer {
         height: 350px !important;
       }
-    }
-
-    /* Receive details grid styles (1 column on mobile, 2 on desktop) */
-    .receive-details-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-shrink: 0;
-    }
-    @media (min-width: 641px) {
-      .receive-details-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-    .receive-details-grid > div {
-      min-width: 0 !important;
-      width: 100% !important;
-    }
-    .receive-details-grid input,
-    #receiveDate,
-    #receiveReceiver {
-      -webkit-appearance: none !important;
-      appearance: none !important;
-      min-width: 0 !important;
-      width: 100% !important;
-      height: 48px !important;
-      min-height: 48px !important;
-      max-height: 48px !important;
-      padding: 10px 14px !important;
-      font-size: 16px !important;
-      line-height: 1.4 !important;
-      box-sizing: border-box !important;
-      border-radius: 12px !important;
-      display: block !important;
-    }
-    /* ===== FIX MOBILE IOS SAFARI AUTO-ZOOM & PUSHUP BUG ===== */
-    @media screen and (max-width: 768px) {
-      input, select, textarea, .form-input {
-        font-size: 16px !important;
-      }
-    }
-    html.modal-open,
-    body.modal-open {
-      overflow: hidden !important;
-      touch-action: pan-x pan-y;
-    }
-    /* Hide floating navbar & menu button when any modal is open to prevent overlapping */
-    body.modal-open .navbar,
-    body.modal-open .mobile-menu-btn,
-    body.modal-open #mobileMenuBtn {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      transition: opacity 0.2s ease;
-    }
-  
-  
-    /* ===== COMPREHENSIVE MOBILE MODAL & VIEWPORT FIXES ===== */
-    html.modal-open, body.modal-open {
-      overflow: hidden !important;
-      height: 100dvh !important;
-      touch-action: none !important;
-    }
-
-    /* Hide floating action / hamburger buttons when modal is open */
-    body.modal-open .hamburger-btn,
-    body.modal-open .floating-btn,
-    body.modal-open .mobile-menu-btn,
-    body.modal-open #mobileMenuBtn,
-    body.modal-open nav,
-    body.modal-open .navbar {
-      display: none !important;
-    }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      top: 0; left: 0; right: 0; bottom: 0;
-      height: 100dvh;
-      width: 100vw;
-      z-index: 9999;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(4px);
-      align-items: flex-end;
-      justify-content: center;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
-    .modal-sheet {
-      width: 100%;
-      max-width: 540px;
-      background: #1a2840;
-      border-radius: 24px 24px 0 0;
-      border: 1px solid var(--border);
-      border-bottom: none;
-      padding: 20px 20px 24px;
-      max-height: 88dvh;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      animation: slideUp .3s ease;
-      will-change: transform, height, max-height;
-      box-sizing: border-box;
-    }
-
-    .modal-title, .modal-handle, #receiveMeta, .receive-details-grid, .modal-actions, .modal-footer {
-      flex-shrink: 0 !important;
-    }
-
-    /* Scrollable middle container inside modal */
-    #receiveItemsList, #moveItemsContainer, .modal-body-scroll {
-      flex: 1 1 auto !important;
-      min-height: 60px !important;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch !important;
-    }
-
-  
-    /* ===== LIFT MODAL SHEET ABOVE SAFARI BOTTOM BAR & SAFE AREA ===== */
-    .modal-overlay {
-      padding: 12px 12px calc(16px + env(safe-area-inset-bottom, 16px)) 12px !important;
-      align-items: flex-end !important;
-      box-sizing: border-box !important;
-    }
-
-    .modal-sheet {
-      width: 100% !important;
-      max-width: 540px !important;
-      background: #1a2840 !important;
-      border-radius: 24px !important; /* Full rounded corners top and bottom */
-      border: 1px solid var(--border) !important;
-      padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 12px)) 20px !important;
-      max-height: 80dvh !important;
-      max-height: 80vh !important;
-      margin-bottom: calc(8px + env(safe-area-inset-bottom, 8px)) !important;
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
     }
 
   </style>
@@ -854,7 +699,7 @@
 
 <!-- ========== MODAL: MOVE ========== -->
 <div class="modal-overlay" id="moveModal" onclick="closeMoveModal(event)">
-  <div class="modal-sheet move-modal-sheet" style="padding-bottom: 20px; width: 1000px !important; max-width: 95vw !important;">
+  <div class="modal-sheet move-modal-sheet" style="padding-bottom: 20px;">
     <div class="modal-handle"></div>
     <div class="modal-title">🚛 บันทึกการขนย้าย</div>
     
