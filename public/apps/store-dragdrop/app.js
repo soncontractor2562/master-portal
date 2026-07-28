@@ -1873,9 +1873,26 @@ function openReceiveModal(id) {
   if (p.from_location === 'ปรับยอด') {
     meta.innerHTML = 'ประเภท: <b>ขอปรับยอด</b><br>สถานที่: ' + p.to_location + '<br>ผู้ขอปรับ: ' + (p.reporter || '-') + '<br>หมายเหตุ: ' + (p.remark || '-');
     list.innerHTML = p.items.map(function(item) {
+      var oldQty = item.currentQty || 0;
+      var newQty = item.quantitySent || 0;
+      var diff = newQty - oldQty;
+      var diffStr = diff > 0 ? ('+' + diff) : (diff < 0 ? diff : '0');
+      var diffColor = diff > 0 ? '#4ade80' : (diff < 0 ? '#f87171' : '#94a3b8');
+
       return '<div style="background:rgba(30,41,59,0.5); padding:14px; border-radius:8px; text-align:center;">' +
         '<div style="font-weight:700; color:#e2e8f0; margin-bottom:10px; font-size:16px;">' + item.itemName + '</div>' +
-        '<div style="font-size:14px; color:#cbd5e1;">ยอดใหม่ที่ต้องการปรับ: <span style="font-size:24px; color:#38bdf8; font-weight:800; margin-left:8px;">' + item.quantitySent + '</span></div>' +
+        '<div style="display:flex; justify-content:center; align-items:center; gap:20px;">' +
+          '<div style="text-align:right;">' +
+            '<div style="font-size:12px; color:#94a3b8;">ยอดเดิม</div>' +
+            '<div style="font-size:18px; color:#cbd5e1; font-weight:700;">' + oldQty + '</div>' +
+          '</div>' +
+          '<div style="color:#64748b;">➔</div>' +
+          '<div style="text-align:left;">' +
+            '<div style="font-size:12px; color:#38bdf8;">ยอดใหม่</div>' +
+            '<div style="font-size:24px; color:#38bdf8; font-weight:800;">' + newQty + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:13px; margin-top:12px; font-weight:600; color:' + diffColor + ';">ส่วนต่าง: ' + diffStr + '</div>' +
         '</div>';
     }).join('');
     
