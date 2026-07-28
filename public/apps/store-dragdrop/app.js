@@ -1049,7 +1049,7 @@ async function confirmMove() {
   if (moveDateInput) {
     var parts = moveDateInput.split('-');
     if (parts.length === 3) {
-      var displayDate = parts[2] + '/' + parts[1] + '/' + parts[0];
+      var displayDate = parts[2] + '/' + parts[1] + '/' + (Number(parts[0]) + 543);
       remark = '[วันที่ขนจริง: ' + displayDate + '] ' + remark;
     }
   }
