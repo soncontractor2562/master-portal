@@ -705,6 +705,7 @@
     <div style="display:flex; gap:10px; margin-top:10px;">
       <button id="confirmReceiveBtn" onclick="confirmReceive()" class="btn-primary" style="flex:1.2;">✅ ยืนยันการรับของ</button>
       <button id="forceCompleteBtn" onclick="forceCompleteReceive()" class="btn-primary" style="background:#ef4444; display:none; flex:1;">🚨 บังคับจบงาน (สูญหาย)</button>
+      <button id="confirmAdjustReceiveBtn" onclick="confirmAdjustReceive()" class="btn-primary" style="background:#3b82f6; display:none; flex:1;">✅ ยืนยันยอดนี้</button>
       <button onclick="closeReceiveModal()" class="btn-primary btn-ghost" style="flex:0.8;">ปิด</button>
     </div>
   </div>
@@ -920,7 +921,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=2.1"></script>
+<script src="app.js?v=2.2"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>
