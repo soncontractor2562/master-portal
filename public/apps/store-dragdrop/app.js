@@ -2392,3 +2392,35 @@ function notifyParentModalState(isOpen) {
       itemDl.innerHTML = state.items.map(function(i) { return '<option value="' + esc(i.name) + '"></option>'; }).join('');
     }
   }
+
+
+async function confirmAdjustReceive() {
+  if (state.currentUser.role === 'ผู้ใช้งาน') {
+    showToast('ผู้ใช้งานทั่วไปไม่สามารถอนุมัติได้', 'error');
+    return;
+  }
+  if (!currentReceiveMove) return;
+  
+  if (!confirm('ยืนยันอนุมัติการปรับยอดนี้?')) return;
+  
+  // Set default values for date and receiver since they are hidden
+  var today = new Date();
+  var rcvDate = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  var rcvReceiver = state.currentUser.name || state.currentUser.username || 'สโตร์';
+
+  currentReceiveMove.items.forEach(function(it) {
+    it.receiveDate = rcvDate;
+    it.receiver = rcvReceiver;
+    // ensure quantityReceived is same as quantitySent
+    it.quantityReceived = it.quantitySent;
+  });
+
+  try {
+    var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
+    showToast(res.message, 'success');
+    closeReceiveModal();
+    await loadPending();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
