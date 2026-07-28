@@ -1461,7 +1461,7 @@ function renderHistoryList() {
     var isSameType = h.type === cgFirst.type;
     var isSameMeta = h.reporter === cgFirst.reporter && h.carrier === cgFirst.carrier && h.remark === cgFirst.remark;
 
-    if (timeDiff <= 60000 && isSameLocation && isSameType && isSameMeta) {
+    if (timeDiff <= 300000 && isSameLocation && isSameType && isSameMeta) {
       currentGroup.push(h);
     } else {
       groups.push([h]);
@@ -2465,3 +2465,116 @@ document.addEventListener('focusout', function(e) {
     }, 150);
   }
 });
+
+
+// ==================== EXPORT SYSTEM ====================
+
+function escapeHtmlStr(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function exportToExcel() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Excel Library is loading... please try again.', 'error');
+    return;
+  }
+  var data = [];
+  var d = new Date();
+  var dateStr = d.getDate() + '/' + (d.getMonth()+1) + '/' + (d.getFullYear()+543);
+  var validLocs = state.locations.filter(function(l) { return l.name !== 'ปรับยอด'; });
+  
+  state.items.forEach(function(it, index) {
+    var row = {
+      'ลำดับ': index + 1,
+      'วันที่เอกสาร': dateStr,
+      'หมวดหมู่': it.category || '-',
+      'ชื่อวัสดุ': it.name,
+      'ยอดรวมทั้งหมด': (it.quantity || 0)
+    };
+    validLocs.forEach(function(loc) {
+      row[loc.name] = (it.quantities && it.quantities[loc.name]) ? it.quantities[loc.name] : 0;
+    });
+    data.push(row);
+  });
+  
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+  
+  var safeDateStr = dateStr.replace(/\//g, '-');
+  XLSX.writeFile(wb, "รายงานสต็อก_" + safeDateStr + ".xlsx");
+  showToast('ดาวน์โหลด Excel สำเร็จ', 'success');
+}
+
+function generateReportTableHtml() {
+  var d = new Date();
+  var dateStr = d.getDate() + '/' + (d.getMonth()+1) + '/' + (d.getFullYear()+543);
+  var html = '<div id="pdfExportWrap" style="padding:20px; font-family:\'Sarabun\',sans-serif; width:100%; background:white; color:black;">';
+  html += '<h2 style="text-align:center; margin-bottom:10px; font-size:18px;">รายงานสต็อกวัสดุ-อุปกรณ์</h2>';
+  html += '<div style="text-align:right; margin-bottom:10px; font-size:12px;">วันที่ออกรายงาน: ' + dateStr + '</div>';
+  html += '<table style="width:100%; border-collapse:collapse; font-size:10px;" border="1">';
+  html += '<thead style="background:#f1f5f9;"><tr>';
+  html += '<th style="padding:4px;border:1px solid #cbd5e1;">ลำดับ</th>';
+  html += '<th style="padding:4px;border:1px solid #cbd5e1;">หมวดหมู่</th>';
+  html += '<th style="padding:4px;border:1px solid #cbd5e1;">ชื่อวัสดุ</th>';
+  html += '<th style="padding:4px;border:1px solid #cbd5e1;">รวม</th>';
+  
+  var validLocs = state.locations.filter(function(l) { return l.name !== 'ปรับยอด'; });
+  validLocs.forEach(function(l) {
+    html += '<th style="padding:4px;border:1px solid #cbd5e1;white-space:nowrap;writing-mode:horizontal-tb;">' + escapeHtmlStr(l.name) + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  
+  state.items.forEach(function(it, index) {
+    html += '<tr>';
+    html += '<td style="padding:4px;border:1px solid #cbd5e1;text-align:center;">' + (index+1) + '</td>';
+    html += '<td style="padding:4px;border:1px solid #cbd5e1;">' + escapeHtmlStr(it.category || '-') + '</td>';
+    html += '<td style="padding:4px;border:1px solid #cbd5e1;">' + escapeHtmlStr(it.name) + '</td>';
+    html += '<td style="padding:4px;border:1px solid #cbd5e1;text-align:center;font-weight:bold;">' + (it.quantity || 0) + '</td>';
+    validLocs.forEach(function(l) {
+      var qty = (it.quantities && it.quantities[l.name]) ? it.quantities[l.name] : 0;
+      html += '<td style="padding:4px;border:1px solid #cbd5e1;text-align:center;">' + qty + '</td>';
+    });
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function exportToPDF() {
+  if (typeof window.html2pdf === 'undefined') {
+    showToast('PDF Library is loading... please try again.', 'error');
+    return;
+  }
+  var html = generateReportTableHtml();
+  var container = document.createElement('div');
+  container.innerHTML = html;
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '297mm'; // A4 landscape width
+  document.body.appendChild(container);
+  
+  var d = new Date();
+  var dateStr = d.getDate() + '-' + (d.getMonth()+1) + '-' + (d.getFullYear()+543);
+  
+  var opt = {
+    margin:       [10, 10, 10, 10], // mm
+    filename:     'รายงานสต็อก_' + dateStr + '.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+  };
+  
+  showToast('กำลังเตรียมไฟล์ PDF กรุณารอสักครู่...', 'info');
+  
+  html2pdf().set(opt).from(container.firstChild).save().then(function() {
+    document.body.removeChild(container);
+    showToast('ดาวน์โหลด PDF สำเร็จ', 'success');
+  }).catch(function(err) {
+    document.body.removeChild(container);
+    showToast('เกิดข้อผิดพลาดในการสร้าง PDF', 'error');
+  });
+}

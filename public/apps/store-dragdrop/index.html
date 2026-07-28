@@ -501,7 +501,8 @@
       }
     }
 
-  </style>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -585,6 +586,8 @@
       <div class="page-header">
         <div class="page-header-title">ทะเบียนวัสดุ</div>
         <div class="page-header-actions">
+          <button id="exportExcelBtn" onclick="exportToExcel()" class="icon-btn" title="ส่งออก Excel" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);">📊 Excel</button>
+          <button id="exportPDFBtn" onclick="exportToPDF()" class="icon-btn" title="ส่งออก PDF" style="color:#f43f5e; border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);">📄 PDF</button>
           <button id="sortToggleBtn" onclick="toggleSortMode()" class="icon-btn" title="จัดเรียง">☰ Sort</button>
           <button id="addInventoryBtn" onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เพิ่มของ</button>
         </div>
@@ -921,7 +924,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="app.js?v=3.6"></script>
+<script src="app.js?v=2.7"></script>
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>
