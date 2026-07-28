@@ -279,7 +279,7 @@ async function apiPost(pathStr, body) {
             toLocation: move.to_location,
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + new Date(move.receiveDate).toLocaleDateString('th-TH') + ']' : ''),
+            remark: move.remark + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + ']' : ''),
             balanceFrom: item.quantities[move.from_location] || 0,
             balanceTo: item.quantities[move.to_location] || 0
           });
@@ -296,7 +296,7 @@ async function apiPost(pathStr, body) {
             toLocation: 'สูญหาย',
             receiver: move.receiver || '-',
             reporter: move.reporter,
-            remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + new Date(move.receiveDate).toLocaleDateString('th-TH') + ']' : ''),
+            remark: 'ยอดขาดจากการส่ง' + (move.receiveDate ? ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(move.receiveDate) + ']' : ''),
             balanceFrom: (item.quantities['สูญหาย'] || 0) - diff,
             balanceTo: item.quantities['สูญหาย'] || 0
           });
@@ -319,7 +319,7 @@ async function apiPost(pathStr, body) {
       
       let fullRemark = body.remark || '';
       if (body.sender) fullRemark = '[ผู้ส่ง: ' + body.sender + '] ' + fullRemark;
-      if (body.date) fullRemark += ' [รับจริง: ' + new Date(body.date).toLocaleDateString('th-TH') + ']';
+      if (body.date) fullRemark += ' [รับจริง: ' + (function(d){var _d=new Date(d);return _d.getDate().toString().padStart(2,'0')+'/'+(_d.getMonth()+1).toString().padStart(2,'0')+'/'+(_d.getFullYear()+543);})(body.date) + ']';
       
       const d = new Date().toISOString(); // ALWAYS use current timestamp for history and pending
       
@@ -692,10 +692,10 @@ function applyUserRole() {
     document.getElementById('addInventoryBtn').style.display = isUser ? 'none' : 'block';
   }
   if (document.getElementById('nav-move')) {
-    document.getElementById('nav-move').style.display = isUser ? 'none' : 'flex';
+    document.getElementById('nav-move').style.display = 'flex';
   }
   if (document.getElementById('snav-move')) {
-    document.getElementById('snav-move').style.display = isUser ? 'none' : 'flex';
+    document.getElementById('snav-move').style.display = 'flex';
   }
   
   if (isUser && state.currentPage === 'move') {
@@ -1541,6 +1541,12 @@ async function confirmUndo() {
 // ====== SETTINGS MODAL ======
 async function showSettingsModal() {
   document.getElementById('settingsModal').style.display = 'flex';
+  var isUser = state.currentUser.role === 'ผู้ใช้งาน';
+  document.querySelectorAll('#settingsModal .section-card').forEach(function(el) {
+    if (el.querySelector('.section-title')) {
+      el.style.display = isUser ? 'none' : 'block';
+    }
+  });
   // Also load all locations for the location section
   try {
     var data = await apiGet('/api/locations');
