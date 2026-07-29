@@ -126,8 +126,8 @@ function App() {
   const [filterAssignee, setFilterAssignee] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   
-  // Default to weekOffset = -1 (20-26 Jul week) so all user tasks are immediately visible
-  const [weekOffset, setWeekOffset] = useState(-1);
+  // Default to weekOffset = 0 (This Week)
+  const [weekOffset, setWeekOffset] = useState(0);
 
   // Edit State
   const [editingTask, setEditingTask] = useState(null);
