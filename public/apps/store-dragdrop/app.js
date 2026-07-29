@@ -100,6 +100,22 @@ async function apiPost(pathStr, body) {
     if (!supabaseClient) throw new Error("Supabase is not initialized.");
     // (Omitted other post commands for brevity in this fallback testing, wait no, I MUST include them all!)
     
+
+    const restrictedActions = [
+      '/api/inventory/rename-item',
+      '/api/inventory/change-item-category',
+      '/api/locations/rename',
+      '/api/categories/rename',
+      '/api/inventory/delete-item',
+      '/api/categories/delete',
+      '/api/locations/delete'
+    ];
+    if (restrictedActions.includes(pathStr)) {
+      if (!state.currentUser || state.currentUser.role === 'ผู้ใช้งาน') {
+        throw new Error('ไม่มีสิทธิ์ดำเนินการ (เฉพาะผู้ดูแลสโตร์ หรือ แอดมิน)');
+      }
+    }
+
     if (pathStr === '/api/pending/cancel') {
       const { id } = body;
       const { data: moves, error: err1 } = await supabaseClient.from('store_pending_moves').select('*').eq('id', id);
@@ -1638,7 +1654,8 @@ function renderCategoryManageList() {
   container.innerHTML = state.allCategories.map(function(cat) {
     return '<div class="cat-manage-row">' +
       '<div style="flex:1;font-size:13px;font-weight:600;color:#e2e8f0;">📂 ' + cat + '</div>' +
-      '<button onclick="startRenameCat(\'' + esc(cat) + '\')" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:6px 12px;border-radius:9px;cursor:pointer;font-size:12px;font-family:\'Sarabun\',sans-serif;">✏️ เปลี่ยนชื่อ</button>' +
+      '<button onclick="startRenameCat(\'' + esc(cat) + '\')" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:6px 12px;border-radius:9px;cursor:pointer;font-size:12px;font-family:\'Sarabun\',sans-serif;margin-right:8px;">✏️ เปลี่ยนชื่อ</button>' +
+      '<button onclick="startDeleteCat(\'' + esc(cat) + '\')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:6px 12px;border-radius:9px;cursor:pointer;font-size:12px;font-family:\'Sarabun\',sans-serif;">🗑️ ลบ</button>' +
       '</div>';
   }).join('');
 }
@@ -1679,6 +1696,7 @@ function renderLocationManageList() {
       '<div style="font-size:11px;color:#64748b;">' + getLocTypeLabel(loc.type) + '</div>' +
       '</div>' +
       '<button onclick="startRenameLocation(\'' + esc(loc.name) + '\')" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px;font-family:\'Sarabun\',sans-serif;margin-right:8px;">✏️</button>' +
+      '<button onclick="startDeleteLocation(\'' + esc(loc.name) + '\')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px;font-family:\'Sarabun\',sans-serif;margin-right:8px;">🗑️</button>' +
       '<label class="toggle-switch">' +
       '<input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleArchiveLocation(\'' + esc(loc.name) + '\', this.checked)" />' +
       '<span class="toggle-slider"></span>' +
@@ -2577,4 +2595,47 @@ function exportToPDF() {
     document.body.removeChild(container);
     showToast('เกิดข้อผิดพลาดในการสร้าง PDF', 'error');
   });
+}
+// ==================== DELETE FUNCTIONS ====================
+async function deleteCurrentItem() {
+  if (!currentDetailItem) return;
+  if (!confirm('ยืนยันการลบวัสดุ "' + currentDetailItem.name + '" อย่างถาวร?')) return;
+  try {
+    var res = await apiPost('/api/inventory/delete-item', { itemName: currentDetailItem.name });
+    showToast(res.message, 'success');
+    closeItemDetailModal();
+    await loadInventory();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function startDeleteCat(catName) {
+  if (!confirm('ยืนยันการลบหมวดหมู่ "' + catName + '"?\n(วัสดุในหมวดนี้จะไม่ถูกลบ แต่จะกลายเป็น "ไม่มีหมวดหมู่")')) return;
+  try {
+    var res = await apiPost('/api/categories/delete', { name: catName });
+    showToast(res.message, 'success');
+    state.allCategories = state.allCategories.filter(c => c !== catName);
+    state.catOrder = state.catOrder.filter(c => c !== catName);
+    saveCatOrder();
+    renderCategoryManageList();
+    updateCategoryDatalist();
+    await loadInventory();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function startDeleteLocation(locName) {
+  if (!confirm('ยืนยันการลบสถานที่ "' + locName + '" ถาวร?\n⚠️ ยอดคงเหลือของวัสดุที่อยู่ในสถานที่นี้จะหายไปจากตารางทันที')) return;
+  try {
+    var res = await apiPost('/api/locations/delete', { name: locName });
+    showToast(res.message, 'success');
+    var data = await apiGet('/api/locations');
+    state.allLocations = data.locations || [];
+    renderLocationManageList();
+    await loadInventory();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }

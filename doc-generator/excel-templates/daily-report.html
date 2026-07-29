@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบรายงานประจำวัน - บันทึกงานก่อสร้าง</title>
+<style>
+  :root{
+    --ink:#1f2a24;
+    --paper:#fbfaf6;
+    --line:#c9c2ab;
+    --accent:#2f5233;
+    --accent-soft:#e7ede4;
+    --gold:#a8792f;
+    --danger:#a13a2f;
+    --gray:#6b6558;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Sarabun","TH Sarabun New","Segoe UI",sans-serif;
+    background:#e9e5d8;
+    color:var(--ink);
+  }
+  .app{
+    max-width:1000px;
+    margin:0 auto;
+    padding:24px 20px 80px;
+  }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .topbar h1{
+    font-size:20px;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  .topbar .sub{
+    font-size:12.5px;
+    color:var(--gray);
+    margin-top:2px;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+  }
+  .tabs button{
+    border:1px solid var(--line);
+    background:#fff;
+    padding:8px 14px;
+    border-radius:8px 8px 0 0;
+    font-size:14px;
+    cursor:pointer;
+    color:var(--gray);
+  }
+  .tabs button.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+    margin-bottom:18px;
+  }
+  .card h2{
+    font-size:15px;
+    margin:0 0 14px;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--accent);
+    color:var(--accent);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px;
+  }
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--gray);
+    margin-bottom:4px;
+  }
+  input[type=text],input[type=date],input[type=number],textarea,select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:8px 10px;
+    font-size:14px;
+    font-family:inherit;
+    background:#fff;
+    color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:70px;}
+  .field{margin-bottom:4px;}
+  .radio-row{display:flex;gap:18px;align-items:center;height:38px;}
+  .radio-row label{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink);margin:0;}
+  table.entry-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+  }
+  table.entry-table th,table.entry-table td{
+    border:1px solid var(--line);
+    padding:6px 8px;
+    text-align:left;
+  }
+  table.entry-table th{
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-weight:600;
+  }
+  table.entry-table input{
+    border:none;
+    background:transparent;
+    padding:4px;
+    width:100%;
+    font-size:13.5px;
+  }
+  table.entry-table input:focus{
+    outline:1px solid var(--accent);
+    background:#fff;
+    border-radius:4px;
+  }
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{
+    border:1px solid var(--line);
+    background:#fff;
+    width:26px;height:26px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+    color:var(--gray);
+  }
+  .icon-btn.danger{color:var(--danger);border-color:#e2b6ab;}
+  .add-row-btn{
+    margin-top:10px;
+    border:1px dashed var(--accent);
+    background:transparent;
+    color:var(--accent);
+    padding:7px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13.5px;
+  }
+  .clock-wrap{
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .legend{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    font-size:13px;
+    min-width:220px;
+  }
+  .legend .item{display:flex;align-items:center;gap:8px;}
+  .swatch{width:16px;height:16px;border-radius:3px;border:1px solid rgba(0,0,0,.15);}
+  .hint{font-size:12px;color:var(--gray);margin-top:6px;}
+  .btnbar{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin-top:6px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink);}
+  .list-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fff;
+    margin-bottom:8px;
+  }
+  .list-card .meta b{display:block;font-size:14px;}
+  .list-card .meta span{font-size:12.5px;color:var(--gray);}
+  .list-card .actions{display:flex;gap:8px;}
+  .empty{
+    text-align:center;
+    color:var(--gray);
+    padding:40px 0;
+    font-size:14px;
+  }
+
+  /* ---- Report preview / print ---- */
+  #reportView{display:none;}
+  .report-page{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:26px 30px;
+    font-size:12.5px;
+    color:#000;
+  }
+  .rp-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:2px solid #000;
+    padding-bottom:8px;
+    margin-bottom:10px;
+  }
+  .rp-header .logo{
+    display:flex;align-items:center;gap:10px;
+  }
+  .rp-header .logo img{height:44px;}
+  .rp-header .company{font-weight:700;font-size:15px;}
+  .rp-header .title{font-weight:700;font-size:15px;}
+  .rp-meta-row{display:flex;flex-wrap:wrap;gap:6px 24px;margin-bottom:8px;font-size:12.5px;}
+  .rp-meta-row div{white-space:nowrap;}
+  table.rp-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px;}
+  table.rp-table th,table.rp-table td{border:1px solid #000;padding:4px 6px;}
+  table.rp-table th{background:#eee;text-align:center;}
+  .rp-section-title{
+    background:#dfe7db;
+    font-weight:700;
+    padding:4px 8px;
+    border:1px solid #000;
+    border-bottom:none;
+    font-size:12.5px;
+  }
+  .rp-issues{border:1px solid #000;min-height:60px;padding:6px 8px;font-size:12.5px;white-space:pre-wrap;}
+  .rp-two-col{display:flex;gap:16px;margin-top:10px;}
+  .rp-two-col > div{flex:1;}
+  .rp-clock-box{border:1px solid #000;padding:8px;display:flex;flex-direction:column;align-items:center;}
+  .rp-legend{font-size:11px;margin-top:6px;width:100%;}
+  .rp-legend div{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+  .rp-legend .sw{width:12px;height:12px;border:1px solid #333;display:inline-block;}
+  .rp-three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;}
+  .rp-sign{margin-top:24px;text-align:right;font-size:12.5px;}
+  .rp-sign .line{margin-bottom:4px;}
+
+  @media print{
+    body{background:#fff;}
+    .app{max-width:100%;padding:0;}
+    .topbar,.tabs,.card:not(#printableCard),.btnbar,.no-print{display:none !important;}
+    #reportView{display:block !important;}
+    .report-page{border:none;padding:0;}
+  }
+  @media (max-width:640px){
+    .rp-two-col,.rp-three{flex-direction:column;display:block;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar no-print">
+    <div>
+      <h1>ระบบบันทึกรายงานประจำวันหน้างาน</h1>
+      <div class="sub">กรอกข้อมูล → บันทึก → ดูตัวอย่าง/พิมพ์เป็น PDF</div>
+    </div>
+    <div class="tabs">
+      <button id="tabFormBtn" class="active" onclick="showTab('form')">กรอกข้อมูล</button>
+      <button id="tabListBtn" onclick="showTab('list')">รายงานที่บันทึกไว้</button>
+      <button id="tabCompanyBtn" onclick="showTab('company')">ตั้งค่าบริษัท</button>
+    </div>
+  </div>
+
+  <!-- ============ FORM TAB ============ -->
+  <div id="formTab">
+
+    <div class="card">
+      <h2>ข้อมูลโครงการ</h2>
+      <div class="grid">
+        <div class="field">
+          <label>ชื่อโครงการ</label>
+          <input type="text" id="f_project" placeholder="เช่น ปรับปรุงอาคารสำนักงาน...">
+        </div>
+        <div class="field">
+          <label>วันที่</label>
+          <input type="date" id="f_date">
+        </div>
+        <div class="field">
+          <label>ประเภทวันทำงาน</label>
+          <div class="radio-row">
+            <label><input type="radio" name="worktype" value="ปกติ" checked> วันปกติ</label>
+            <label><input type="radio" name="worktype" value="วันหยุด"> วันหยุด</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>เวลาทำงาน</label>
+          <input type="text" id="f_time" placeholder="เช่น 8.00 - 17.00 น." value="8.00 - 17.00 น.">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>รายการปฏิบัติงาน</h2>
+      <table class="entry-table" id="taskTable">
+        <thead>
+          <tr>
+            <th style="width:36px;">ลำดับ</th>
+            <th>รายการ</th>
+            <th style="width:90px;">จำนวน</th>
+            <th style="width:80px;">หน่วย</th>
+            <th>หมายเหตุ</th>
+            <th style="width:40px;"></th>
+          </tr>
+        </thead>
+        <tbody id="taskBody"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addTask()">+ เพิ่มรายการ</button>
+    </div>
+
+    <div class="card">
+      <h2>ปัญหาและอุปสรรค / ข้อคิดเห็น</h2>
+      <textarea id="f_issues" placeholder="ระบุปัญหาที่พบระหว่างวัน..."></textarea>
+    </div>
+
+    <div class="card">
+      <h2>สภาพอากาศ (คลิกเพื่อไล่สีแต่ละช่วงเวลา)</h2>
+      <div class="clock-wrap">
+        <svg id="clockSvg" width="220" height="220" viewBox="0 0 220 220"></svg>
+        <div class="legend">
+          <div class="item"><span class="swatch" style="background:#4a8c3f"></span> ทำงานได้ปกติ</div>
+          <div class="item"><span class="swatch" style="background:#e0b93c"></span> ฝนตกเล็กน้อย ทำงานได้บางส่วน</div>
+          <div class="item"><span class="swatch" style="background:#3f6fa8"></span> ฝนตกปานกลาง ทำงานได้น้อย</div>
+          <div class="item"><span class="swatch" style="background:#b23b2f"></span> ฝนตกหนัก / ทำงานไม่ได้</div>
+          <div class="hint">คลิกที่แต่ละช่องบนหน้าปัดนาฬิกาเพื่อสลับสถานะของชั่วโมงนั้น</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>แรงงาน</h2>
+      <table class="entry-table" id="laborTable">
+        <thead><tr><th>ตำแหน่ง</th><th style="width:100px;">จำนวน</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="laborBody"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addRow('labor')">+ เพิ่มตำแหน่ง</button>
+    </div>
+
+    <div class="card">
+      <h2>เครื่องจักร - อุปกรณ์</h2>
+      <table class="entry-table" id="equipTable">
+        <thead><tr><th>รายการ</th><th style="width:100px;">จำนวน</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="equipBody"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addRow('equip')">+ เพิ่มรายการ</button>
+    </div>
+
+    <div class="card">
+      <h2>วัสดุที่ใช้ผ่านงาน</h2>
+      <table class="entry-table" id="matTable">
+        <thead><tr><th>รายการ</th><th style="width:100px;">จำนวน</th><th style="width:40px;"></th></tr></thead>
+        <tbody id="matBody"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addRow('mat')">+ เพิ่มรายการ</button>
+    </div>
+
+    <div class="card">
+      <h2>ผู้บันทึกรายงาน</h2>
+      <div class="grid">
+        <div class="field">
+          <label>ชื่อ-สกุล</label>
+          <input type="text" id="f_signerName" placeholder="ชื่อผู้บันทึก">
+        </div>
+        <div class="field">
+          <label>ตำแหน่ง</label>
+          <input type="text" id="f_signerRole" placeholder="เช่น วิศวกรโครงการ">
+        </div>
+        <div class="field">
+          <label>วันที่บันทึก</label>
+          <input type="date" id="f_signerDate">
+        </div>
+      </div>
+    </div>
+
+    <div class="btnbar no-print">
+      <button class="btn ghost" onclick="clearForm()">ล้างฟอร์ม</button>
+      <button class="btn primary" onclick="saveReport()">💾 บันทึกรายงาน</button>
+      <button class="btn primary" onclick="previewAndPrint()">🖨️ ดูตัวอย่าง / พิมพ์ PDF</button>
+    </div>
+  </div>
+
+  <!-- ============ LIST TAB ============ -->
+  <div id="listTab" style="display:none;">
+    <div class="card">
+      <h2>รายงานที่บันทึกไว้</h2>
+      <div id="reportList"></div>
+    </div>
+  </div>
+
+  <!-- ============ COMPANY TAB ============ -->
+  <div id="companyTab" style="display:none;">
+    <div class="card">
+      <h2>ตั้งค่าบริษัท (ใช้แสดงบนหัวรายงาน)</h2>
+      <div class="grid">
+        <div class="field">
+          <label>ชื่อบริษัท</label>
+          <input type="text" id="c_name" placeholder="เช่น บริษัท ขัน คอนแทรคเตอร์ จำกัด">
+        </div>
+        <div class="field">
+          <label>โลโก้บริษัท (รูปภาพ)</label>
+          <input type="file" id="c_logo" accept="image/*" onchange="handleLogoUpload(event)">
+        </div>
+      </div>
+      <div class="btnbar no-print">
+        <button class="btn primary" onclick="saveCompany()">บันทึกการตั้งค่า</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PRINTABLE REPORT ============ -->
+  <div class="card no-print" id="previewCard" style="display:none;">
+    <h2>ตัวอย่างรายงาน</h2>
+    <div id="reportView"></div>
+    <div class="btnbar">
+      <button class="btn ghost" onclick="document.getElementById('previewCard').style.display='none'">ปิด</button>
+      <button class="btn primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF</button>
+    </div>
+  </div>
+
+  <div id="printableCard" style="display:none;">
+    <div class="report-page" id="printArea"></div>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'daily_reports_v1';
+const COMPANY_KEY = 'daily_reports_company_v1';
+const CLOCK_KEY = 'clock_state_temp';
+
+let clockState = new Array(12).fill(0); // 0=green,1=yellow,2=blue,3=red
+const clockColors = ['#4a8c3f','#e0b93c','#3f6fa8','#b23b2f'];
+
+function uid(){ return 'r_' + Date.now() + '_' + Math.floor(Math.random()*9999); }
+
+// ---------- Tabs ----------
+function showTab(name){
+  document.getElementById('formTab').style.display = name==='form' ? '' : 'none';
+  document.getElementById('listTab').style.display = name==='list' ? '' : 'none';
+  document.getElementById('companyTab').style.display = name==='company' ? '' : 'none';
+  document.getElementById('tabFormBtn').classList.toggle('active', name==='form');
+  document.getElementById('tabListBtn').classList.toggle('active', name==='list');
+  document.getElementById('tabCompanyBtn').classList.toggle('active', name==='company');
+  document.getElementById('previewCard').style.display='none';
+  if(name==='list') renderReportList();
+}
+
+// ---------- Task table ----------
+function addTask(item='', qty='', unit='งาน', note=''){
+  const tbody = document.getElementById('taskBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="rownum" style="text-align:center;"></td>
+    <td><input type="text" class="t-item" value="${escapeAttr(item)}" placeholder="รายละเอียดงาน"></td>
+    <td><input type="text" class="t-qty" value="${escapeAttr(qty)}" placeholder="1"></td>
+    <td><input type="text" class="t-unit" value="${escapeAttr(unit)}" placeholder="งาน"></td>
+    <td><input type="text" class="t-note" value="${escapeAttr(note)}"></td>
+    <td class="row-actions"><button class="icon-btn danger" onclick="this.closest('tr').remove(); renumberTasks();">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  renumberTasks();
+}
+function renumberTasks(){
+  document.querySelectorAll('#taskBody tr').forEach((tr,i)=>{
+    tr.querySelector('.rownum').textContent = i+1;
+  });
+}
+
+// ---------- Generic 2-col rows (labor/equip/mat) ----------
+function addRow(kind, name='', qty=''){
+  const bodyId = kind==='labor' ? 'laborBody' : kind==='equip' ? 'equipBody' : 'matBody';
+  const tbody = document.getElementById(bodyId);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="r-name" value="${escapeAttr(name)}"></td>
+    <td><input type="text" class="r-qty" value="${escapeAttr(qty)}"></td>
+    <td><button class="icon-btn danger" onclick="this.closest('tr').remove();">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function escapeAttr(s){
+  return String(s).replace(/"/g,'&quot;');
+}
+function escapeHtml(s){
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ---------- Weather clock ----------
+function drawClock(){
+  const svg = document.getElementById('clockSvg');
+  svg.innerHTML = '';
+  const cx=110, cy=110, rOuter=95, rInner=40;
+  for(let i=0;i<12;i++){
+    const startAngle = (i*30 - 90) * Math.PI/180;
+    const endAngle = ((i+1)*30 - 90) * Math.PI/180;
+    const x1 = cx + rInner*Math.cos(startAngle), y1 = cy + rInner*Math.sin(startAngle);
+    const x2 = cx + rOuter*Math.cos(startAngle), y2 = cy + rOuter*Math.sin(startAngle);
+    const x3 = cx + rOuter*Math.cos(endAngle), y3 = cy + rOuter*Math.sin(endAngle);
+    const x4 = cx + rInner*Math.cos(endAngle), y4 = cy + rInner*Math.sin(endAngle);
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d = `M ${x1} ${y1} L ${x2} ${y2} A ${rOuter} ${rOuter} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${rInner} ${rInner} 0 0 0 ${x1} ${y1} Z`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', clockColors[clockState[i]]);
+    path.setAttribute('stroke', '#fff');
+    path.setAttribute('stroke-width', '1.5');
+    path.style.cursor = 'pointer';
+    path.dataset.idx = i;
+    path.addEventListener('click', ()=>{
+      clockState[i] = (clockState[i]+1) % 4;
+      drawClock();
+    });
+    svg.appendChild(path);
+
+    // hour label
+    const labelAngle = (i*30 - 90 + 15) * Math.PI/180;
+    const lx = cx + (rOuter+14)*Math.cos(labelAngle);
+    const ly = cy + (rOuter+14)*Math.sin(labelAngle);
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    const hourNum = i+1;
+    label.setAttribute('x', lx);
+    label.setAttribute('y', ly+4);
+    label.setAttribute('text-anchor','middle');
+    label.setAttribute('font-size','10');
+    label.setAttribute('fill','#555');
+    label.textContent = hourNum;
+    svg.appendChild(label);
+  }
+  const centerCircle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  centerCircle.setAttribute('cx',cx); centerCircle.setAttribute('cy',cy);
+  centerCircle.setAttribute('r',rInner-1);
+  centerCircle.setAttribute('fill','#fff');
+  centerCircle.setAttribute('stroke','#ccc');
+  svg.appendChild(centerCircle);
+}
+
+// ---------- Collect / fill form ----------
+function collectForm(){
+  const tasks = [...document.querySelectorAll('#taskBody tr')].map((tr,i)=>({
+    no:i+1,
+    item: tr.querySelector('.t-item').value,
+    qty: tr.querySelector('.t-qty').value,
+    unit: tr.querySelector('.t-unit').value,
+    note: tr.querySelector('.t-note').value,
+  }));
+  const readPairs = (bodyId)=>[...document.querySelectorAll('#'+bodyId+' tr')].map(tr=>({
+    name: tr.querySelector('.r-name').value,
+    qty: tr.querySelector('.r-qty').value,
+  }));
+  return {
+    id: currentEditId || uid(),
+    project: document.getElementById('f_project').value,
+    date: document.getElementById('f_date').value,
+    workType: document.querySelector('input[name=worktype]:checked').value,
+    time: document.getElementById('f_time').value,
+    tasks,
+    issues: document.getElementById('f_issues').value,
+    clock: [...clockState],
+    labor: readPairs('laborBody'),
+    equip: readPairs('equipBody'),
+    mat: readPairs('matBody'),
+    signerName: document.getElementById('f_signerName').value,
+    signerRole: document.getElementById('f_signerRole').value,
+    signerDate: document.getElementById('f_signerDate').value,
+    savedAt: new Date().toISOString(),
+  };
+}
+
+function fillForm(r){
+  document.getElementById('f_project').value = r.project||'';
+  document.getElementById('f_date').value = r.date||'';
+  document.querySelector(`input[name=worktype][value="${r.workType||'ปกติ'}"]`).checked = true;
+  document.getElementById('f_time').value = r.time||'8.00 - 17.00 น.';
+  document.getElementById('taskBody').innerHTML='';
+  (r.tasks&&r.tasks.length?r.tasks:[{}]).forEach(t=>addTask(t.item,t.qty,t.unit,t.note));
+  document.getElementById('f_issues').value = r.issues||'';
+  clockState = r.clock ? [...r.clock] : new Array(12).fill(0);
+  drawClock();
+  document.getElementById('laborBody').innerHTML='';
+  (r.labor&&r.labor.length?r.labor:defaultLabor()).forEach(x=>addRow('labor',x.name,x.qty));
+  document.getElementById('equipBody').innerHTML='';
+  (r.equip&&r.equip.length?r.equip:defaultEquip()).forEach(x=>addRow('equip',x.name,x.qty));
+  document.getElementById('matBody').innerHTML='';
+  (r.mat&&r.mat.length?r.mat:[{name:'',qty:''}]).forEach(x=>addRow('mat',x.name,x.qty));
+  document.getElementById('f_signerName').value = r.signerName||'';
+  document.getElementById('f_signerRole').value = r.signerRole||'';
+  document.getElementById('f_signerDate').value = r.signerDate||'';
+  currentEditId = r.id || null;
+}
+
+function defaultLabor(){
+  return ['ผู้ควบคุมงาน','วิศวกรโครงการ','วิศวกรไซต์','สถาปนิก','ช่างเขียนแบบ','ช่างสำรวจ','ยาม / รปภ.','ช่างไฟฟ้า-ประปา','ช่างก่อสร้าง','ช่างเหล็ก']
+    .map(name=>({name,qty:''}));
+}
+function defaultEquip(){
+  return ['รถเทเลอร์','รถแบคโฮ','รถเครน','เครื่องระดับ','กล้อง Total Station','เครื่องเชื่อม','เครื่องตัดเหล็ก','เครื่องผสมปูน']
+    .map(name=>({name,qty:''}));
+}
+
+function clearForm(){
+  currentEditId = null;
+  fillForm({});
+  document.getElementById('f_date').value = todayStr();
+  document.getElementById('f_signerDate').value = todayStr();
+}
+
+function todayStr(){
+  const d=new Date();
+  return d.toISOString().slice(0,10);
+}
+
+// ---------- Persistence ----------
+let currentEditId = null;
+
+function loadReports(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ return []; }
+}
+function saveReports(list){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+function saveReport(){
+  const data = collectForm();
+  let list = loadReports();
+  const idx = list.findIndex(r=>r.id===data.id);
+  if(idx>=0) list[idx]=data; else list.push(data);
+  saveReports(list);
+  currentEditId = data.id;
+  alert('บันทึกรายงานเรียบร้อยแล้ว');
+  renderReportList();
+}
+
+function loadCompany(){
+  try{ return JSON.parse(localStorage.getItem(COMPANY_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveCompany(){
+  const c = { name: document.getElementById('c_name').value, logo: loadCompany().logo || '' };
+  localStorage.setItem(COMPANY_KEY, JSON.stringify(c));
+  alert('บันทึกการตั้งค่าบริษัทแล้ว');
+}
+function handleLogoUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const c = loadCompany();
+    c.logo = ev.target.result;
+    c.name = document.getElementById('c_name').value || c.name || '';
+    localStorage.setItem(COMPANY_KEY, JSON.stringify(c));
+  };
+  reader.readAsDataURL(file);
+}
+
+// ---------- List view ----------
+function renderReportList(){
+  const list = loadReports().sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  const el = document.getElementById('reportList');
+  if(!list.length){
+    el.innerHTML = '<div class="empty">ยังไม่มีรายงานที่บันทึกไว้</div>';
+    return;
+  }
+  el.innerHTML = list.map(r=>`
+    <div class="list-card">
+      <div class="meta">
+        <b>${escapeHtml(r.project || '(ไม่ระบุชื่อโครงการ)')}</b>
+        <span>วันที่ ${escapeHtml(r.date||'-')} · ${escapeHtml(r.workType||'')} · บันทึกโดย ${escapeHtml(r.signerName||'-')}</span>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" onclick="editReport('${r.id}')">แก้ไข</button>
+        <button class="btn primary" onclick="viewReport('${r.id}')">ดู/พิมพ์</button>
+        <button class="btn ghost" onclick="deleteReport('${r.id}')" style="color:#a13a2f;">ลบ</button>
+      </div>
+    </div>
+  `).join('');
+}
+function editReport(id){
+  const r = loadReports().find(x=>x.id===id);
+  if(!r) return;
+  fillForm(r);
+  showTab('form');
+}
+function deleteReport(id){
+  if(!confirm('ลบรายงานนี้ใช่หรือไม่?')) return;
+  saveReports(loadReports().filter(x=>x.id!==id));
+  renderReportList();
+}
+function viewReport(id){
+  const r = loadReports().find(x=>x.id===id);
+  if(!r) return;
+  renderPreview(r);
+}
+
+// ---------- Report rendering (preview + print) ----------
+function buildReportHtml(r){
+  const company = loadCompany();
+  const companyName = company.name || 'ชื่อบริษัท';
+  const logoImg = company.logo ? `<img src="${company.logo}">` : '';
+
+  const taskRows = (r.tasks||[]).map((t,i)=>`
+    <tr>
+      <td style="text-align:center;">${i+1}</td>
+      <td>${escapeHtml(t.item)}</td>
+      <td style="text-align:center;">${escapeHtml(t.qty)}</td>
+      <td style="text-align:center;">${escapeHtml(t.unit)}</td>
+      <td>${escapeHtml(t.note)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">- ไม่มีรายการ -</td></tr>';
+
+  const pairRows = (arr)=> (arr||[]).filter(x=>x.name).map(x=>`
+      <tr><td>${escapeHtml(x.name)}</td><td style="text-align:center;">${escapeHtml(x.qty)}</td></tr>
+    `).join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">-</td></tr>';
+
+  const clock = r.clock || new Array(12).fill(0);
+  const clockSvgStr = buildClockSvgString(clock);
+
+  return `
+    <div class="rp-header">
+      <div class="logo">${logoImg}<div class="company">${escapeHtml(companyName)}</div></div>
+      <div class="title">รายงานประจำวัน</div>
+    </div>
+    <div class="rp-meta-row">
+      <div><b>โครงการ:</b> ${escapeHtml(r.project)}</div>
+      <div><b>วันที่:</b> ${escapeHtml(r.date)}</div>
+      <div><b>ประเภทวัน:</b> ${escapeHtml(r.workType)}</div>
+      <div><b>เวลาทำงาน:</b> ${escapeHtml(r.time)}</div>
+    </div>
+
+    <table class="rp-table">
+      <thead>
+        <tr><th rowspan="2" style="width:32px;">ลำดับ</th><th rowspan="2">รายการ</th><th colspan="2">ปริมาณ</th><th rowspan="2">หมายเหตุ</th></tr>
+        <tr><th style="width:60px;">จำนวน</th><th style="width:60px;">หน่วย</th></tr>
+      </thead>
+      <tbody>${taskRows}</tbody>
+    </table>
+
+    <div class="rp-two-col">
+      <div>
+        <div class="rp-section-title">ปัญหาและอุปสรรค / ข้อคิดเห็น</div>
+        <div class="rp-issues">${escapeHtml(r.issues)}</div>
+      </div>
+      <div style="max-width:230px;">
+        <div class="rp-section-title">สภาพอากาศ</div>
+        <div class="rp-clock-box">
+          ${clockSvgStr}
+          <div class="rp-legend">
+            <div><span class="sw" style="background:#4a8c3f"></span>ทำงานได้ปกติ</div>
+            <div><span class="sw" style="background:#e0b93c"></span>ทำงานได้บางส่วน</div>
+            <div><span class="sw" style="background:#3f6fa8"></span>ทำงานได้น้อย</div>
+            <div><span class="sw" style="background:#b23b2f"></span>ทำงานไม่ได้</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rp-three">
+      <div>
+        <div class="rp-section-title">แรงงาน</div>
+        <table class="rp-table"><thead><tr><th>ตำแหน่ง</th><th style="width:50px;">จำนวน</th></tr></thead>
+        <tbody>${pairRows(r.labor)}</tbody></table>
+      </div>
+      <div>
+        <div class="rp-section-title">เครื่องจักร-อุปกรณ์</div>
+        <table class="rp-table"><thead><tr><th>รายการ</th><th style="width:50px;">จำนวน</th></tr></thead>
+        <tbody>${pairRows(r.equip)}</tbody></table>
+      </div>
+      <div>
+        <div class="rp-section-title">วัสดุที่ใช้ผ่านงาน</div>
+        <table class="rp-table"><thead><tr><th>รายการ</th><th style="width:50px;">จำนวน</th></tr></thead>
+        <tbody>${pairRows(r.mat)}</tbody></table>
+      </div>
+    </div>
+
+    <div class="rp-sign">
+      <div class="line">ผู้บันทึกรายงาน: ....................................................</div>
+      <div class="line">(${escapeHtml(r.signerName||'')})</div>
+      <div class="line">ตำแหน่ง: ${escapeHtml(r.signerRole||'')}</div>
+      <div class="line">วันที่: ${escapeHtml(r.signerDate||'')}</div>
+    </div>
+  `;
+}
+
+function buildClockSvgString(clock){
+  const cx=70, cy=70, rOuter=60, rInner=26;
+  let paths='';
+  for(let i=0;i<12;i++){
+    const startAngle = (i*30 - 90) * Math.PI/180;
+    const endAngle = ((i+1)*30 - 90) * Math.PI/180;
+    const x1 = cx + rInner*Math.cos(startAngle), y1 = cy + rInner*Math.sin(startAngle);
+    const x2 = cx + rOuter*Math.cos(startAngle), y2 = cy + rOuter*Math.sin(startAngle);
+    const x3 = cx + rOuter*Math.cos(endAngle), y3 = cy + rOuter*Math.sin(endAngle);
+    const x4 = cx + rInner*Math.cos(endAngle), y4 = cy + rInner*Math.sin(endAngle);
+    const d = `M ${x1} ${y1} L ${x2} ${y2} A ${rOuter} ${rOuter} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${rInner} ${rInner} 0 0 0 ${x1} ${y1} Z`;
+    paths += `<path d="${d}" fill="${clockColors[clock[i]||0]}" stroke="#fff" stroke-width="1"/>`;
+  }
+  return `<svg width="140" height="140" viewBox="0 0 140 140">${paths}<circle cx="${cx}" cy="${cy}" r="${rInner-1}" fill="#fff" stroke="#ccc"/></svg>`;
+}
+
+function renderPreview(r){
+  document.getElementById('reportView').innerHTML = buildReportHtml(r);
+  document.getElementById('printArea').innerHTML = buildReportHtml(r);
+  document.getElementById('previewCard').style.display='';
+  document.getElementById('previewCard').scrollIntoView({behavior:'smooth'});
+}
+function previewAndPrint(){
+  const data = collectForm();
+  renderPreview(data);
+}
+
+// ---------- Init ----------
+window.addEventListener('DOMContentLoaded', ()=>{
+  const c = loadCompany();
+  document.getElementById('c_name').value = c.name || '';
+  clearForm();
+});
+</script>
+</body>
+</html>
