@@ -902,7 +902,7 @@ function getLocIcon(loc) {
   if (name.includes('ร้านซ่อม') || name.includes('ซ่อม')) return '🔧';
   if (name.includes('สูญหาย') || name.includes('หาย')) return '🚫';
   if (name.includes('จำหน่าย') || name.includes('ทิ้ง') || name.includes('ตัดออก')) return '🗑️';
-  if (type === 'สโตร์') return '🏭';
+  if (type === 'สโตร์') return '🏬';
   if (type === 'ไซต์งาน') return '🏗️';
   return '📦';
 }
