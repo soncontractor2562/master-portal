@@ -492,6 +492,24 @@ async function apiPost(pathStr, body) {
     }
 
     
+
+    if (pathStr === '/api/inventory/delete-item') {
+      const { error: err1 } = await supabaseClient.from('store_items').delete().eq('name', body.itemName);
+      if (err1) throw err1;
+      return { success: true, message: 'ลบวัสดุเรียบร้อยแล้ว' };
+    }
+    
+    if (pathStr === '/api/categories/delete') {
+      const { error: err1 } = await supabaseClient.from('store_items').update({ category: '' }).eq('category', body.name);
+      if (err1) throw err1;
+      return { success: true, message: 'ลบหมวดหมู่เรียบร้อยแล้ว' };
+    }
+    
+    if (pathStr === '/api/locations/delete') {
+      const { error: err1 } = await supabaseClient.from('store_locations').delete().eq('name', body.name);
+      if (err1) throw err1;
+      return { success: true, message: 'ลบสถานที่เรียบร้อยแล้ว' };
+    }
     if (pathStr === '/api/inventory/rename-item') {
       const { oldName, newName } = body;
       const { data: exist, error: e1 } = await supabaseClient.from('store_items').select('*').eq('name', newName);
