@@ -1348,6 +1348,13 @@ function showItemDetail(itemName) {
   if (!item) return;
   state.currentItem = item;
   document.getElementById('detailItemName').textContent = item.name;
+  var isUser = state.currentUser && state.currentUser.role === 'ผู้ใช้งาน';
+  var detailRenameBtn = document.getElementById('detailRenameBtn');
+  var detailChangeCatBtn = document.getElementById('detailChangeCatBtn');
+  var detailDeleteItemBtn = document.getElementById('detailDeleteItemBtn');
+  if (detailRenameBtn) detailRenameBtn.style.display = isUser ? 'none' : '';
+  if (detailChangeCatBtn) detailChangeCatBtn.style.display = isUser ? 'none' : '';
+  if (detailDeleteItemBtn) detailDeleteItemBtn.style.display = isUser ? 'none' : '';
   document.getElementById('detailItemCat').textContent = (item.category || '-') + ' · ' + item.unit;
   var total = Object.keys(item.quantities).reduce(function(s, k) { return s + (k === 'สูญหาย' ? 0 : Math.max(0, item.quantities[k] || 0)); }, 0);
   document.getElementById('detailTotalBadge').textContent = 'รวม ' + total + ' ' + item.unit;
@@ -2598,10 +2605,10 @@ function exportToPDF() {
 }
 // ==================== DELETE FUNCTIONS ====================
 async function deleteCurrentItem() {
-  if (!currentDetailItem) return;
-  if (!confirm('ยืนยันการลบวัสดุ "' + currentDetailItem.name + '" อย่างถาวร?')) return;
+  if (!state.currentItem) return;
+  if (!confirm('ยืนยันการลบวัสดุ "' + state.currentItem.name + '" อย่างถาวร?')) return;
   try {
-    var res = await apiPost('/api/inventory/delete-item', { itemName: currentDetailItem.name });
+    var res = await apiPost('/api/inventory/delete-item', { itemName: state.currentItem.name });
     showToast(res.message, 'success');
     closeItemDetailModal();
     await loadInventory();
