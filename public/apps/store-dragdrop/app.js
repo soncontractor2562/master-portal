@@ -517,7 +517,26 @@ async function apiPost(pathStr, body) {
       if (exist && exist.length > 0) throw new Error('มีชื่อนี้แล้ว');
       const { error: e2 } = await supabaseClient.from('store_items').update({ name: newName }).eq('name', oldName);
       if (e2) throw e2;
-      return { success: true, message: 'เปลี่ยนชื่อเป็น ' + newName + ' สำเร็จ' };
+      
+      // Cascade to history
+      await supabaseClient.from('store_history').update({ itemName: newName }).eq('itemName', oldName);
+      
+      // Cascade to pending moves
+      const { data: pendingMoves } = await supabaseClient.from('store_pending_moves').select('*');
+      if (pendingMoves) {
+        for (const pm of pendingMoves) {
+          let modified = false;
+          const newItems = pm.items.map(m => {
+            if (m.itemName === oldName) { modified = true; return Object.assign({}, m, { itemName: newName }); }
+            return m;
+          });
+          if (modified) {
+            await supabaseClient.from('store_pending_moves').update({ items: newItems }).eq('id', pm.id);
+          }
+        }
+      }
+      
+      return { success: true, message: 'เปลี่ยนชื่อเป็น ' + newName + ' สำเร็จ (อัปเดตประวัติทั้งหมดแล้ว)' };
     }
     if (pathStr === '/api/locations/rename') {
       const { oldName, newName } = body;
@@ -538,7 +557,16 @@ async function apiPost(pathStr, body) {
           }
         }
       }
-      return { success: true, message: 'เปลี่ยนชื่อสถานที่เป็น ' + newName + ' สำเร็จ' };
+      
+      // Cascade to history
+      await supabaseClient.from('store_history').update({ fromLocation: newName }).eq('fromLocation', oldName);
+      await supabaseClient.from('store_history').update({ toLocation: newName }).eq('toLocation', oldName);
+      
+      // Cascade to pending moves
+      await supabaseClient.from('store_pending_moves').update({ from_location: newName }).eq('from_location', oldName);
+      await supabaseClient.from('store_pending_moves').update({ to_location: newName }).eq('to_location', oldName);
+      
+      return { success: true, message: 'เปลี่ยนชื่อสถานที่เป็น ' + newName + ' สำเร็จ (อัปเดตประวัติทั้งหมดแล้ว)' };
     }
 
     if (pathStr === '/api/inventory/add-item') {
