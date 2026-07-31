@@ -494,6 +494,10 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--accent);
 }
 
+.react-datepicker-popper {
+  z-index: 999999 !important;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
