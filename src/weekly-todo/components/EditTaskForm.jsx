@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -37,9 +37,20 @@ const formatSafeDate = (dateObj) => {
 };
 
 const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelete, existingProjects = [], existingAssignees = [] }) => {
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    return () => {
+      document.body.classList.remove('modal-open');
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
+      }, 50);
+    };
+  }, []);
+
   const initialDateObj = parseSafeDate(task ? task.dueDate : null);
   const [selectedDate, setSelectedDate] = useState(initialDateObj);
-
+  
   const [formData, setFormData] = useState({
     id: task ? task.id : '',
     project: task ? (task.project || '') : '',
