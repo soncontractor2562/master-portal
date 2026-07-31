@@ -2060,7 +2060,6 @@ function openReceiveModal(id) {
     var receiverInput = document.getElementById('receiveReceiver');
     if (receiverInput) {
       if (savedReceiver) receiverInput.value = savedReceiver;
-      else if (state.currentUser.role === 'ผู้ใช้งาน') receiverInput.value = state.currentUser.name || state.currentUser.username || '';
       else receiverInput.value = '';
     }
   }

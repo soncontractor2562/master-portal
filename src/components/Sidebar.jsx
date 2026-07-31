@@ -124,16 +124,6 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
 
       </aside>
 
-      {/* Mobile Floating Hamburger — แสดงเฉพาะ mobile และ Sidebar ปิดอยู่ */}
-      {!sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open Menu"
-          className="lg:hidden fixed bottom-24 left-4 z-30 p-3 rounded-2xl bg-blue-600/90 text-white shadow-lg shadow-blue-500/40 backdrop-blur-sm border border-blue-500/50 active:scale-95 transition-transform"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      )}
     </>
   );
 }
