@@ -1518,21 +1518,25 @@ function renderHistoryList() {
   }
   var groups = [];
   state.history.forEach(function(h) {
-    if (groups.length === 0) {
-      groups.push([h]);
-      return;
-    }
-    var currentGroup = groups[groups.length - 1];
-    var cgFirst = currentGroup[0];
-    
-    var timeDiff = Math.abs(new Date(h.date || 0) - new Date(cgFirst.date || 0));
-    var isSameLocation = h.fromLocation === cgFirst.fromLocation && h.toLocation === cgFirst.toLocation;
-    var isSameType = h.type === cgFirst.type;
-    var isSameMeta = h.reporter === cgFirst.reporter && h.carrier === cgFirst.carrier && h.remark === cgFirst.remark;
+    var added = false;
+    for (var i = groups.length - 1; i >= 0; i--) {
+      var cgFirst = groups[i][0];
+      var timeDiff = Math.abs(new Date(h.date || 0) - new Date(cgFirst.date || 0));
+      
+      if (timeDiff > 300000) break; 
+      
+      var isSameLocation = h.fromLocation === cgFirst.fromLocation && h.toLocation === cgFirst.toLocation;
+      var isSameType = h.type === cgFirst.type;
+      var isSameMeta = h.reporter === cgFirst.reporter && h.carrier === cgFirst.carrier && h.remark === cgFirst.remark;
 
-    if (timeDiff <= 300000 && isSameLocation && isSameType && isSameMeta) {
-      currentGroup.push(h);
-    } else {
+      if (isSameLocation && isSameType && isSameMeta) {
+        groups[i].push(h);
+        added = true;
+        break;
+      }
+    }
+    
+    if (!added) {
       groups.push([h]);
     }
   });
