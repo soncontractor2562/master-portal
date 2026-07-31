@@ -417,7 +417,7 @@ h1, h2, h3, h4, h5, h6 {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -435,6 +435,8 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1.5rem;
   width: 100%;
   max-width: 450px;
+  max-height: 85dvh;
+  overflow-y: auto;
   box-shadow: 0 20px 40px var(--shadow-color);
   z-index: 100000 !important;
   position: relative;
