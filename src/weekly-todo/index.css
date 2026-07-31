@@ -435,8 +435,6 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1.5rem;
   width: 100%;
   max-width: 450px;
-  max-height: 85dvh;
-  overflow-y: auto;
   box-shadow: 0 20px 40px var(--shadow-color);
   z-index: 100000 !important;
   position: relative;
@@ -678,5 +676,14 @@ h1, h2, h3, h4, h5, h6 {
 
   #root {
     overflow: auto; /* Allow root scroll on mobile */
+  }
+
+  body.modal-open #root {
+    overflow: hidden !important;
+  }
+
+  .modal-content {
+    max-height: 85dvh;
+    overflow-y: auto;
   }
 }
