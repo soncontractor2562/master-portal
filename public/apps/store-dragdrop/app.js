@@ -1943,8 +1943,14 @@ function renderPendingList() {
     }
 
       var titleText = p.from_location + ' ➔ ' + p.to_location;
+      var itemsText = p.items.length + ' รายการ';
+      
       if (p.from_location === 'ปรับยอด' && p.items && p.items.length > 0) {
-        titleText = 'ปรับยอด (' + p.items[0].name + ') ➔ ' + p.to_location;
+        var it = p.items[0];
+        var itemName = it.itemName || it.name || 'ไม่ทราบชื่อ';
+        var oldQ = it.currentQty !== undefined ? it.currentQty : '?';
+        var newQ = it.quantitySent !== undefined ? it.quantitySent : '?';
+        itemsText = itemName + ' (ปรับ: ' + oldQ + ' ➔ ' + newQ + ')';
       }
       
       return '<div class="timeline-item" style="margin-bottom:12px;">' +
@@ -1954,7 +1960,7 @@ function renderPendingList() {
           warningHtml +
           '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + titleText + '</div>' +
           '<div style="font-size:13px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">' +
-            '<span>' + p.items.length + ' รายการ</span>' +
+            '<span>' + itemsText + '</span>' +
           cancelBtnHtml +
         '</div>' +
         (p.remark ? '<div style="font-size:12px;color:#fbbf24;margin-top:6px;word-break:break-all;">' + p.remark + '</div>' : '') +
