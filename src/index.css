@@ -169,6 +169,50 @@ body {
   animation: pulseGlow 4s infinite ease-in-out;
 }
 
+/* ===== LIGHT THEME MASTER PORTAL OVERRIDES ===== */
+[data-theme='light'] body {
+  background-color: #f0f4f8;
+  color: #0f172a;
+}
+
+/* Sidebar stays dark — for premium look */
+[data-theme='light'] .glass-drawer {
+  background: rgba(15, 23, 42, 0.97);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Content area background */
+[data-theme='light'] .master-content-col,
+[data-theme='light'] .main-iframe-area,
+[data-theme='light'] .master-layout {
+  background: #f0f4f8;
+}
+
+/* Ambient glows — adjust for light */
+[data-theme='light'] .glow-ambient-1 {
+  background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+}
+[data-theme='light'] .glow-ambient-2 {
+  background: radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%);
+}
+
+/* Glass panels */
+[data-theme='light'] .glass-panel {
+  background: rgba(255, 255, 255, 0.80);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+/* Scrollbar */
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15);
+}
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 99, 235, 0.4);
+}
+
+
+
 /* Fix iOS Safari mobile input auto-zoom and page push-up for all modules */
 @media screen and (max-width: 768px) {
   input, select, textarea {
