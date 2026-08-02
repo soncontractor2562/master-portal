@@ -1942,14 +1942,19 @@ function renderPendingList() {
       cardStyle = 'border-left:4px solid #fbbf24;';
     }
 
-    return '<div class="timeline-item" style="margin-bottom:12px;">' +
-      '<div class="timeline-dot" style="' + dotStyle + ' font-size:16px;">📥</div>' +
-      '<div class="glass-card" style="' + cardStyle + ' padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
-        warningHtml +
-        '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + p.from_location + ' ➔ ' + p.to_location + '</div>' +
-        '<div style="font-size:13px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">' +
-          '<span>' + p.items.length + ' รายการ</span>' +
+      var titleText = p.from_location + ' ➔ ' + p.to_location;
+      if (p.to_location === 'ปรับยอด' && p.items && p.items.length > 0) {
+        titleText = p.from_location + ' ➔ ปรับยอด (' + p.items[0].name + ')';
+      }
+      
+      return '<div class="timeline-item" style="margin-bottom:12px;">' +
+        '<div class="timeline-dot" style="' + dotStyle + ' font-size:16px;">📥</div>' +
+        '<div class="glass-card" style="' + cardStyle + ' padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
+          '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
+          warningHtml +
+          '<div style="font-size:14px;color:#e2e8f0;font-weight:700;margin-bottom:6px;">' + titleText + '</div>' +
+          '<div style="font-size:13px;color:#cbd5e1;display:flex;justify-content:space-between;align-items:center;">' +
+            '<span>' + p.items.length + ' รายการ</span>' +
           cancelBtnHtml +
         '</div>' +
         (p.remark ? '<div style="font-size:12px;color:#fbbf24;margin-top:6px;word-break:break-all;">' + p.remark + '</div>' : '') +
