@@ -2361,39 +2361,8 @@ document.addEventListener('focusout', function(e) {
 (function initKeyboardViewportFix() {
   if (!window.visualViewport) return;
 
-  var activeSheet = null;
-  var originalBottom = 0;
-
-  function adjustForKeyboard() {
-    var vv = window.visualViewport;
-    var windowH = window.innerHeight;
-    var vvBottom = windowH - (vv.offsetTop + vv.height);
-    var keyboardH = Math.max(0, vvBottom);
-
-    // Find any open modal overlay
-    var overlays = document.querySelectorAll('.modal-overlay');
-    overlays.forEach(function(overlay) {
-      if (overlay.style.display !== 'none') {
-        var sheet = overlay.querySelector('.modal-sheet');
-        if (sheet) {
-          if (keyboardH > 50) {
-            // Keyboard is open — lift sheet above keyboard
-            sheet.style.transform = 'translateY(-' + keyboardH + 'px)';
-            sheet.style.transition = 'transform 0.2s ease-out';
-            sheet.style.maxHeight = (vv.height - 20) + 'px';
-          } else {
-            // Keyboard closed — restore sheet to original position
-            sheet.style.transform = 'translateY(0)';
-            sheet.style.transition = 'transform 0.25s ease-out';
-            sheet.style.maxHeight = '';
-          }
-        }
-      }
-    });
-  }
-
-  window.visualViewport.addEventListener('resize', adjustForKeyboard);
-  window.visualViewport.addEventListener('scroll', adjustForKeyboard);
+  // Function adjustForKeyboard is no longer translating the modal-sheet, 
+  // because the modal is now full-screen and CSS handles the layout.
 })();
 
 /* ===== GLOBAL ONBLUR KEYBOARD SCROLL RESET (EVENT CAPTURE) ===== */
@@ -2421,16 +2390,10 @@ document.addEventListener('blur', function(e) {
         if (vv) {
           overlay.style.height = vv.height + 'px';
           overlay.style.top = vv.offsetTop + 'px';
-          var sheet = overlay.querySelector('.modal-sheet');
-          if (sheet) {
-            sheet.style.maxHeight = Math.min(vv.height - 12, vv.height * 0.90) + 'px';
-          }
         }
       } else {
         overlay.style.height = '';
         overlay.style.top = '';
-        var sheet = overlay.querySelector('.modal-sheet');
-        if (sheet) sheet.style.maxHeight = '';
       }
     });
 
@@ -2695,3 +2658,17 @@ async function startDeleteLocation(locName) {
     showToast(err.message, 'error');
   }
 }
+
+// Modal Back Handler for Full Screen Mobile Modals
+window.handleModalBack = function(btn) {
+  var overlay = btn.closest('.modal-overlay');
+  if (!overlay) return;
+  if (overlay.id === 'receiveModal') closeReceiveModal();
+  else if (overlay.id === 'moveModal') closeMoveModalDirect();
+  else if (overlay.id === 'addItemModal') document.getElementById('addItemModal').style.display = 'none';
+  else if (overlay.id === 'adjustModal') document.getElementById('adjustModal').style.display = 'none';
+  else if (overlay.id === 'settingsModal') closeSettingsModal();
+  else if (overlay.id === 'undoModal') document.getElementById('undoModal').style.display = 'none';
+  else if (overlay.id === 'itemDetailModal') closeItemDetailModal();
+  else overlay.style.display = 'none';
+};

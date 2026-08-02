@@ -7,7 +7,7 @@ export default function StoreDragDropView() {
     <div className="module-iframe-wrap">
       <iframe
         ref={iframeRef}
-        src="/apps/store-dragdrop/index.html?v=2.15"
+        src="/apps/store-dragdrop/index.html?v=2.18"
         title="Store Drag & Drop System"
         className=""
         scrolling="yes"
