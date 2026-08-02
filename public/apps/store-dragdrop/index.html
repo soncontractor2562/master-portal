@@ -542,6 +542,14 @@
     html[data-theme="light"] *[style*="color:#60a5fa"] { color: #2563eb !important; }
     html[data-theme="light"] *[style*="color:#4ade80"] { color: #16a34a !important; }
 
+        /* Icon buttons */
+    html[data-theme="light"] .icon-btn {
+      background: #ffffff !important;
+      color: #334155 !important;
+      border: 1px solid rgba(15,23,42,0.2) !important;
+    }
+    html[data-theme="light"] .icon-btn:hover { background: #f8fafc !important; color: #0f172a !important; }
+
     /* Filter pills */
     html[data-theme="light"] .filter-pill {
       background: #ffffff !important;
@@ -678,13 +686,7 @@
         padding-left: 0 !important;
         padding-right: 0 !important;
       }
-      #page-history .page-header,
-      #page-pending .page-header {
-        max-width: 900px !important;
-        margin: 0 auto !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-      }
+      
       #historyLoadMore {
         max-width: 900px !important;
         margin: 16px auto 0 !important;
@@ -866,7 +868,7 @@
           <div style="font-size:12px;color:var(--muted);" id="pendingCount">-</div>
         </div>
         <div class="page-header-actions">
-          <button onclick="refreshAll()" id="refreshBtn" class="icon-btn" style="background:#ffffff; color:#0f172a; border: 1px solid rgba(15,23,42,0.15);" title="รีเฟรช">🔄</button>
+          <button onclick="refreshAll()" id="refreshBtn" class="icon-btn" title="รีเฟรช">🔄</button>
         </div>
       </div>
       <div class="page-body">
@@ -1200,6 +1202,7 @@
 <script src="sort-mode.js?v=2"></script>
 </body>
 </html>
+
 
 
 
