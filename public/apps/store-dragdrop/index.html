@@ -220,23 +220,21 @@
       font-family: 'Sarabun', sans-serif; font-size: 12px; font-weight: 600;
       cursor: pointer; white-space: nowrap; transition: all .2s; flex-shrink: 0;
     }
-    .filter-pill.active { background: var(--blue); border-color: var(--blue); color: white; }
-
-    /* ===== MODALS ===== */
+    
+    .filter-pill.active { background: var(--blue); border-color: var(--blue); color: white; } /* ===== MODALS ===== */
     .modal-overlay {
       display: none; position: fixed; inset: 0; z-index: 200; height: 100dvh;
-      background: #090d16;
-      align-items: flex-start; justify-content: center;
+      background: rgba(0,0,0,0.6);
+      align-items: center; justify-content: center; padding: 16px;
     }
     .modal-sheet {
-      width: 100%; max-width: none; height: 100%; max-height: 100%;
-      background: #090d16; border-radius: 0;
-      border: none;
-      padding: 24px 20px 44px;
-      overflow-y: auto; animation: slideInRight .3s cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: transform;
+      width: 100%; max-width: 500px; height: auto; max-height: 85dvh;
+      background: #1a2840; border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 20px 20px 24px; margin: auto;
+      overflow-y: auto; animation: scaleUp .3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+    @keyframes scaleUp { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
     .modal-handle { display: none; }
     .modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .modal-back-btn { 
