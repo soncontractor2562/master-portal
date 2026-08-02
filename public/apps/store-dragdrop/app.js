@@ -1943,8 +1943,8 @@ function renderPendingList() {
     }
 
       var titleText = p.from_location + ' ➔ ' + p.to_location;
-      if (p.to_location === 'ปรับยอด' && p.items && p.items.length > 0) {
-        titleText = p.from_location + ' ➔ ปรับยอด (' + p.items[0].name + ')';
+      if (p.from_location === 'ปรับยอด' && p.items && p.items.length > 0) {
+        titleText = 'ปรับยอด (' + p.items[0].name + ') ➔ ' + p.to_location;
       }
       
       return '<div class="timeline-item" style="margin-bottom:12px;">' +
