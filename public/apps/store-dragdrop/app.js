@@ -2258,14 +2258,6 @@ async function forceCompleteReceive() {
   }
 }
 
-// Fix iOS Safari keyboard push-up bug
-document.addEventListener('focusout', function(e) {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-    setTimeout(function() {
-      window.scrollTo(0, 0); if (window.parent && window.parent !== window) { try { window.parent.scrollTo(0, 0); } catch(e){} }
-    }, 100);
-  }
-});
 
 /* ===== SWIPE DOWN TO CLOSE MODAL SHEET ===== */
 (function initSwipeToClose() {
@@ -2355,83 +2347,6 @@ document.addEventListener('focusout', function(e) {
 
 
 
-/* ===== KEYBOARD VIEWPORT FIX (VisualViewport API) ===== */
-// The CORRECT approach: when keyboard opens inside a modal, use VisualViewport
-// to MOVE the modal sheet UP so input is visible — without scrolling the parent window
-(function initKeyboardViewportFix() {
-  if (!window.visualViewport) return;
-
-  // Function adjustForKeyboard is no longer translating the modal-sheet, 
-  // because the modal is now full-screen and CSS handles the layout.
-})();
-
-/* ===== GLOBAL ONBLUR KEYBOARD SCROLL RESET (EVENT CAPTURE) ===== */
-document.addEventListener('blur', function(e) {
-  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-    setTimeout(function() {
-      window.scrollTo(0, 0);
-      document.body.scrollTop = 0;
-      if (window.parent && window.parent !== window) {
-        try { window.parent.scrollTo(0, 0); } catch(err){}
-      }
-    }, 100);
-  }
-}, true);
-
-/* ===== COMPREHENSIVE REAL-TIME VISUAL VIEWPORT & MODAL MANAGER ===== */
-(function initComprehensiveViewportManager() {
-  function updateModalLayouts() {
-    var vv = window.visualViewport;
-    var isModalOpen = document.body.classList.contains('modal-open');
-
-    var overlays = document.querySelectorAll('.modal-overlay');
-    overlays.forEach(function(overlay) {
-      if (overlay.style.display !== 'none' && overlay.style.display !== '') {
-        if (vv) {
-          overlay.style.height = vv.height + 'px';
-          overlay.style.top = vv.offsetTop + 'px';
-        }
-      } else {
-        overlay.style.height = '';
-        overlay.style.top = '';
-      }
-    });
-
-    if (!isModalOpen) {
-      window.scrollTo(0, 0);
-      if (window.parent && window.parent !== window) {
-        try { window.parent.scrollTo(0, 0); } catch(e){}
-      }
-    }
-  }
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', updateModalLayouts);
-    window.visualViewport.addEventListener('scroll', updateModalLayouts);
-  }
-
-  document.addEventListener('focusin', function(e) {
-    if (document.body.classList.contains('modal-open')) {
-      setTimeout(updateModalLayouts, 50);
-      setTimeout(updateModalLayouts, 250);
-    }
-  });
-
-  document.addEventListener('focusout', function(e) {
-    if (document.body.classList.contains('modal-open')) {
-      setTimeout(updateModalLayouts, 50);
-      setTimeout(updateModalLayouts, 250);
-      setTimeout(function() {
-        window.scrollTo(0, 0);
-        if (window.parent && window.parent !== window) {
-          try { window.parent.scrollTo(0, 0); } catch(err){}
-        }
-      }, 150);
-    }
-  });
-
-  window.triggerModalLayoutUpdate = updateModalLayouts;
-})();
 
 /* ===== NOTIFY PARENT WINDOW ON MODAL OPEN / CLOSE ===== */
 function notifyParentModalState(isOpen) {
