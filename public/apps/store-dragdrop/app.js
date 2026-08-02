@@ -1948,9 +1948,15 @@ function renderPendingList() {
       if (p.from_location === 'ปรับยอด' && p.items && p.items.length > 0) {
         var it = p.items[0];
         var itemName = it.itemName || it.name || 'ไม่ทราบชื่อ';
-        var oldQ = it.currentQty !== undefined ? it.currentQty : '?';
-        var newQ = it.quantitySent !== undefined ? it.quantitySent : '?';
-        itemsText = itemName + ' (ปรับ: ' + oldQ + ' ➔ ' + newQ + ')';
+        var oldQ = it.currentQty !== undefined ? Number(it.currentQty) : '?';
+        var newQ = it.quantitySent !== undefined ? Number(it.quantitySent) : '?';
+        var diffStr = '';
+        if (oldQ !== '?' && newQ !== '?') {
+          var diff = newQ - oldQ;
+          var sign = diff > 0 ? '+' : '';
+          diffStr = ' [' + sign + diff + ']';
+        }
+        itemsText = itemName + ' (ปรับ: ' + oldQ + ' ➔ ' + newQ + diffStr + ')';
       }
       
       return '<div class="timeline-item" style="margin-bottom:12px;">' +
