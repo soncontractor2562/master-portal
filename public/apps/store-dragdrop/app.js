@@ -813,7 +813,7 @@ async function refreshAll() {
   } catch (e) {
     showToast('โหลดข้อมูลล้มเหลว: ' + e.message, 'error');
   } finally {
-    if (btn) { btn.innerHTML = '🔄 รีเฟรช'; btn.disabled = false; }
+    if (btn) { btn.innerHTML = '🔄'; btn.disabled = false; }
   }
 }
 
@@ -2604,3 +2604,4 @@ window.handleModalBack = function(btn) {
   else if (overlay.id === 'itemDetailModal') closeItemDetailModal();
   else overlay.style.display = 'none';
 };
+

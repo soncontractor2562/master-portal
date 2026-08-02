@@ -795,9 +795,6 @@
           <div class="page-header-title">อัพเดทสโตร์</div>
           <div class="page-header-sub" id="lastUpdate">โหลดข้อมูล...</div>
         </div>
-        <div class="page-header-actions">
-          <button onclick="refreshAll()" id="refreshBtn" class="icon-btn" title="รีเฟรช">🔄</button>
-        </div>
       </div>
       <div class="page-body">
         <!-- Move step bar -->
@@ -864,8 +861,13 @@
     <!-- PAGE: PENDING -->
     <div class="page" id="page-pending">
       <div class="page-header">
-        <div class="page-header-title">รอรับของ</div>
-        <div style="font-size:12px;color:var(--muted);" id="pendingCount">-</div>
+        <div>
+          <div class="page-header-title">รอรับของ</div>
+          <div style="font-size:12px;color:var(--muted);" id="pendingCount">-</div>
+        </div>
+        <div class="page-header-actions">
+          <button onclick="refreshAll()" id="refreshBtn" class="icon-btn" style="background:#ffffff; color:#0f172a; border: 1px solid rgba(15,23,42,0.15);" title="รีเฟรช">🔄</button>
+        </div>
       </div>
       <div class="page-body">
         <div id="pendingList"></div>
