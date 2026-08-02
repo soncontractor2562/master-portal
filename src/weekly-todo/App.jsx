@@ -119,7 +119,9 @@ function App() {
   }, [data, isLoaded]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try { return (localStorage.getItem('app_theme') || 'dark') === 'dark'; } catch { return true; }
+  });
   
   // Filters
   const [filterProject, setFilterProject] = useState('');
@@ -133,10 +135,21 @@ function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [editingTaskColumn, setEditingTaskColumn] = useState(null);
 
-  // Apply theme
+  // Apply theme + listen for Master Portal theme changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('app_theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data && e.data.type === 'SET_THEME') {
+        setIsDarkMode(e.data.theme === 'dark');
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
 
   const handleWeekChange = (offset) => {
     setWeekOffset(prev => prev + offset);

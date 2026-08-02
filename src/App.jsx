@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar.jsx';
 import WeeklyTodoView from './components/WeeklyTodoView.jsx';
 import StoreDragDropView from './components/StoreDragDropView.jsx';
 import PrPoView from './components/PrPoView.jsx';
+import { ThemeProvider } from './ThemeContext.jsx';
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
@@ -24,6 +25,7 @@ function useMediaQuery(query) {
 export default function App() {
   const [activeModule, setActiveModule] = useState(null); // Mobile active module
   const [activeTab, setActiveTab] = useState('todo'); // PC active tab
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 1024px)'); // Tailwind 'lg' breakpoint
 
   // Handle Android back-button / browser back gesture for Mobile
@@ -34,6 +36,17 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [activeModule]);
+
+  // Re-broadcast theme to newly mounted iframes when tab changes
+  useEffect(() => {
+    const theme = localStorage.getItem('app_theme') || 'dark';
+    setTimeout(() => {
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach(f => {
+        try { f.contentWindow.postMessage({ type: 'SET_THEME', theme }, '*'); } catch (_) {}
+      });
+    }, 300);
+  }, [activeTab]);
 
   const openModule = (id) => {
     window.history.pushState({ module: id }, '');
@@ -49,23 +62,25 @@ export default function App() {
   // ------------------------------------
   if (isDesktop) {
     return (
-      <div className="master-layout bg-[#090d16] text-[#f1f5f9]" style={{ fontFamily: "'Prompt','Sarabun',sans-serif" }}>
-        <div className="glow-ambient-1" />
-        <div className="glow-ambient-2" />
-        
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          sidebarOpen={false} // PC sidebar is always visible statically
-          setSidebarOpen={() => {}}
-        />
-        
-        <div className="master-content-col relative z-10" style={{ display: 'flex', flexDirection: 'column' }}>
-          {activeTab === 'todo' && <WeeklyTodoView />}
-          {activeTab === 'store' && <StoreDragDropView />}
-          {activeTab === 'prpo' && <PrPoView />}
+      <ThemeProvider>
+        <div className="master-layout bg-[#090d16] text-[#f1f5f9]" style={{ fontFamily: "'Prompt','Sarabun',sans-serif" }}>
+          <div className="glow-ambient-1" />
+          <div className="glow-ambient-2" />
+          
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />
+          
+          <div className="master-content-col relative z-10" style={{ display: 'flex', flexDirection: 'column' }}>
+            {activeTab === 'todo' && <WeeklyTodoView />}
+            {activeTab === 'store' && <StoreDragDropView />}
+            {activeTab === 'prpo' && <PrPoView />}
+          </div>
         </div>
-      </div>
+      </ThemeProvider>
     );
   }
 
@@ -73,68 +88,71 @@ export default function App() {
   // MOBILE LAYOUT: Home Screen + Full-Screen Takeover
   // ------------------------------------
   return (
-    <div
-      style={{
-        height: '100dvh',
-        background: '#090d16',
-        color: '#f1f5f9',
-        fontFamily: "'Prompt','Sarabun',sans-serif",
-        overflowY: activeModule ? 'hidden' : 'auto',
-        position: 'relative',
-      }}
-    >
-      {/* Ambient glow */}
-      <div className="glow-ambient-1" />
-      <div className="glow-ambient-2" />
+    <ThemeProvider>
+      <div
+        style={{
+          height: '100dvh',
+          background: '#090d16',
+          color: '#f1f5f9',
+          fontFamily: "'Prompt','Sarabun',sans-serif",
+          overflowY: activeModule ? 'hidden' : 'auto',
+          position: 'relative',
+        }}
+      >
+        {/* Ambient glow */}
+        <div className="glow-ambient-1" />
+        <div className="glow-ambient-2" />
 
-      {/* Home screen header — safe-area aware */}
-      {!activeModule && (
-        <header
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-            background: 'rgba(9,13,22,0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            paddingTop: 'max(8px, env(safe-area-inset-top))',
-            paddingBottom: '8px',
-            paddingLeft: '16px',
-            paddingRight: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-          }}
-        >
-          <div
+        {/* Home screen header — safe-area aware */}
+        {!activeModule && (
+          <header
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: '10px',
-              overflow: 'hidden',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              flexShrink: 0,
+              position: 'sticky',
+              top: 0,
+              zIndex: 50,
+              background: 'rgba(9,13,22,0.85)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              paddingTop: 'max(8px, env(safe-area-inset-top))',
+              paddingBottom: '8px',
+              paddingLeft: '16px',
+              paddingRight: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
             }}
           >
-            <img src="/logo.png" alt="SON" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.03em' }}>
-            SON <span style={{ color: '#facc15' }}>CONTRACTOR</span>
-          </div>
-        </header>
-      )}
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '10px',
+                overflow: 'hidden',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                flexShrink: 0,
+              }}
+            >
+              <img src="/logo.png" alt="SON" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.03em' }}>
+              SON <span style={{ color: '#facc15' }}>CONTRACTOR</span>
+            </div>
+          </header>
+        )}
 
-      {/* Home content */}
-      {!activeModule && (
-        <HomeScreen onSelect={openModule} />
-      )}
+        {/* Home content */}
+        {!activeModule && (
+          <HomeScreen onSelect={openModule} />
+        )}
 
-      {/* Full-screen module overlay */}
-      {activeModule && (
-        <ModuleScreen moduleId={activeModule} onBack={closeModule} />
-      )}
-    </div>
+        {/* Full-screen module overlay */}
+        {activeModule && (
+          <ModuleScreen moduleId={activeModule} onBack={closeModule} />
+        )}
+      </div>
+    </ThemeProvider>
   );
 }
+

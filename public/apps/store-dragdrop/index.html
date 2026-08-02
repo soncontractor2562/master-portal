@@ -398,6 +398,37 @@
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    /* ===== LIGHT THEME VARIABLES ===== */
+    html[data-theme="light"] {
+      --bg: #f1f5f9; --card: #ffffff; --card2: #f8fafc;
+      --border: rgba(15,23,42,0.12);
+      --blue: #2563eb; --green: #16a34a; --amber: #d97706; --red: #dc2626;
+      --text: #0f172a; --muted: #64748b; --teal: #0d9488;
+    }
+    html[data-theme="light"] body {
+      background: var(--bg) !important; color: var(--text) !important;
+    }
+    html[data-theme="light"] .glass-card,
+    html[data-theme="light"] .modal-sheet,
+    html[data-theme="light"] .sidebar {
+      background: rgba(255,255,255,0.95) !important;
+      border-color: rgba(15,23,42,0.10) !important;
+    }
+    html[data-theme="light"] .navbar {
+      background: rgba(241,245,249,0.95) !important;
+      border-top: 1px solid rgba(15,23,42,0.08) !important;
+    }
+    html[data-theme="light"] .form-input {
+      background: #f8fafc !important; color: var(--text) !important;
+      border-color: rgba(15,23,42,0.18) !important;
+    }
+    html[data-theme="light"] .inv-row {
+      border-color: rgba(15,23,42,0.07) !important;
+    }
+    html[data-theme="light"] .page-header {
+      background: rgba(241,245,249,0.9) !important;
+    }
+
 
     
     /* ===== RESPONSIVE: Tablet & iPad (640px+) ===== */
@@ -513,6 +544,19 @@
   </style>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+  (function() {
+    var t = localStorage.getItem('app_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'SET_THEME') {
+      document.documentElement.setAttribute('data-theme', e.data.theme);
+      localStorage.setItem('app_theme', e.data.theme);
+    }
+  });
+</script>
 </head>
 <body>
 <div id="app">
