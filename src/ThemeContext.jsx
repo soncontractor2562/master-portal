@@ -11,17 +11,12 @@ export function ThemeProvider({ children }) {
   });
 
   useEffect(() => {
-    // Apply to Master Portal HTML root
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
-
-    // Broadcast to all iframes
-    const theme = isDark ? 'dark' : 'light';
-    const iframes = document.querySelectorAll('iframe');
-    iframes.forEach(f => {
-      try { f.contentWindow.postMessage({ type: 'SET_THEME', theme }, '*'); } catch (_) {}
-    });
+    // Master Portal always uses dark mode for premium look
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.setAttribute('data-theme', 'dark');
+    localStorage.setItem('app_theme', 'dark');
+    
+    // Removed iframe broadcast since each app now manages its own theme
   }, [isDark]);
 
   const toggle = () => setIsDark(prev => !prev);

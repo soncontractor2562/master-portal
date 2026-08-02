@@ -120,7 +120,7 @@ function App() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    try { return (localStorage.getItem('app_theme') || 'dark') === 'dark'; } catch { return true; }
+    try { return (localStorage.getItem('todo_theme') || 'dark') === 'dark'; } catch { return true; }
   });
   
   // Filters
@@ -135,21 +135,10 @@ function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [editingTaskColumn, setEditingTaskColumn] = useState(null);
 
-  // Apply theme + listen for Master Portal theme changes
+  // Save theme state locally
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-    localStorage.setItem('app_theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('todo_theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.data && e.data.type === 'SET_THEME') {
-        setIsDarkMode(e.data.theme === 'dark');
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
 
   const handleWeekChange = (offset) => {
     setWeekOffset(prev => prev + offset);
@@ -391,7 +380,7 @@ function App() {
   }, [data]);
 
   return (
-    <div className="app-container">
+    <div className="app-container weekly-todo-root" data-theme={isDarkMode ? 'dark' : 'light'}>
       {fetchError && (
         <div style={{ backgroundColor: '#ef4444', color: 'white', padding: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
           Database Connection Error: {fetchError}. Falling back to sample data.

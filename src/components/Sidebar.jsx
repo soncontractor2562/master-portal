@@ -121,23 +121,6 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
             })}
           </div>
         </div>
-
-        {/* Footer: Theme Toggle */}
-        <div className="p-3 border-t border-white/10">
-          <button
-            onClick={toggle}
-            title={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
-            className="w-full flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-slate-800/40 hover:bg-slate-700/50 transition-all duration-200 text-slate-300 hover:text-white group"
-          >
-            <div className="p-2 rounded-xl bg-slate-700/60 group-hover:bg-slate-600/60 transition-colors">
-              {isDark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-            </div>
-            <div className="text-left">
-              <div className="text-sm font-semibold">{isDark ? 'โหมดสว่าง' : 'โหมดมืด'}</div>
-              <div className="text-[10px] text-slate-500">{isDark ? 'Switch to Light' : 'Switch to Dark'}</div>
-            </div>
-          </button>
-        </div>
       </aside>
 
       {/* Mobile Floating Hamburger — แสดงเฉพาะ mobile และ Sidebar ปิดอยู่ */}

@@ -14,18 +14,19 @@
 
 <script>
   (function() {
-    var t = localStorage.getItem('app_theme') || 'dark';
+    var t = localStorage.getItem('construct_theme') || 'dark';
     document.body.className = t === 'light' ? 'light-theme' : 'dark-theme';
     document.documentElement.setAttribute('data-theme', t);
+    
+    // Update button text if DOM is ready
+    window.addEventListener('DOMContentLoaded', function() {
+        var themeText = document.getElementById('theme-text');
+        if (themeText) {
+            themeText.textContent = t === 'light' ? 'โหมดมืด' : 'โหมดสว่าง';
+        }
+    });
   })();
-  window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'SET_THEME') {
-      var theme = e.data.theme;
-      localStorage.setItem('app_theme', theme);
-      document.body.className = theme === 'light' ? 'light-theme' : 'dark-theme';
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-  });
+  // Removed SET_THEME listener since PR/PO manages its own theme
 </script>
 </head>
 <body class="dark-theme">

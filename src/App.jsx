@@ -6,27 +6,6 @@ import WeeklyTodoView from './components/WeeklyTodoView.jsx';
 import StoreDragDropView from './components/StoreDragDropView.jsx';
 import PrPoView from './components/PrPoView.jsx';
 import { ThemeProvider, useTheme } from './ThemeContext.jsx';
-import { Sun, Moon } from 'lucide-react';
-
-function MobileThemeToggle() {
-  const { isDark, toggle } = useTheme();
-  return (
-    <button
-      onClick={toggle}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: '32px', height: '32px',
-        borderRadius: '8px',
-        background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-        border: '1px solid ' + (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
-        color: isDark ? '#fbbf24' : '#334155',
-        marginLeft: 'auto'
-      }}
-    >
-      {isDark ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
-  );
-}
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
@@ -162,7 +141,6 @@ export default function App() {
             <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.03em' }} className="mobile-header-title">
               SON <span style={{ color: '#facc15' }}>CONTRACTOR</span>
             </div>
-            <MobileThemeToggle />
           </header>
         )}
 

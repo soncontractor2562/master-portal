@@ -971,14 +971,28 @@
 
 <script>
   (function() {
-    var t = localStorage.getItem('app_theme') || 'dark';
+    var t = localStorage.getItem('store_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', t);
   })();
-  window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'SET_THEME') {
-      document.documentElement.setAttribute('data-theme', e.data.theme);
-      localStorage.setItem('app_theme', e.data.theme);
+
+  function toggleStoreTheme() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('store_theme', next);
+    updateThemeToggleButton(next);
+  }
+
+  function updateThemeToggleButton(theme) {
+    var btn = document.getElementById('storeThemeToggleBtn');
+    if (btn) {
+      btn.innerHTML = theme === 'dark' ? '🌞 <span>โหมดสว่าง</span>' : '🌙 <span>โหมดมืด</span>';
     }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    updateThemeToggleButton(current);
   });
 </script>
 </head>
@@ -1009,6 +1023,7 @@
     <div class="sidebar-footer">
       <button class="sidebar-action-btn" onclick="refreshAll()">🔄 <span>รีเฟรชข้อมูล</span></button>
       <button class="sidebar-action-btn" id="nav-settings" onclick="showSettingsModal()">⚙️ <span>ตั้งค่าระบบ</span></button>
+      <button class="sidebar-action-btn" id="storeThemeToggleBtn" onclick="toggleStoreTheme()" style="margin-top: 6px;">🌞 <span>โหมดสว่าง</span></button>
     </div>
   </aside>
 
