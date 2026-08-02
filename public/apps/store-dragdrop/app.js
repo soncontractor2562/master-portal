@@ -1933,13 +1933,21 @@ function renderPendingList() {
     var dotStyle = '';
     var cardStyle = '';
     var warningHtml = '';
+    var isMove = p.from_location !== 'ปรับยอด' && p.type !== 'adjust';
+    var dotEmoji = isMove ? '🚛' : '📥';
+    
     if (hasReceiver && hasMismatch) {
       dotStyle = 'background:rgba(239, 68, 68, 0.15); color:#f87171; border:2px solid rgba(239, 68, 68, 0.3);';
       cardStyle = 'border-left:4px solid #ef4444;';
       warningHtml = '<div style="font-size:11px; color:#f87171; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px;">⚠️ ยอดรับไม่ตรงกัน! รอสโตร์ตรวจสอบ (ผู้รับ: ' + (p.items[0].receiver || '-') + ')</div>';
     } else {
-      dotStyle = 'background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:2px solid rgba(251, 191, 36, 0.3);';
-      cardStyle = 'border-left:4px solid #fbbf24;';
+      if (isMove) {
+        dotStyle = 'background:rgba(59, 130, 246, 0.15); color:#3b82f6; border:2px solid rgba(59, 130, 246, 0.3);';
+        cardStyle = 'border-left:4px solid #3b82f6;';
+      } else {
+        dotStyle = 'background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:2px solid rgba(251, 191, 36, 0.3);';
+        cardStyle = 'border-left:4px solid #fbbf24;';
+      }
     }
 
       var titleText = p.from_location + ' ➔ ' + p.to_location;
@@ -1960,7 +1968,7 @@ function renderPendingList() {
       }
       
       return '<div class="timeline-item" style="margin-bottom:12px;">' +
-        '<div class="timeline-dot" style="' + dotStyle + ' font-size:16px;">📥</div>' +
+        '<div class="timeline-dot" style="' + dotStyle + ' font-size:16px;">' + dotEmoji + '</div>' +
         '<div class="glass-card" style="' + cardStyle + ' padding:14px; flex:1; min-width:0; cursor:pointer;" onclick="openReceiveModal(\'' + p.id + '\')">' +
           '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + dateStr + '</div>' +
           warningHtml +
