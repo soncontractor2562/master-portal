@@ -211,6 +211,22 @@ body {
   background: rgba(37, 99, 235, 0.4);
 }
 
+/* ===== MOBILE LIGHT THEME OVERRIDES ===== */
+[data-theme='light'] .mobile-layout-container {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+[data-theme='light'] .mobile-header-container {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+}
+[data-theme='light'] .mobile-header-title {
+  color: #0f172a !important;
+}
+[data-theme='light'] .mobile-header-title span {
+  color: #d97706 !important; /* from yellow to darker amber for contrast */
+}
+
 
 
 /* Fix iOS Safari mobile input auto-zoom and page push-up for all modules */

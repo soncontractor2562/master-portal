@@ -5,7 +5,28 @@ import Sidebar from './components/Sidebar.jsx';
 import WeeklyTodoView from './components/WeeklyTodoView.jsx';
 import StoreDragDropView from './components/StoreDragDropView.jsx';
 import PrPoView from './components/PrPoView.jsx';
-import { ThemeProvider } from './ThemeContext.jsx';
+import { ThemeProvider, useTheme } from './ThemeContext.jsx';
+import { Sun, Moon } from 'lucide-react';
+
+function MobileThemeToggle() {
+  const { isDark, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: '32px', height: '32px',
+        borderRadius: '8px',
+        background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        border: '1px solid ' + (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'),
+        color: isDark ? '#fbbf24' : '#334155',
+        marginLeft: 'auto'
+      }}
+    >
+      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
+  );
+}
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
@@ -90,6 +111,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <div
+        className="mobile-layout-container"
         style={{
           height: '100dvh',
           background: '#090d16',
@@ -106,6 +128,7 @@ export default function App() {
         {/* Home screen header — safe-area aware */}
         {!activeModule && (
           <header
+            className="mobile-header-container"
             style={{
               position: 'sticky',
               top: 0,
@@ -136,9 +159,10 @@ export default function App() {
             >
               <img src="/logo.png" alt="SON" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.03em' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.03em' }} className="mobile-header-title">
               SON <span style={{ color: '#facc15' }}>CONTRACTOR</span>
             </div>
+            <MobileThemeToggle />
           </header>
         )}
 
