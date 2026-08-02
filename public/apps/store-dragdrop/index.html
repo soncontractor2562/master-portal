@@ -727,6 +727,25 @@
   function toggleStoreTheme() {
     var current = document.documentElement.getAttribute('data-theme') || 'dark';
     var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('store_theme', next);
+    updateThemeToggleButton(next);
+  }
+
+  function updateThemeToggleButton(theme) {
+    var btn = document.getElementById('storeThemeToggleBtn');
+    if (btn) {
+      btn.innerHTML = theme === 'dark' ? '🌞 <span>โหมดสว่าง</span>' : '🌙 <span>โหมดมืด</span>';
+    }
+    var mbtn = document.getElementById('mobileThemeToggleBtn');
+    if (mbtn) {
+      mbtn.innerHTML = theme === 'dark' ? '🌞 โหมดสว่าง' : '🌙 โหมดมืด';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    updateThemeToggleButton(current);
   });
 </script>
 </head>
