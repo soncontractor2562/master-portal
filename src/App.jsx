@@ -76,7 +76,10 @@ export default function App() {
 
         <div className="master-content-col">
           {/* Mobile Header Bar */}
-          <div className="lg:hidden flex items-center justify-between p-3 bg-[#0f172a] border-b border-slate-800 z-30">
+          <div 
+            className="lg:hidden flex items-center justify-between p-3 bg-[#0f172a] border-b border-slate-800 z-30"
+            style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+          >
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setSidebarOpen(true)} 
