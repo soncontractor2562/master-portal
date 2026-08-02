@@ -11,22 +11,6 @@
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
-
-<script>
-  (function() {
-    var t = localStorage.getItem('app_theme') || 'dark';
-    document.body.className = t === 'light' ? 'light-theme' : 'dark-theme';
-    document.documentElement.setAttribute('data-theme', t);
-  })();
-  window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'SET_THEME') {
-      var theme = e.data.theme;
-      localStorage.setItem('app_theme', theme);
-      document.body.className = theme === 'light' ? 'light-theme' : 'dark-theme';
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-  });
-</script>
 </head>
 <body class="dark-theme">
     <!-- App Container -->

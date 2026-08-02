@@ -14,46 +14,23 @@
   --accent-amber: #f59e0b;
 }
 
-/* ===== DARK THEME (default) ===== */
-[data-theme='dark'], :root {
-  --master-bg: #090d16;
-  --master-text: #f1f5f9;
-  --master-sidebar: rgba(13, 19, 33, 0.92);
-  --master-sidebar-border: rgba(255,255,255,0.10);
-  --master-panel: rgba(18, 26, 45, 0.65);
-  --master-muted: #94a3b8;
-}
-
-/* ===== LIGHT THEME ===== */
-[data-theme='light'] {
-  --master-bg: #f1f5f9;
-  --master-text: #0f172a;
-  --master-sidebar: rgba(15, 23, 42, 0.95);
-  --master-sidebar-border: rgba(255,255,255,0.08);
-  --master-panel: rgba(255,255,255,0.85);
-  --master-muted: #64748b;
-}
-
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ===== ROOT LAYOUT — ให้ scroll เกิดที่ body หลัก ===== */
-html {
+/* ===== ROOT LAYOUT ===== */
+html, body {
   height: 100%;
-  overflow: hidden; /* ป้องกัน double scrollbar */
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background-color: var(--master-bg, #090d16);
-  color: var(--master-text, #f1f5f9);
+  background-color: var(--bg-color);
+  color: #f1f5f9;
   font-family: 'Prompt', 'Sarabun', sans-serif;
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden; /* layout scroll จัดการใน #root */
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {

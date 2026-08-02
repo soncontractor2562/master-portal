@@ -1,10 +1,7 @@
 import React from 'react';
-import { CheckSquare, ShoppingBag, FileSpreadsheet, X, ChevronRight, Menu, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../ThemeContext.jsx';
+import { CheckSquare, ShoppingBag, FileSpreadsheet, X, Hexagon, ChevronRight, Menu } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) {
-  const { isDark, toggle } = useTheme();
-
   const navItems = [
     {
       id: 'todo',
@@ -80,6 +77,8 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
             </button>
           </div>
 
+          {/* Mobile hamburger hint row — แสดงบนมือถือเหนือปุ่ม menu */}
+
           {/* Nav Items */}
           <div className="p-3 space-y-1.5 mt-2">
             <div className="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
@@ -122,34 +121,9 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
           </div>
         </div>
 
-        {/* Footer: Theme Toggle */}
-        <div className="p-3 border-t border-white/10">
-          <button
-            onClick={toggle}
-            title={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
-            className="w-full flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-slate-800/40 hover:bg-slate-700/50 transition-all duration-200 text-slate-300 hover:text-white group"
-          >
-            <div className="p-2 rounded-xl bg-slate-700/60 group-hover:bg-slate-600/60 transition-colors">
-              {isDark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-            </div>
-            <div className="text-left">
-              <div className="text-sm font-semibold">{isDark ? 'โหมดสว่าง' : 'โหมดมืด'}</div>
-              <div className="text-[10px] text-slate-500">{isDark ? 'Switch to Light' : 'Switch to Dark'}</div>
-            </div>
-          </button>
-        </div>
+
       </aside>
 
-      {/* Mobile Floating Hamburger — แสดงเฉพาะ mobile และ Sidebar ปิดอยู่ */}
-      {!sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open Menu"
-          className="lg:hidden fixed bottom-24 left-4 z-30 p-3 rounded-2xl bg-blue-600/90 text-white shadow-lg shadow-blue-500/40 backdrop-blur-sm border border-blue-500/50 active:scale-95 transition-transform"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      )}
     </>
   );
 }
