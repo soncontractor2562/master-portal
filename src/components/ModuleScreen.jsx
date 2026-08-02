@@ -1,12 +1,8 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
-
-/** กำหนด src ของแต่ละ module */
-const MODULE_SRCS = {
-  todo:  '/apps/weekly-todo/index.html?v=1',
-  store: '/apps/store-dragdrop/index.html?v=2.18',
-  prpo:  '/apps/prpo/index.html?v=1',
-};
+import WeeklyTodoView from './WeeklyTodoView.jsx';
+import StoreDragDropView from './StoreDragDropView.jsx';
+import PrPoView from './PrPoView.jsx';
 
 const MODULE_LABELS = {
   todo:  'Weekly Todo List',
@@ -14,17 +10,10 @@ const MODULE_LABELS = {
   prpo:  'PR / PO System',
 };
 
-/**
- * ModuleScreen — renders the selected module as a truly full-screen iframe.
- * The iframe uses `position: fixed; inset: 0` so it becomes the sole owner of
- * the viewport. This removes the parent React shell from the keyboard/scroll
- * equation, eliminating the "push-up" and cursor-lag issues on mobile.
- */
 export default function ModuleScreen({ moduleId, onBack }) {
-  const src = MODULE_SRCS[moduleId];
   const label = MODULE_LABELS[moduleId];
 
-  if (!src) return null;
+  if (!label) return null;
 
   return (
     <div
@@ -88,24 +77,15 @@ export default function ModuleScreen({ moduleId, onBack }) {
         >
           {label}
         </span>
-        {/* Spacer to balance the back button */}
         <div style={{ width: '80px' }} />
       </div>
 
-      {/* iframe — takes all remaining space */}
-      <iframe
-        src={src}
-        title={label}
-        scrolling="yes"
-        style={{
-          flex: 1,
-          width: '100%',
-          border: 'none',
-          background: '#090d16',
-          /* No overflow:hidden wrapper here — let the iframe manage its own scroll */
-        }}
-        allow="clipboard-read; clipboard-write"
-      />
+      {/* Module Content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {moduleId === 'todo' && <WeeklyTodoView />}
+        {moduleId === 'store' && <StoreDragDropView />}
+        {moduleId === 'prpo' && <PrPoView />}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import HomeScreen from './components/HomeScreen.jsx';
 import ModuleScreen from './components/ModuleScreen.jsx';
 import Sidebar from './components/Sidebar.jsx';
+import WeeklyTodoView from './components/WeeklyTodoView.jsx';
+import StoreDragDropView from './components/StoreDragDropView.jsx';
+import PrPoView from './components/PrPoView.jsx';
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
@@ -17,12 +20,6 @@ function useMediaQuery(query) {
   }, [query]);
   return matches;
 }
-
-const MODULE_SRCS = {
-  todo:  '/apps/weekly-todo/index.html?v=1',
-  store: '/apps/store-dragdrop/index.html?v=2.18',
-  prpo:  '/apps/prpo/index.html?v=1',
-};
 
 export default function App() {
   const [activeModule, setActiveModule] = useState(null); // Mobile active module
@@ -48,7 +45,7 @@ export default function App() {
   };
 
   // ------------------------------------
-  // DESKTOP (PC) LAYOUT: Sidebar + Iframe
+  // DESKTOP (PC) LAYOUT: Sidebar + Content
   // ------------------------------------
   if (isDesktop) {
     return (
@@ -63,14 +60,10 @@ export default function App() {
           setSidebarOpen={() => {}}
         />
         
-        <div className="master-content-col relative z-10">
-          <div className="module-iframe-wrap">
-            <iframe
-              src={MODULE_SRCS[activeTab]}
-              title={activeTab}
-              scrolling="yes"
-            />
-          </div>
+        <div className="master-content-col relative z-10" style={{ display: 'flex', flexDirection: 'column' }}>
+          {activeTab === 'todo' && <WeeklyTodoView />}
+          {activeTab === 'store' && <StoreDragDropView />}
+          {activeTab === 'prpo' && <PrPoView />}
         </div>
       </div>
     );
