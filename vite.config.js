@@ -10,6 +10,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png', 'favicon.ico'],
+      workbox: {
+        navigateFallbackDenylist: [/^\/apps\//]
+      },
       manifest: {
         name: 'SON CONTRACTOR',
         short_name: 'SON',
