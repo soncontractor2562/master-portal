@@ -1,11 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import HomeScreen from './components/HomeScreen.jsx';
 import ModuleScreen from './components/ModuleScreen.jsx';
+import Sidebar from './components/Sidebar.jsx';
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window !== 'undefined') return window.matchMedia(query).matches;
+    return false;
+  });
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    setMatches(media.matches);
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [query]);
+  return matches;
+}
+
+const MODULE_SRCS = {
+  todo:  '/apps/weekly-todo/index.html?v=1',
+  store: '/apps/store-dragdrop/index.html?v=2.18',
+  prpo:  '/apps/prpo/index.html?v=1',
+};
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState(null); // null = home
+  const [activeModule, setActiveModule] = useState(null); // Mobile active module
+  const [activeTab, setActiveTab] = useState('todo'); // PC active tab
+  const isDesktop = useMediaQuery('(min-width: 1024px)'); // Tailwind 'lg' breakpoint
 
-  // Handle Android back-button / browser back gesture
+  // Handle Android back-button / browser back gesture for Mobile
   useEffect(() => {
     const handlePopState = () => {
       if (activeModule) setActiveModule(null);
@@ -15,7 +39,6 @@ export default function App() {
   }, [activeModule]);
 
   const openModule = (id) => {
-    // Push a history entry so the back gesture works on Android
     window.history.pushState({ module: id }, '');
     setActiveModule(id);
   };
@@ -24,6 +47,38 @@ export default function App() {
     window.history.back(); // triggers popstate → setActiveModule(null)
   };
 
+  // ------------------------------------
+  // DESKTOP (PC) LAYOUT: Sidebar + Iframe
+  // ------------------------------------
+  if (isDesktop) {
+    return (
+      <div className="master-layout bg-[#090d16] text-[#f1f5f9]" style={{ fontFamily: "'Prompt','Sarabun',sans-serif" }}>
+        <div className="glow-ambient-1" />
+        <div className="glow-ambient-2" />
+        
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          sidebarOpen={false} // PC sidebar is always visible statically
+          setSidebarOpen={() => {}}
+        />
+        
+        <div className="master-content-col relative z-10">
+          <div className="module-iframe-wrap">
+            <iframe
+              src={MODULE_SRCS[activeTab]}
+              title={activeTab}
+              scrolling="yes"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ------------------------------------
+  // MOBILE LAYOUT: Home Screen + Full-Screen Takeover
+  // ------------------------------------
   return (
     <div
       style={{
