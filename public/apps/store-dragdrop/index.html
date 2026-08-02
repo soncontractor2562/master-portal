@@ -109,14 +109,23 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 12px 14px 10px;
       border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap; /* Allow wrapping on small screens */
     }
     .page-header-title {
       font-size: 17px; font-weight: 800; font-family: 'Outfit', sans-serif;
       background: linear-gradient(135deg,#60a5fa,#34d399);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      white-space: nowrap;
     }
     .page-header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
-    .page-header-actions { display: flex; gap: 8px; align-items: center; }
+    .page-header-actions { 
+      display: flex; gap: 8px; align-items: center; 
+      flex: 1; justify-content: flex-end;
+      overflow-x: auto; padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .page-header-actions::-webkit-scrollbar { display: none; }
 
     /* ===== PAGES ===== */
     .page { display: none; }
@@ -149,8 +158,8 @@
       -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid var(--border);
       display: flex;
-      height: calc(var(--nav-height) + max(env(safe-area-inset-bottom), 34px));
-      padding-bottom: max(env(safe-area-inset-bottom), 34px);
+      padding-top: 8px;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
     }
     .nav-btn {
       flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -589,10 +598,10 @@
       <div class="page-header">
         <div class="page-header-title">ทะเบียนวัสดุ</div>
         <div class="page-header-actions">
-          <button id="exportExcelBtn" onclick="exportToExcel()" class="icon-btn" title="ส่งออก Excel" style="color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1);">📊 Excel</button>
-          <button id="exportPDFBtn" onclick="exportToPDF()" class="icon-btn" title="ส่งออก PDF" style="color:#f43f5e; border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);">📄 PDF</button>
-          <button id="sortToggleBtn" onclick="toggleSortMode()" class="icon-btn" title="จัดเรียง">☰ Sort</button>
-          <button id="addInventoryBtn" onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:9px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;">+ เพิ่มของ</button>
+          <button id="exportExcelBtn" onclick="exportToExcel()" class="icon-btn" title="ส่งออก Excel" style="width:auto; padding:0 12px; color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); font-size:13px; font-weight:600;">📊 Excel</button>
+          <button id="exportPDFBtn" onclick="exportToPDF()" class="icon-btn" title="ส่งออก PDF" style="width:auto; padding:0 12px; color:#f43f5e; border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1); font-size:13px; font-weight:600;">📄 PDF</button>
+          <button id="sortToggleBtn" onclick="toggleSortMode()" class="icon-btn" title="จัดเรียง" style="width:auto; padding:0 12px; font-size:13px; font-weight:600;">☰ Sort</button>
+          <button id="addInventoryBtn" onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:8px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700; white-space:nowrap; flex-shrink:0;">+ เพิ่มของ</button>
         </div>
       </div>
       <div class="page-body">
