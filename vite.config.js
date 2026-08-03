@@ -11,7 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png', 'favicon.ico'],
       workbox: {
-        navigateFallbackDenylist: [/^\/apps\//]
+        navigateFallbackDenylist: [/^\/apps\//],
+        runtimeCaching: [],
+        additionalManifestEntries: []
       },
       manifest: {
         name: 'SON CONTRACTOR',
