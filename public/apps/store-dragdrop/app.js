@@ -2646,16 +2646,8 @@ async function initPushNotifications() {
       return;
     }
     
-    let publicVapidKey = 'BA4xMBm2GNpJZGC5Ogp3t71czEqE_xpzw4DhuQxcnf_pYzRfSmX6Y2v5MmK14mJ0DLDP8hMgHz6hYUhn4sSzmZ0';
-    try {
-      const vapidRes = await fetch('/api/vapid-public-key');
-      if (vapidRes.ok) {
-        const vapidData = await vapidRes.json();
-        if (vapidData.publicKey) publicVapidKey = vapidData.publicKey;
-      }
-    } catch(e) {
-      console.warn('Could not fetch dynamic VAPID key, using fallback');
-    }
+    // VAPID public key must match the server's VITE_VAPID_PUBLIC_KEY env var
+    const publicVapidKey = 'BA4xMBm2GNpJZGC5Ogp3t71czEqE_xpzw4DhuQxcnf_pYzRfSmX6Y2v5MmK14mJ0DLDP8hMgHz6hYUhn4sSzmZ0';
     
     const urlBase64ToUint8Array = (base64String) => {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
