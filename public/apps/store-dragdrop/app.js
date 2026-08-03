@@ -3514,36 +3514,51 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 
+function toggleSelfPinEye() {
+  var pinInp = document.getElementById('editSelfPin');
+  var btn = document.getElementById('selfPinEyeBtn');
+  if (!pinInp) return;
+  if (pinInp.type === 'password') {
+    pinInp.type = 'text';
+    if (btn) btn.innerText = '👁️';
+  } else {
+    pinInp.type = 'password';
+    if (btn) btn.innerText = '🙈';
+  }
+}
+
 async function broadcastNotification(type, title, message, linkUrl, extraData) {
   const isTestMode = !!state.isTestMode;
   const currentUsername = state.currentUser ? state.currentUser.username : null;
+  const displayTitle = isTestMode ? '🧪 [ทดสอบ] ' + title : title;
+  const displayMsg = isTestMode ? message + ' (โหมดทดสอบโดย ' + (currentUsername || 'แอดมิน') + ')' : message;
 
+  // 1. Insert into Supabase store_notifications table for In-App Bell
   try {
-    var insertPayload = {
+    const insertPayload = {
       type: type,
-      title: isTestMode ? '🧪 [ทดสอบ] ' + title : title,
-      message: message,
+      title: displayTitle,
+      message: displayMsg,
       link_url: linkUrl
     };
-    if (isTestMode && currentUsername) {
-      insertPayload.target_username = currentUsername;
-    }
+    await supabaseClient.from('store_notifications').insert(insertPayload);
+  } catch (err) {
+    console.error('DB Notification Insert error:', err);
+  }
 
-    const { data, error } = await supabaseClient.from('store_notifications').insert(insertPayload).select();
-    
-    if (error && error.message && error.message.includes('target_username')) {
-      delete insertPayload.target_username;
-      await supabaseClient.from('store_notifications').insert(insertPayload);
-    } else if (error) {
-      throw error;
-    }
-    
+  // 2. Refresh In-App Bell notifications
+  try {
+    fetchNotifications();
+  } catch (_) {}
+
+  // 3. Trigger WebPush Broadcast API
+  try {
     fetch('/api/push-broadcast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: isTestMode ? '🧪 [ทดสอบ] ' + title : title,
-        message: message,
+        title: displayTitle,
+        message: displayMsg,
         url: window.location.origin + '/apps/store-dragdrop/',
         targetUsername: isTestMode ? currentUsername : null
       })
@@ -3562,10 +3577,7 @@ async function broadcastNotification(type, title, message, linkUrl, extraData) {
       }
     })
     .catch(e => console.error('Push API err:', e));
-    
-    fetchNotifications();
-    
   } catch (err) {
-    console.error('Broadcast error:', err);
+    console.error('Push broadcast fetch error:', err);
   }
 }
