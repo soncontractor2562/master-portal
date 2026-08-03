@@ -752,12 +752,32 @@ function toggleRegisterForm(show) {
     loginBlock.style.display = show ? 'none' : 'block';
     regBlock.style.display = show ? 'block' : 'none';
   }
+  if (show) {
+    var populateLocations = function(locs) {
+      var sel = document.getElementById('regAssignedLoc');
+      if (sel) {
+        sel.innerHTML = '<option value="">-- ไม่ระบุสถานที่ --</option>' +
+          locs.map(function(l) {
+            return '<option value="' + esc(l.name) + '">' + esc(l.name) + '</option>';
+          }).join('');
+      }
+    };
+    if (state.allLocations && state.allLocations.length > 0) {
+      populateLocations(state.allLocations);
+    } else {
+      apiGet('/api/locations').then(function(data) {
+        state.allLocations = data.locations || [];
+        populateLocations(state.allLocations);
+      }).catch(function(_) {});
+    }
+  }
 }
 
 async function doRegisterUser() {
   var u = document.getElementById('regUsername').value.trim();
   var p = document.getElementById('regPin').value.trim();
   var d = document.getElementById('regDisplayName').value.trim();
+  var loc = document.getElementById('regAssignedLoc') ? document.getElementById('regAssignedLoc').value : '';
   
   if (!u) return showToast('กรุณากรอกชื่อผู้ใช้สำหรับล็อกอิน (Username)', 'error');
   if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
@@ -765,12 +785,18 @@ async function doRegisterUser() {
   
   try {
     var payload = { username: u, pin: p, role: 'ผู้ใช้งาน', display_name: d };
+    if (loc) payload.assigned_location = loc;
+    
     var { error } = await supabaseClient.from('store_users').insert(payload);
     
-    if (error && error.message && error.message.includes('display_name')) {
-      delete payload.display_name;
+    if (error && error.message && error.message.includes('assigned_location')) {
+      delete payload.assigned_location;
       var { error: err2 } = await supabaseClient.from('store_users').insert(payload);
       if (err2) throw err2;
+    } else if (error && error.message && error.message.includes('display_name')) {
+      delete payload.display_name;
+      var { error: err3 } = await supabaseClient.from('store_users').insert(payload);
+      if (err3) throw err3;
     } else if (error) {
       if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น');
       throw error;
@@ -784,6 +810,22 @@ async function doRegisterUser() {
     toggleRegisterForm(false);
   } catch (err) {
     showToast('สมัครสมาชิกไม่สำเร็จ: ' + err.message, 'error');
+  }
+}
+
+async function forceLogoutAllUsers() {
+  if (!confirm('คุณต้องการสั่งบังคับให้ผู้ใช้งานทุกเครื่องในระบบออกจากระบบ (Log Out) ใช่หรือไม่?')) return;
+  try {
+    var logoutToken = new Date().getTime().toString();
+    if (supabaseClient) {
+      await supabaseClient.from('store_settings').upsert({ key: 'force_logout', value: logoutToken });
+    }
+    localStorage.setItem('inv_force_logout', logoutToken);
+    showToast('ส่งคำสั่งออกจากระบบทุกเครื่องเรียบร้อยแล้ว', 'success');
+    setTimeout(function() { logout(); }, 1000);
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+    logout();
   }
 }
 

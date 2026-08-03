@@ -797,11 +797,13 @@
           <div class="page-header-title">อัพเดทสโตร์</div>
           <div class="page-header-sub" id="lastUpdate">โหลดข้อมูล...</div>
         </div>
-        <div class="page-header-actions">
-          <button class="icon-btn noti-bell-btn" onclick="openNotiModal()" title="การแจ้งเตือน" style="position:relative; margin-right:4px;">
-            🔔
-            <span class="noti-badge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; font-size:10px; font-weight:bold; height:18px; min-width:18px; border-radius:99px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:0 5px; box-shadow:0 0 0 2px #0f172a, 0 2px 6px rgba(239,68,68,0.4); z-index:5;">0</span>
-          </button>
+        <div class="page-header-actions" style="overflow:visible !important;">
+          <div style="position:relative; display:inline-block; overflow:visible !important; margin-right:4px;">
+            <button class="icon-btn noti-bell-btn" onclick="openNotiModal()" title="การแจ้งเตือน" style="position:relative; overflow:visible !important;">
+              🔔
+              <span class="noti-badge" style="display:none; position:absolute; top:-6px; right:-6px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; height:18px; width:18px; min-width:18px; border-radius:50%; align-items:center; justify-content:center; box-sizing:border-box; padding:0; box-shadow:0 0 0 2px #0f172a, 0 2px 6px rgba(239,68,68,0.5); z-index:99; line-height:1; text-align:center;">0</span>
+            </button>
+          </div>
         </div>
       </div>
       <div class="page-body">
@@ -973,10 +975,17 @@
         <label class="form-label">รหัส PIN (4-6 หลัก) *</label>
         <input type="password" id="regPin" class="form-input" placeholder="รหัส PIN 4-6 หลัก (แก้ไขได้ทีหลัง)..." maxlength="6" autocomplete="off">
       </div>
-      <div class="form-group" style="margin-bottom:16px;">
+      <div class="form-group" style="margin-bottom:10px;">
         <label class="form-label">ชื่อที่ใช้ในการปฏิบัติงาน (Display Name) *</label>
         <input type="text" id="regDisplayName" class="form-input" placeholder="ชื่อจริง / ชื่อเล่นช่าง (ใช้บันทึกในใบรับของ)..." autocomplete="off">
         <div style="font-size:10px; color:#fbbf24; margin-top:3px;">⚠️ ชื่อนี้จะแสดงในบันทึกการรับของ/เบิกของ (ช่างเปลี่ยนเองทีหลังไม่ได้)</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">เลือกสถานที่/ไซต์งานที่รับผิดชอบ *</label>
+        <select id="regAssignedLoc" class="form-input form-select">
+          <option value="">-- กรุณาเลือกสถานที่/ไซต์งาน --</option>
+        </select>
       </div>
       
       <button onclick="doRegisterUser()" class="btn-primary btn-success" style="width:100%; padding:12px; font-size:15px; margin-bottom:10px;">✅ ยืนยันการสมัครสมาชิก</button>
@@ -1248,6 +1257,12 @@
 
       <div style="font-size:11px; color:var(--muted); margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;">รายชื่อผู้ใช้งานในระบบ</div>
       <div id="userManageList"><div style="text-align:center; color:var(--muted); padding:14px; font-size:13px;">⏳ กำลังโหลด...</div></div>
+      
+      <div style="margin-top:12px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
+        <button onclick="forceLogoutAllUsers()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:700; width:100%; font-family:'Sarabun',sans-serif;" title="บังคับออกจากระบบทุกเครื่อง">
+          🚪 บังคับออกจากระบบทุกเครื่อง (Force Logout All Users)
+        </button>
+      </div>
     </div>
 
     <!-- Location Management -->
