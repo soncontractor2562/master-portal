@@ -25,8 +25,10 @@ export default async function handler(req, res) {
 
     let supabase;
     try {
-      const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').trim();
-      const supabaseKey = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+      let supabaseUrl = (process.env.VITE_SUPABASE_URL || '').trim();
+      let supabaseKey = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+      supabaseUrl = supabaseUrl.replace(/^["']|["']$/g, '');
+      supabaseKey = supabaseKey.replace(/^["']|["']$/g, '');
       supabase = createClient(supabaseUrl, supabaseKey);
     } catch (dbInitErr) {
       return res.status(500).json({ error: 'Supabase Config Error: ' + dbInitErr.message });
