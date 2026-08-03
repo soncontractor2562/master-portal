@@ -3273,9 +3273,8 @@ async function fetchNotifications() {
 
     const visibleNotis = notis.filter(n => {
       if (deletedSet.has(n.id)) return false;
-      const isTestNoti = !!n.target_username || (n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]');
-      if (isTestNoti) {
-        return state.currentUser && (n.target_username === state.currentUser.username || (n.message || '').includes(state.currentUser.username));
+      if (n.target_username && state.currentUser && n.target_username !== state.currentUser.username) {
+        return false;
       }
       return true;
     });
@@ -3515,16 +3514,7 @@ document.addEventListener('visibilitychange', function() {
 });
 
 async function broadcastNotification(type, title, message, linkUrl, extraData) {
-  const isTestEnv = window.location.hostname.includes('git') || 
-                    window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1';
-  
-  const extraStr = typeof extraData === 'object' ? JSON.stringify(extraData) : String(extraData || '');
-  const hasTestKeyword = /test|ทดสอบ|demo|sample/i.test(title) || 
-                         /test|ทดสอบ|demo|sample/i.test(message) ||
-                         /test|ทดสอบ|demo|sample/i.test(extraStr);
-
-  const isTestMode = state.isTestMode || isTestEnv || hasTestKeyword;
+  const isTestMode = !!state.isTestMode;
   const currentUsername = state.currentUser ? state.currentUser.username : null;
 
   try {
