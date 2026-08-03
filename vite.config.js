@@ -16,8 +16,8 @@ export default defineConfig({
         additionalManifestEntries: []
       },
       manifest: {
-        name: 'SON CONTRACTOR',
-        short_name: 'SON',
+        name: 'Store Manager',
+        short_name: 'Store Manager',
         description: 'ระบบจัดการสโตร์ ไซต์งาน และวัสดุอุปกรณ์',
         theme_color: '#090d16',
         background_color: '#090d16',

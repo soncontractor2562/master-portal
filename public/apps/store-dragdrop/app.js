@@ -2207,8 +2207,10 @@ async function confirmReceive() {
       try {
         var res = await apiPost('/api/pending/complete', { move: currentReceiveMove });
         showToast(res.message, 'success');
+        var fromLoc = currentReceiveMove.from_location;
+        var toLoc = currentReceiveMove.to_location;
+        broadcastNotification('receive', '📥 รับของเรียบร้อย', `${toLoc} รับของจาก ${fromLoc} ครบถ้วน`, 'history');
         closeReceiveModal();
-        broadcastNotification('receive', '📥 รับของเรียบร้อย', `${currentReceiveMove.to_location} รับของจาก ${currentReceiveMove.from_location} ครบถ้วน`, 'history');
         loadPending();
         loadInventory();
       } catch (e) {
@@ -2220,8 +2222,10 @@ async function confirmReceive() {
     try {
       var res = await apiPost('/api/pending/receive', { id: currentReceiveMove.id, items: updatedItems });
       showToast('บันทึกยอดรับแล้ว (ยอดยังไม่ตรงกัน โปรดให้สโตร์ตรวจสอบ)', 'success');
+      var fromLoc = currentReceiveMove.from_location;
+      var toLoc = currentReceiveMove.to_location;
+      broadcastNotification('mismatch', '⚠️ แจ้งเตือนด่วน', `${toLoc} รับของจาก ${fromLoc} ไม่ครบ รอการตรวจสอบ`, 'pending');
       closeReceiveModal();
-      broadcastNotification('mismatch', '⚠️ แจ้งเตือนด่วน', `${currentReceiveMove.to_location} รับของจาก ${currentReceiveMove.from_location} ไม่ครบ รอการตรวจสอบ`, 'pending');
       loadPending();
     } catch (e) {
       showToast('Error: ' + e.message, 'error');
@@ -2284,8 +2288,10 @@ async function forceCompleteReceive() {
   try {
     var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
     showToast(res.message, 'success');
+    var fromLoc = currentReceiveMove.from_location;
+    var toLoc = currentReceiveMove.to_location;
+    broadcastNotification('lost', '❌ บันทึกของสูญหาย', `เคลียร์รายการขนย้าย ${fromLoc} ➔ ${toLoc} เรียบร้อยแล้ว`, 'history');
     closeReceiveModal();
-    broadcastNotification('lost', '❌ บันทึกของสูญหาย', `เคลียร์รายการขนย้าย ${currentReceiveMove.from_location} ➔ ${currentReceiveMove.to_location} เรียบร้อยแล้ว`, 'history');
     loadPending();
     loadInventory();
   } catch (e) {
@@ -2433,8 +2439,10 @@ async function confirmAdjustReceive() {
   try {
     var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
     showToast(res.message, 'success');
+    var fromLoc = currentReceiveMove.from_location;
+    var toLoc = currentReceiveMove.to_location;
+    broadcastNotification('lost', '❌ บันทึกของสูญหาย', `เคลียร์รายการขนย้าย ${fromLoc} ➔ ${toLoc} เรียบร้อยแล้ว`, 'history');
     closeReceiveModal();
-    broadcastNotification('lost', '❌ บันทึกของสูญหาย', `เคลียร์รายการขนย้าย ${currentReceiveMove.from_location} ➔ ${currentReceiveMove.to_location} เรียบร้อยแล้ว`, 'history');
     await loadPending();
   } catch (err) {
     showToast(err.message, 'error');
