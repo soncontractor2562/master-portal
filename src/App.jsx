@@ -22,7 +22,7 @@ function useMediaQuery(query) {
 }
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState('store'); // Mobile active module (default: store)
+  const [activeModule, setActiveModule] = useState(null); // Mobile active module (default: null to show home screen)
   const [activeTab, setActiveTab] = useState('store'); // PC active tab (default: store)
   const isDesktop = useMediaQuery('(min-width: 1024px)'); // Tailwind 'lg' breakpoint
 
