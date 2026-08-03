@@ -1199,10 +1199,16 @@
       </div>
       
       <div style="background:rgba(15,23,42,0.4); border:1px solid var(--border); border-radius:12px; padding:12px;">
-        <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px;">✏️ แก้ไขชื่อผู้ใช้และรหัส PIN ของคุณ</div>
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-          <input type="text" id="editSelfUsername" class="form-input" placeholder="ชื่อผู้ใช้ใหม่..." style="flex:1;" />
-          <input type="password" id="editSelfPin" class="form-input" placeholder="PIN ใหม่ (4-6 หลัก)..." maxlength="6" style="width:140px;" />
+        <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px;">✏️ แก้ไขข้อมูลส่วนตัวของคุณ</div>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="editSelfUsername" class="form-input" placeholder="ชื่อผู้ใช้ (Username)..." style="flex:1;" />
+            <input type="password" id="editSelfPin" class="form-input" placeholder="PIN ใหม่ (4-6 หลัก)..." maxlength="6" style="width:140px;" />
+          </div>
+          <div id="selfDisplayNameBlock">
+            <input type="text" id="editSelfDisplayName" class="form-input" placeholder="ชื่อที่ใช้จริงในการปฏิบัติงาน (Display Name)..." />
+            <div style="font-size:10px; color:var(--muted); margin-top:2px;">* ชื่อนี้จะแสดงเป็นชื่อผู้บันทึกในการเบิก/ขนย้าย/ปรับยอดสต็อก</div>
+          </div>
         </div>
         <button onclick="confirmEditSelfProfile()" class="btn-primary" style="padding:8px 12px; width:100%; font-size:13px; background:#3b82f6;">💾 บันทึกการเปลี่ยนแปลงข้อมูลส่วนตัว</button>
       </div>

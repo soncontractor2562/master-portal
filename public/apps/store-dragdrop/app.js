@@ -886,6 +886,16 @@ async function refreshAll() {
   var btn = document.getElementById('refreshBtn');
   if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
   try {
+    if (state.currentUser && state.currentUser.id && supabaseClient) {
+      try {
+        var { data: freshUser } = await supabaseClient.from('store_users').select('*').eq('id', state.currentUser.id).maybeSingle();
+        if (freshUser) {
+          state.currentUser = freshUser;
+          localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+        }
+      } catch (_) {}
+    }
+
     // Load settings, inventory, and pending in parallel
     var [settingsRes, _, __] = await Promise.all([
       apiGet('/api/settings').catch(function(){ return { settings: {} }; }),
@@ -1784,8 +1794,13 @@ function canUserAccessLocation(locationName) {
   if (state.currentUser.role !== 'ผู้ใช้งาน') return true;
   var assigned = state.currentUser.assigned_location || '';
   if (!assigned || !assigned.trim()) return false;
-  var list = assigned.split(',').map(function(s) { return s.trim(); });
-  return list.includes((locationName || '').trim());
+  
+  var targetLoc = (locationName || '').trim().toLowerCase();
+  var list = assigned.split(',').map(function(s) { return s.trim().toLowerCase(); });
+  
+  return list.some(function(site) {
+    return site && (targetLoc.includes(site) || site.includes(targetLoc) || site === targetLoc);
+  });
 }
 
 // ====== SETTINGS MODAL ======
@@ -1797,6 +1812,51 @@ async function showSettingsModal() {
       el.style.display = isUser ? 'none' : 'block';
     }
   });
+
+  if (document.getElementById('editSelfUsername')) document.getElementById('editSelfUsername').value = state.currentUser.username || '';
+  if (document.getElementById('editSelfPin')) document.getElementById('editSelfPin').value = state.currentUser.pin || '';
+  if (document.getElementById('editSelfDisplayName')) document.getElementById('editSelfDisplayName').value = getUserDisplayName(state.currentUser);
+  if (document.getElementById('settingsUser')) document.getElementById('settingsUser').innerText = getUserDisplayName(state.currentUser);
+
+  var assignedSites = (state.currentUser.assigned_location || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var userSiteInfoCard = document.getElementById('userSiteInfoCard');
+  if (isUser) {
+    if (!userSiteInfoCard) {
+      userSiteInfoCard = document.createElement('div');
+      userSiteInfoCard.id = 'userSiteInfoCard';
+      var modalSheet = document.querySelector('#settingsModal .modal-sheet');
+      if (modalSheet) {
+        var titleEl = modalSheet.querySelector('.modal-title');
+        modalSheet.insertBefore(userSiteInfoCard, titleEl ? titleEl.nextSibling : modalSheet.firstChild);
+      }
+    }
+    userSiteInfoCard.style.display = 'block';
+    var siteBadges = assignedSites.map(function(s) {
+      return '<span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); color:#4ade80; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; margin-right:6px; margin-bottom:6px;">🏗️ ' + esc(s) + '</span>';
+    }).join('');
+    
+    userSiteInfoCard.innerHTML = `
+      <div style="padding:14px; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:12px; margin-bottom:14px;">
+        <div style="font-size:14px; font-weight:700; color:#60a5fa; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          📍 ไซต์งานที่คุณมีสิทธิ์จัดการ (${assignedSites.length} ไซต์)
+        </div>
+        ${assignedSites.length > 0 ? `
+          <div style="margin-bottom:8px;">${siteBadges}</div>
+          <div style="font-size:11px; color:#cbd5e1; background:rgba(30,41,59,0.5); padding:8px 10px; border-radius:8px; border-left:3px solid #3b82f6;">
+            ✅ <strong>สิทธิ์ของคุณในไซต์เหล่านี้:</strong><br>
+            • 📥 <strong>กดตรวจรับวัสดุ</strong> ที่จัดส่งมายังไซต์ของคุณ<br>
+            • ⚖️ <strong>ปรับยอดสต็อกวัสดุ</strong> คงเหลือในไซต์ของคุณ
+          </div>
+        ` : `
+          <div style="font-size:12px; color:#f87171; background:rgba(239,68,68,0.1); padding:8px 10px; border-radius:8px;">
+            ⚠️ คุณยังไม่มีไซต์งานที่ได้รับมอบหมาย (ติดต่อสโตร์หรือแอดมินเพื่อเพิ่มสิทธิ์ไซต์งาน)
+          </div>
+        `}
+      </div>
+    `;
+  } else if (userSiteInfoCard) {
+    userSiteInfoCard.style.display = 'none';
+  }
   
   if ('Notification' in window) {
     var notiBtn = document.getElementById('settingsNotiBtn');
@@ -1990,9 +2050,57 @@ async function saveUserLocationChanges(userId) {
       }
       throw error;
     }
-    showToast('อัปเดตสถานที่รับผิดชอบเรียบร้อยแล้ว', 'success');
+    if (state.currentUser && state.currentUser.id === userId) {
+      state.currentUser.assigned_location = newLocStr;
+      localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+    }
+    if (state.usersListCache) {
+      var cached = state.usersListCache.find(function(x) { return x.id === userId; });
+      if (cached) cached.assigned_location = newLocStr;
+    }
+    showToast('อัปเดตไซต์งานที่รับผิดชอบเรียบร้อยแล้ว', 'success');
   } catch (err) {
     showToast('อัปเดตล้มเหลว: ' + err.message, 'error');
+  }
+}
+
+async function confirmEditSelfProfile() {
+  if (!state.currentUser || !supabaseClient) return;
+  var newU = document.getElementById('editSelfUsername').value.trim();
+  var newP = document.getElementById('editSelfPin').value.trim();
+  var newDInput = document.getElementById('editSelfDisplayName');
+  var newD = newDInput ? newDInput.value.trim() : '';
+
+  if (!newU) return showToast('กรุณากรอกชื่อผู้ใช้', 'error');
+  if (!newP || newP.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+
+  try {
+    var payload = { username: newU, pin: newP };
+    if (newD && state.currentUser.role !== 'ผู้ใช้งาน') {
+      payload.display_name = newD;
+    }
+
+    var { error } = await supabaseClient.from('store_users').update(payload).eq('id', state.currentUser.id);
+    if (error && error.message && error.message.includes('display_name')) {
+      delete payload.display_name;
+      var { error: err2 } = await supabaseClient.from('store_users').update(payload).eq('id', state.currentUser.id);
+      if (err2) throw err2;
+    } else if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
+      throw error;
+    }
+
+    state.currentUser.username = newU;
+    state.currentUser.pin = newP;
+    if (payload.display_name) state.currentUser.display_name = payload.display_name;
+    localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+
+    showToast('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว', 'success');
+    if (document.getElementById('settingsUser')) {
+      document.getElementById('settingsUser').innerText = getUserDisplayName(state.currentUser);
+    }
+  } catch (err) {
+    showToast('แก้ไขข้อมูลส่วนตัวล้มเหลว: ' + err.message, 'error');
   }
 }
 
