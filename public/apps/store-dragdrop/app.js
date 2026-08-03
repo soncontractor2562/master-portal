@@ -3274,7 +3274,8 @@ async function fetchNotifications() {
 
     const visibleNotis = notis.filter(n => {
       if (deletedSet.has(n.id)) return false;
-      if (n.target_username && state.currentUser && n.target_username !== state.currentUser.username) {
+      const isTestNoti = (n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]');
+      if (isTestNoti && state.currentUser && state.currentUser.role !== 'แอดมิน') {
         return false;
       }
       return true;
@@ -3560,6 +3561,7 @@ async function broadcastNotification(type, title, message, linkUrl, extraData) {
         title: displayTitle,
         message: displayMsg,
         url: window.location.origin + '/apps/store-dragdrop/',
+        targetRole: isTestMode ? 'แอดมิน' : null,
         targetUsername: isTestMode ? currentUsername : null
       })
     })

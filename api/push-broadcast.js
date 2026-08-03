@@ -39,9 +39,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
-    // Fetch subscriptions from Supabase (filter by targetUsername if test mode)
+    // Fetch subscriptions from Supabase (filter by targetRole/targetUsername if test mode)
     let query = supabase.from('store_push_subscriptions').select('*');
-    if (targetUsername) {
+    if (targetRole === 'แอดมิน' || targetRole === 'admin') {
+      const { data: adminUsers } = await supabase.from('store_users').select('username').or('role.eq.แอดมิน,role.eq.admin');
+      if (adminUsers && adminUsers.length > 0) {
+        const adminUsernames = adminUsers.map(u => u.username);
+        if (targetUsername && !adminUsernames.includes(targetUsername)) {
+          adminUsernames.push(targetUsername);
+        }
+        query = query.in('username', adminUsernames);
+      } else if (targetUsername) {
+        query = query.ilike('username', targetUsername.trim());
+      }
+    } else if (targetUsername) {
       query = query.ilike('username', targetUsername.trim());
     }
 
