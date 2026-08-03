@@ -24,8 +24,9 @@ export default async function handler(req, res) {
     }
 
     let supabase;
+    let supabaseUrl;
     try {
-      let supabaseUrl = (process.env.VITE_SUPABASE_URL || '').trim();
+      supabaseUrl = (process.env.VITE_SUPABASE_URL || '').trim();
       let supabaseKey = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
       supabaseUrl = supabaseUrl.replace(/^["']|["']$/g, '');
       supabaseKey = supabaseKey.replace(/^["']|["']$/g, '');
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Error fetching subscriptions:', error);
-      return res.status(500).json({ error: 'DB Error: ' + (error.message || JSON.stringify(error)) });
+      return res.status(500).json({ error: `DB Error [${supabaseUrl}]: ` + (error.message || JSON.stringify(error)) });
     }
 
     if (!subscriptions || subscriptions.length === 0) {
