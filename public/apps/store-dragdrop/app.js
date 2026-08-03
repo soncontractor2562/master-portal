@@ -727,6 +727,8 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('loginModal').style.display = 'none';
       applyUserRole();
       refreshAll();
+      initPushNotifications();
+      fetchNotifications();
     } catch(e) {
       document.getElementById('loginModal').style.display = 'flex';
     }
