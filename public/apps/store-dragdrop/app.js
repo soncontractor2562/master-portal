@@ -784,11 +784,7 @@ function applyUserRole() {
     document.getElementById('snav-move').style.display = 'flex';
   }
   
-  if (isUser && state.currentPage === 'move') {
-    switchPage('pending');
-  } else if (!isUser && state.currentPage === 'pending') {
-    // switchPage('move');
-  }
+  // Removed user redirection to 'pending' to keep app on 'move' (main menu)
   
   // Update username UI
   if (document.getElementById('settingsUser')) {
@@ -1680,6 +1676,22 @@ async function showSettingsModal() {
       el.style.display = isUser ? 'none' : 'block';
     }
   });
+  
+  if ('Notification' in window) {
+    var notiBtn = document.getElementById('settingsNotiBtn');
+    if (notiBtn) {
+      if (Notification.permission === 'granted') {
+        notiBtn.innerText = 'อนุญาตแล้ว';
+        notiBtn.style.background = '#10b981';
+        notiBtn.style.color = '#fff';
+      } else {
+        notiBtn.innerText = 'เปิดใช้งาน';
+        notiBtn.style.background = '';
+        notiBtn.style.color = '';
+      }
+    }
+  }
+
   // Also load all locations for the location section
   try {
     var data = await apiGet('/api/locations');
@@ -2637,6 +2649,27 @@ window.handleModalBack = function(btn) {
 // ==========================================
 // NOTIFICATION SYSTEM (In-App + PWA Push)
 // ==========================================
+
+function requestNotificationPermissionUI() {
+  if (!('Notification' in window)) {
+    showToast('เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน', 'error');
+    return;
+  }
+  Notification.requestPermission().then(function(permission) {
+    if (permission === 'granted') {
+      showToast('อนุญาตการแจ้งเตือนแล้ว', 'success');
+      initPushNotifications();
+      var btn = document.getElementById('settingsNotiBtn');
+      if (btn) {
+        btn.innerText = 'อนุญาตแล้ว';
+        btn.style.background = '#10b981';
+        btn.style.color = '#fff';
+      }
+    } else {
+      showToast('ปฏิเสธการแจ้งเตือน (กรุณาเปิดในตั้งค่าเบราว์เซอร์)', 'error');
+    }
+  });
+}
 
 async function initPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {

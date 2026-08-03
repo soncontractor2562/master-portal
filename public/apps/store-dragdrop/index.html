@@ -1167,6 +1167,18 @@
       <button onclick="toggleStoreTheme()" class="filter-pill active" id="mobileThemeToggleBtn" style="padding:6px 12px; margin:0; cursor:pointer;">🌙 โหมดมืด</button>
     </div>
 
+    <!-- Push Notifications Settings -->
+    <div class="section-card" style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:24px;">🔔</span>
+        <div>
+          <div style="font-size:14px; font-weight:700; color:var(--text);">การแจ้งเตือน</div>
+          <div style="font-size:12px; color:var(--muted);">รับแจ้งเตือนเมื่อมีรายการใหม่</div>
+        </div>
+      </div>
+      <button onclick="requestNotificationPermissionUI()" class="filter-pill" id="settingsNotiBtn" style="padding:6px 12px; margin:0; cursor:pointer;">เปิดใช้งาน</button>
+    </div>
+
     <!-- Location Management -->
     <div class="section-card">
       <div class="section-title">📍 จัดการสถานที่</div>
