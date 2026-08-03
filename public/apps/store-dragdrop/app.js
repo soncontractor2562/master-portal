@@ -1084,10 +1084,6 @@ function closeMoveModalDirect() {
 }
 
 async function confirmMove() {
-  if (state.currentUser && state.currentUser.role === 'ผู้ใช้งาน') {
-    showToast('ผู้ใช้งานทั่วไปไม่สามารถทำการขนย้ายได้', 'error');
-    return;
-  }
   var inputs = document.querySelectorAll('.move-bulk-qty');
   var moves = [];
   inputs.forEach(function(inp) {
