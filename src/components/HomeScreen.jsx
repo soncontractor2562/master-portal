@@ -3,18 +3,6 @@ import { CheckSquare, ShoppingBag, FileSpreadsheet, ChevronRight } from 'lucide-
 
 const modules = [
   {
-    id: 'todo',
-    label: 'Weekly Todo List',
-    desc: 'ติดตามงานรายสัปดาห์',
-    icon: CheckSquare,
-    gradient: 'from-indigo-600/25 to-purple-600/15',
-    border: 'border-indigo-500/30',
-    iconBg: 'bg-indigo-500/20',
-    iconColor: 'text-indigo-400',
-    glow: 'shadow-indigo-500/10',
-    emoji: '📋',
-  },
-  {
     id: 'store',
     label: 'Store Manager',
     desc: 'อัพเดทสโตร์และเช็คยอดคงเหลือ',
@@ -25,6 +13,18 @@ const modules = [
     iconColor: 'text-emerald-400',
     glow: 'shadow-emerald-500/10',
     emoji: '🏪',
+  },
+  {
+    id: 'todo',
+    label: 'Weekly Todo List',
+    desc: 'ติดตามงานรายสัปดาห์',
+    icon: CheckSquare,
+    gradient: 'from-indigo-600/25 to-purple-600/15',
+    border: 'border-indigo-500/30',
+    iconBg: 'bg-indigo-500/20',
+    iconColor: 'text-indigo-400',
+    glow: 'shadow-indigo-500/10',
+    emoji: '📋',
   },
   {
     id: 'prpo',

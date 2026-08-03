@@ -22,8 +22,8 @@ function useMediaQuery(query) {
 }
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState(null); // Mobile active module
-  const [activeTab, setActiveTab] = useState('todo'); // PC active tab
+  const [activeModule, setActiveModule] = useState('store'); // Mobile active module (default: store)
+  const [activeTab, setActiveTab] = useState('store'); // PC active tab (default: store)
   const isDesktop = useMediaQuery('(min-width: 1024px)'); // Tailwind 'lg' breakpoint
 
   // Handle Android back-button / browser back gesture for Mobile

@@ -4,15 +4,6 @@ import { CheckSquare, ShoppingBag, FileSpreadsheet, X, Hexagon, ChevronRight, Me
 export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) {
   const navItems = [
     {
-      id: 'todo',
-      label: 'Weekly Todo List',
-      icon: CheckSquare,
-      desc: 'ติดตามงานรายสัปดาห์',
-      color: 'text-indigo-400',
-      activeBg: 'from-indigo-600/30 to-purple-600/20 border-indigo-500/40',
-      activeIcon: 'bg-indigo-500',
-    },
-    {
       id: 'store',
       label: 'Store Manager',
       icon: ShoppingBag,
@@ -20,6 +11,15 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
       color: 'text-emerald-400',
       activeBg: 'from-emerald-600/30 to-teal-600/20 border-emerald-500/40',
       activeIcon: 'bg-emerald-500',
+    },
+    {
+      id: 'todo',
+      label: 'Weekly Todo List',
+      icon: CheckSquare,
+      desc: 'ติดตามงานรายสัปดาห์',
+      color: 'text-indigo-400',
+      activeBg: 'from-indigo-600/30 to-purple-600/20 border-indigo-500/40',
+      activeIcon: 'bg-indigo-500',
     },
     {
       id: 'prpo',
