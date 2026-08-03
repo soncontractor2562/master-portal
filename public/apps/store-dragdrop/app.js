@@ -1817,7 +1817,14 @@ async function updateUserAssignedLocation(userId, newLoc) {
   if (!supabaseClient) return;
   try {
     var { error } = await supabaseClient.from('store_users').update({ assigned_location: newLoc }).eq('id', userId);
-    if (error) throw error;
+    if (error) {
+      if (error.message && error.message.includes('assigned_location')) {
+        alert('กรุณารันคำสั่ง SQL นี้ใน Supabase SQL Editor เพื่อเพิ่มคอลัมน์ assigned_location ในตาราง store_users:\n\nALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;');
+        showToast('ยังไม่ได้เพิ่มคอลัมน์ assigned_location ในตาราง store_users ใน Supabase', 'error');
+        return;
+      }
+      throw error;
+    }
     showToast('อัปเดตสถานที่รับผิดชอบเรียบร้อยแล้ว', 'success');
   } catch (err) {
     showToast('อัปเดตล้มเหลว: ' + err.message, 'error');
@@ -1834,17 +1841,22 @@ async function confirmAddUser() {
   if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
   
   try {
-    var { error } = await supabaseClient.from('store_users').insert({
-      username: u,
-      pin: p,
-      role: r,
-      assigned_location: loc
-    });
-    if (error) {
+    var payload = { username: u, pin: p, role: r };
+    if (loc) payload.assigned_location = loc;
+    
+    var { error } = await supabaseClient.from('store_users').insert(payload);
+    if (error && error.message && error.message.includes('assigned_location')) {
+      delete payload.assigned_location;
+      var { error: err2 } = await supabaseClient.from('store_users').insert(payload);
+      if (err2) throw err2;
+      alert('กรุณารันคำสั่ง SQL นี้ใน Supabase SQL Editor เพื่อเพิ่มคอลัมน์ assigned_location ในตาราง store_users:\n\nALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;');
+      showToast('เพิ่มผู้ใช้งานแล้ว (กรุณาเพิ่มคอลัมน์ assigned_location ใน Supabase)', 'warning');
+    } else if (error) {
       if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
       throw error;
+    } else {
+      showToast('เพิ่มผู้ใช้งาน "' + u + '" เรียบร้อยแล้ว', 'success');
     }
-    showToast('เพิ่มผู้ใช้งาน "' + u + '" เรียบร้อยแล้ว', 'success');
     document.getElementById('newUsername').value = '';
     document.getElementById('newUserPin').value = '';
     loadUsersList();

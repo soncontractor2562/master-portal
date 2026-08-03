@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS store_users (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+ALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;
+
 -- Insert default users
 INSERT INTO store_users (username, pin, role) VALUES 
 ('admin', '1234', 'แอดมิน'),
