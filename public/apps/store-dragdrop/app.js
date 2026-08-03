@@ -2846,7 +2846,18 @@ async function broadcastNotification(type, title, message, linkUrl) {
         message: message,
         url: window.location.origin + '/apps/store-dragdrop/'
       })
-    }).catch(e => console.error('Push API err:', e));
+    })
+    .then(async res => {
+      if (!res.ok) {
+        try {
+          const errData = await res.json();
+          showToast('Push System Error: ' + (errData.error || res.status), 'error');
+        } catch(e) {
+          showToast('Push System Error: ' + res.status, 'error');
+        }
+      }
+    })
+    .catch(e => console.error('Push API err:', e));
     
     fetchNotifications();
     
