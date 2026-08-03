@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS store_users (
 );
 
 ALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;
+ALTER TABLE store_users ADD COLUMN IF NOT EXISTS display_name text;
 
 -- Insert default users
 INSERT INTO store_users (username, pin, role) VALUES 

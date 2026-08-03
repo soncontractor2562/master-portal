@@ -740,6 +740,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+function getUserDisplayName(user) {
+  if (!user) return '';
+  return user.display_name || user.username;
+}
+
+function toggleRegisterForm(show) {
+  var loginBlock = document.getElementById('loginFormBlock');
+  var regBlock = document.getElementById('registerFormBlock');
+  if (loginBlock && regBlock) {
+    loginBlock.style.display = show ? 'none' : 'block';
+    regBlock.style.display = show ? 'block' : 'none';
+  }
+}
+
+async function doRegisterUser() {
+  var u = document.getElementById('regUsername').value.trim();
+  var p = document.getElementById('regPin').value.trim();
+  var d = document.getElementById('regDisplayName').value.trim();
+  
+  if (!u) return showToast('กรุณากรอกชื่อผู้ใช้สำหรับล็อกอิน (Username)', 'error');
+  if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+  if (!d) return showToast('กรุณากรอกชื่อที่ใช้ในการปฏิบัติงาน (Display Name)', 'error');
+  
+  try {
+    var payload = { username: u, pin: p, role: 'ผู้ใช้งาน', display_name: d };
+    var { error } = await supabaseClient.from('store_users').insert(payload);
+    
+    if (error && error.message && error.message.includes('display_name')) {
+      delete payload.display_name;
+      var { error: err2 } = await supabaseClient.from('store_users').insert(payload);
+      if (err2) throw err2;
+    } else if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น');
+      throw error;
+    }
+    
+    showToast('สมัครสมาชิกสำเร็จเรียบร้อย! สามารถล็อกอินเข้าใช้งานได้เลย', 'success');
+    document.getElementById('regUsername').value = '';
+    document.getElementById('regPin').value = '';
+    document.getElementById('regDisplayName').value = '';
+    document.getElementById('loginUsername').value = u;
+    toggleRegisterForm(false);
+  } catch (err) {
+    showToast('สมัครสมาชิกไม่สำเร็จ: ' + err.message, 'error');
+  }
+}
+
 async function doLogin() {
   var u = document.getElementById('loginUsername').value.trim();
   var p = document.getElementById('loginPin').value.trim();
@@ -1065,7 +1112,7 @@ function openMoveModal(itemIndex) {
   
   var reporterInput = document.getElementById('moveReporter');
   if (reporterInput && state.currentUser) {
-    reporterInput.value = state.currentUser.username;
+    reporterInput.value = getUserDisplayName(state.currentUser);
     reporterInput.readOnly = true;
     reporterInput.style.background = 'rgba(15,23,42,0.5)';
     reporterInput.style.color = '#60a5fa';
@@ -1452,7 +1499,7 @@ function showAdjustModal(itemName, locationName) {
   
   var adjusterInput = document.getElementById('adjustAdjuster');
   if (adjusterInput && state.currentUser) {
-    adjusterInput.value = state.currentUser.username;
+    adjusterInput.value = getUserDisplayName(state.currentUser);
     adjusterInput.readOnly = true;
     adjusterInput.style.background = 'rgba(15,23,42,0.5)';
     adjusterInput.style.color = '#60a5fa';
@@ -1593,10 +1640,12 @@ function renderHistoryList() {
       }
     }
       
-    var metaHtml = (first.reporter || first.carrier || first.remark) ?
+    var rName = first.receiver || (isMove && (first.toLocation.includes('สโตร์') || first.toLocation.includes('Store')) ? 'Store' : '');
+    var metaHtml = (first.reporter || first.carrier || rName || first.remark) ?
       '<div style="font-size:11px;color:#64748b;margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap;">' +
-      (first.reporter ? '<span>👤 ' + first.reporter + '</span>' : '') +
-      (first.carrier && first.carrier !== first.reporter ? '<span>🚛 ' + first.carrier + '</span>' : '') +
+      (first.reporter ? '<span>👤 ผู้บันทึก: ' + first.reporter + '</span>' : '') +
+      (rName ? '<span>📥 ผู้รับ: ' + rName + '</span>' : '') +
+      (first.carrier && first.carrier !== first.reporter ? '<span>🚛 ผู้ขนส่ง: ' + first.carrier + '</span>' : '') +
       (first.remark ? '<span>📝 ' + first.remark + '</span>' : '') +
       '</div>' : '';
 
@@ -1773,6 +1822,7 @@ async function loadUsersList() {
       var isSelf = state.currentUser && state.currentUser.username === u.username;
       var roleBadge = u.role === 'แอดมิน' ? '👑' : (u.role === 'ผู้ดูแลสโตร์' ? '🏭' : '👷‍♂️');
       var roleColor = u.role === 'แอดมิน' ? '#a855f7' : (u.role === 'ผู้ดูแลสโตร์' ? '#3b82f6' : '#10b981');
+      var dispName = u.display_name || u.username;
       
       var userAssignedList = (u.assigned_location || '').split(',').map(function(s) { return s.trim(); });
       var locCheckboxesHtml = state.allLocations.map(function(l) {
@@ -1796,10 +1846,17 @@ async function loadUsersList() {
             ` : ''}
           </div>
           
-          <div style="display:flex; gap:6px; align-items:center; margin-top:6px; margin-bottom:6px;">
-            <input type="text" id="editUsername_${u.id}" class="form-input" value="${esc(u.username)}" placeholder="ชื่อ..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
-            <input type="password" id="editPin_${u.id}" class="form-input" value="${esc(u.pin)}" placeholder="PIN" maxlength="6" style="padding:2px 6px; font-size:12px; height:auto; width:60px; text-align:center;" />
-            <button onclick="saveUserChanges('${u.id}')" style="background:#3b82f6; border:none; color:#fff; padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">💾 เซฟ</button>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px; margin-bottom:6px;">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">User / PIN:</span>
+              <input type="text" id="editUsername_${u.id}" class="form-input" value="${esc(u.username)}" placeholder="Username..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+              <input type="text" id="editPin_${u.id}" class="form-input" value="${esc(u.pin)}" placeholder="PIN" maxlength="6" style="padding:2px 6px; font-size:12px; height:auto; width:65px; text-align:center; color:#fbbf24; font-weight:bold;" />
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">ชื่อที่ใช้จริง:</span>
+              <input type="text" id="editDisplayName_${u.id}" class="form-input" value="${esc(dispName)}" placeholder="ชื่อจริง/ชื่อเล่นปฏิบัติงาน..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+              <button onclick="saveUserChanges('${u.id}')" style="background:#3b82f6; border:none; color:#fff; padding:3px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; flex-shrink:0;">💾 เซฟ</button>
+            </div>
           </div>
 
           ${u.role === 'ผู้ใช้งาน' ? `
@@ -1825,20 +1882,25 @@ async function saveUserChanges(userId) {
   if (!supabaseClient) return;
   var uInput = document.getElementById('editUsername_' + userId);
   var pInput = document.getElementById('editPin_' + userId);
+  var dInput = document.getElementById('editDisplayName_' + userId);
   if (!uInput || !pInput) return;
   
   var newU = uInput.value.trim();
   var newP = pInput.value.trim();
+  var newD = dInput ? dInput.value.trim() : '';
   if (!newU) return showToast('กรุณากรอกชื่อผู้ใช้', 'error');
   if (!newP || newP.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
   
   try {
-    var { error } = await supabaseClient.from('store_users').update({
-      username: newU,
-      pin: newP
-    }).eq('id', userId);
+    var payload = { username: newU, pin: newP };
+    if (newD) payload.display_name = newD;
     
-    if (error) {
+    var { error } = await supabaseClient.from('store_users').update(payload).eq('id', userId);
+    if (error && error.message && error.message.includes('display_name')) {
+      delete payload.display_name;
+      var { error: err2 } = await supabaseClient.from('store_users').update(payload).eq('id', userId);
+      if (err2) throw err2;
+    } else if (error) {
       if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
       throw error;
     }
@@ -2312,11 +2374,19 @@ function openReceiveModal(id) {
     }
     var receiverInput = document.getElementById('receiveReceiver');
     if (receiverInput && state.currentUser) {
-      receiverInput.value = state.currentUser.username;
-      receiverInput.readOnly = true;
-      receiverInput.style.background = 'rgba(15,23,42,0.5)';
-      receiverInput.style.color = '#60a5fa';
-      receiverInput.style.fontWeight = 'bold';
+      if (state.currentUser.role === 'ผู้ใช้งาน') {
+        receiverInput.value = getUserDisplayName(state.currentUser);
+        receiverInput.readOnly = true;
+        receiverInput.style.background = 'rgba(15,23,42,0.5)';
+        receiverInput.style.color = '#60a5fa';
+        receiverInput.style.fontWeight = 'bold';
+      } else {
+        receiverInput.value = savedReceiver || (p.to_location.includes('สโตร์') || p.to_location.includes('Store') ? 'Store' : '');
+        receiverInput.readOnly = false;
+        receiverInput.style.background = '';
+        receiverInput.style.color = 'var(--text)';
+        receiverInput.style.fontWeight = 'normal';
+      }
     }
   }
 
