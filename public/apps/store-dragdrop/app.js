@@ -2735,8 +2735,25 @@ async function initPushNotifications() {
   }
 }
 
+async function autoCleanupOldNotis() {
+  if (!supabaseClient) return;
+  try {
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: oldNotis } = await supabaseClient
+      .from('store_notifications')
+      .select('id')
+      .lt('created_at', cutoff);
+    if (oldNotis && oldNotis.length > 0) {
+      const oldIds = oldNotis.map(n => n.id);
+      await supabaseClient.from('store_notification_reads').delete().in('notification_id', oldIds);
+      await supabaseClient.from('store_notifications').delete().lt('created_at', cutoff);
+    }
+  } catch (_) {}
+}
+
 async function fetchNotifications() {
   if (!state.currentUser || !supabaseClient) return;
+  autoCleanupOldNotis();
   try {
     const { data: notis, error: err1 } = await supabaseClient
       .from('store_notifications')
@@ -2762,13 +2779,16 @@ async function fetchNotifications() {
       const dateStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
       
       return `
-        <div onclick="clickNotification('${n.id}', '${n.link_url || ''}', ${isRead})" style="padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; background:${isRead ? 'transparent' : 'rgba(59,130,246,0.1)'}; display:flex; gap:12px; align-items:flex-start; transition:background .2s;">
+        <div onclick="clickNotification('${n.id}', '${n.link_url || ''}', ${isRead})" style="padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; background:${isRead ? 'transparent' : 'rgba(59,130,246,0.1)'}; display:flex; gap:12px; align-items:flex-start; transition:background .2s; position:relative;">
           <div style="font-size:24px; line-height:1; flex-shrink:0;">${getNotiEmoji(n.type)}</div>
-          <div style="flex:1; min-width:0;">
+          <div style="flex:1; min-width:0; padding-right:24px;">
             <div style="font-size:14px; font-weight:700; color:${isRead ? 'var(--text)' : '#60a5fa'}; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${n.title}</div>
             <div style="font-size:13px; color:var(--muted); line-height:1.4;">${n.message}</div>
             <div style="font-size:11px; color:#475569; margin-top:6px;">${dateStr}</div>
           </div>
+          <button onclick="deleteNoti('${n.id}', event)" title="ลบการแจ้งเตือนนี้" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:4px; opacity:0.6; transition:opacity .2s;" onmouseover="this.style.opacity=1;this.style.color='#ef4444';" onmouseout="this.style.opacity=0.6;">
+            🗑️
+          </button>
           ${!isRead ? '<div style="width:8px; height:8px; background:#3b82f6; border-radius:50%; flex-shrink:0; margin-top:8px;"></div>' : ''}
         </div>
       `;
@@ -2805,6 +2825,41 @@ function getNotiEmoji(type) {
   return '🔔';
 }
 
+async function deleteNoti(id, e) {
+  if (e) e.stopPropagation();
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from('store_notification_reads').delete().eq('notification_id', id);
+    await supabaseClient.from('store_notifications').delete().eq('id', id);
+    fetchNotifications();
+    showToast('ลบการแจ้งเตือนแล้ว', 'success');
+  } catch (err) {
+    console.error('Error deleting notification:', err);
+  }
+}
+
+async function clearReadNotis() {
+  if (!state.currentUser || !supabaseClient) return;
+  try {
+    const { data: reads } = await supabaseClient
+      .from('store_notification_reads')
+      .select('notification_id')
+      .eq('username', state.currentUser.username);
+      
+    if (reads && reads.length > 0) {
+      const readIds = reads.map(r => r.notification_id);
+      await supabaseClient.from('store_notification_reads').delete().in('notification_id', readIds);
+      await supabaseClient.from('store_notifications').delete().in('id', readIds);
+      showToast('ลบการแจ้งเตือนที่อ่านแล้วเรียบร้อย', 'success');
+    } else {
+      showToast('ไม่มีรายการที่อ่านแล้ว', 'info');
+    }
+    fetchNotifications();
+  } catch (err) {
+    console.error('Error clearing read notifications:', err);
+  }
+}
+
 async function markNotiAsRead(id) {
   if (!state.currentUser) return;
   try {
@@ -2831,6 +2886,23 @@ async function markAllNotiAsRead() {
     fetchNotifications();
   } catch (err) {
     console.error(err);
+  }
+}
+
+async function clearAllNotis() {
+  if (!confirm('คุณต้องการลบการแจ้งเตือนทั้งหมดหรือไม่?')) return;
+  if (!supabaseClient) return;
+  try {
+    const { data: notis } = await supabaseClient.from('store_notifications').select('id');
+    if (notis && notis.length > 0) {
+      const ids = notis.map(n => n.id);
+      await supabaseClient.from('store_notification_reads').delete().in('notification_id', ids);
+      await supabaseClient.from('store_notifications').delete().in('id', ids);
+    }
+    fetchNotifications();
+    showToast('ลบการแจ้งเตือนทั้งหมดแล้ว', 'success');
+  } catch (err) {
+    console.error('Error clearing all notifications:', err);
   }
 }
 
