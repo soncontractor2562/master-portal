@@ -1144,15 +1144,26 @@
     <div class="modal-title">
       <button class="modal-back-btn" onclick="handleModalBack(this)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>⚙️ ตั้งค่าระบบ</div>
     
-    <div class="section-card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:24px;">👤</span>
-        <div>
-          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700;">ผู้ใช้งานปัจจุบัน</div>
-          <div id="settingsUser" style="font-size:14px; font-weight:600; color:var(--text);">กำลังโหลด...</div>
+    <div class="section-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:24px;">👤</span>
+          <div>
+            <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700;">ผู้ใช้งานปัจจุบัน</div>
+            <div id="settingsUser" style="font-size:14px; font-weight:600; color:var(--text);">กำลังโหลด...</div>
+          </div>
         </div>
+        <button onclick="logout()" style="background:#ef4444; color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:13px;">🚪 ออกจากระบบ</button>
       </div>
-      <button onclick="logout()" style="background:#ef4444; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">🚪 ออกจากระบบ</button>
+      
+      <div style="background:rgba(15,23,42,0.4); border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px;">✏️ แก้ไขชื่อผู้ใช้และรหัส PIN ของคุณ</div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" id="editSelfUsername" class="form-input" placeholder="ชื่อผู้ใช้ใหม่..." style="flex:1;" />
+          <input type="password" id="editSelfPin" class="form-input" placeholder="PIN ใหม่ (4-6 หลัก)..." maxlength="6" style="width:140px;" />
+        </div>
+        <button onclick="confirmEditSelfProfile()" class="btn-primary" style="padding:8px 12px; width:100%; font-size:13px; background:#3b82f6;">💾 บันทึกการเปลี่ยนแปลงข้อมูลส่วนตัว</button>
+      </div>
     </div>
 
     <!-- Theme Settings -->

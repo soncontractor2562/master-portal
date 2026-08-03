@@ -1061,8 +1061,16 @@ function openMoveModal(itemIndex) {
   document.getElementById('moveSender').value = '';
   document.getElementById('moveReceiver').value = '';
   document.getElementById('moveCarrier').value = '';
-  document.getElementById('moveReporter').value = '';
   document.getElementById('moveRemark').value = '';
+  
+  var reporterInput = document.getElementById('moveReporter');
+  if (reporterInput && state.currentUser) {
+    reporterInput.value = state.currentUser.username;
+    reporterInput.readOnly = true;
+    reporterInput.style.background = 'rgba(15,23,42,0.5)';
+    reporterInput.style.color = '#60a5fa';
+    reporterInput.style.fontWeight = 'bold';
+  }
   
   var btn = document.getElementById('confirmMoveBtn');
   if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการขนย้าย'; }
@@ -1440,8 +1448,16 @@ function showAdjustModal(itemName, locationName) {
   document.getElementById('adjustCurrentQty').textContent = currentQty;
   document.getElementById('adjustUnit').textContent = item.unit;
   document.getElementById('adjustNewQty').value = '';
-  document.getElementById('adjustAdjuster').value = '';
   document.getElementById('adjustRemark').value = '';
+  
+  var adjusterInput = document.getElementById('adjustAdjuster');
+  if (adjusterInput && state.currentUser) {
+    adjusterInput.value = state.currentUser.username;
+    adjusterInput.readOnly = true;
+    adjusterInput.style.background = 'rgba(15,23,42,0.5)';
+    adjusterInput.style.color = '#60a5fa';
+    adjusterInput.style.fontWeight = 'bold';
+  }
   document.getElementById('adjustDiffDisplay').style.display = 'none';
   document.getElementById('itemDetailModal').style.display = 'none';
   document.getElementById('adjustModal').style.display = 'flex';
@@ -2243,9 +2259,12 @@ function openReceiveModal(id) {
       }
     }
     var receiverInput = document.getElementById('receiveReceiver');
-    if (receiverInput) {
-      if (savedReceiver) receiverInput.value = savedReceiver;
-      else receiverInput.value = '';
+    if (receiverInput && state.currentUser) {
+      receiverInput.value = state.currentUser.username;
+      receiverInput.readOnly = true;
+      receiverInput.style.background = 'rgba(15,23,42,0.5)';
+      receiverInput.style.color = '#60a5fa';
+      receiverInput.style.fontWeight = 'bold';
     }
   }
 
