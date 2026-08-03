@@ -1199,29 +1199,23 @@
       </div>
       
       <div style="background:rgba(15,23,42,0.4); border:1px solid var(--border); border-radius:12px; padding:12px;">
-        <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px;">✏️ แก้ไขข้อมูลส่วนตัวของคุณ</div>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;">
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="editSelfUsername" class="form-input" placeholder="ชื่อผู้ใช้ (Username)..." style="flex:1;" />
-            <input type="password" id="editSelfPin" class="form-input" placeholder="PIN ใหม่ (4-6 หลัก)..." maxlength="6" style="width:140px;" />
-          </div>
-          <div id="selfDisplayNameBlock">
-            <input type="text" id="editSelfDisplayName" class="form-input" placeholder="ชื่อที่ใช้จริงในการปฏิบัติงาน (Display Name)..." />
-            <div style="font-size:10px; color:var(--muted); margin-top:2px;">* ชื่อนี้จะแสดงเป็นชื่อผู้บันทึกในการเบิก/ขนย้าย/ปรับยอดสต็อก</div>
-          </div>
+        <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px;">✏️ แก้ไขชื่อผู้ใช้และรหัส PIN ของคุณ</div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" id="editSelfUsername" class="form-input" placeholder="ชื่อผู้ใช้ (Username)..." style="flex:1;" />
+          <input type="password" id="editSelfPin" class="form-input" placeholder="PIN ใหม่ (4-6 หลัก)..." maxlength="6" style="width:140px;" />
         </div>
         <button onclick="confirmEditSelfProfile()" class="btn-primary" style="padding:8px 12px; width:100%; font-size:13px; background:#3b82f6;">💾 บันทึกการเปลี่ยนแปลงข้อมูลส่วนตัว</button>
       </div>
     </div>
 
-    <!-- Developer Testing Mode -->
-    <div class="section-card" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3);">
+    <!-- Developer Testing Mode (Admin Only) -->
+    <div class="section-card" id="developerModeCard" style="display:none; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3);">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center; gap:12px;">
           <span style="font-size:24px;">🧪</span>
           <div>
             <div style="font-size:14px; font-weight:700; color:#fbbf24;">โหมดทดสอบระบบ (Developer Mode)</div>
-            <div style="font-size:11px; color:var(--muted);">ทดสอบ Push Noti & กระดิ่ง เฉพาะเครื่องของคุณ โดยไม่ส่งหาคนอื่น</div>
+            <div style="font-size:11px; color:var(--muted);">ส่ง Push Noti เฉพาะเครื่องของคุณคนเดียว โดยไม่รบกวนคนอื่น</div>
           </div>
         </div>
         <label class="toggle-switch">
@@ -1232,11 +1226,11 @@
       <div id="testModeInfoBlock" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed rgba(245,158,11,0.3);">
         <div style="font-size:11px; color:#fef08a; margin-bottom:8px;">
           ✅ <strong>เปิดโหมดทดสอบแล้ว:</strong><br>
-          • แจ้งเตือน Push Notification จะส่งเข้าเครื่องของคุณคนเดียวเท่านั้น<br>
-          • รายการกระดิ่งแจ้งเตือนจากการทดสอบจะเห็นเฉพาะคุณ (ไม่รบกวนผู้ใช้อื่น)
+          • แจ้งเตือน Push Notification จะส่งเข้าเครื่องแอดมินคนเดียวเท่านั้น<br>
+          • ป้องกันการส่ง Push แจ้งเตือนไปยังอุปกรณ์ของผู้ใช้งานทั่วไป
         </div>
         <button onclick="clearTestNotifications()" style="background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.4); color:#fbbf24; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%; font-family:'Sarabun',sans-serif;">
-          🧹 ลบการแจ้งเตือนทดสอบของคุณทั้งหมด
+          🧹 ลบการแจ้งเตือนทดสอบทั้งหมด
         </button>
       </div>
     </div>

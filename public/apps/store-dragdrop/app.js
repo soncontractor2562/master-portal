@@ -1819,11 +1819,15 @@ async function showSettingsModal() {
   if (document.getElementById('editSelfDisplayName')) document.getElementById('editSelfDisplayName').value = getUserDisplayName(state.currentUser);
   if (document.getElementById('settingsUser')) document.getElementById('settingsUser').innerText = getUserDisplayName(state.currentUser);
 
+  var isAdmin = state.currentUser && state.currentUser.role === 'แอดมิน';
+  var devCard = document.getElementById('developerModeCard');
+  if (devCard) devCard.style.display = isAdmin ? 'block' : 'none';
+
   var testToggle = document.getElementById('testModeToggle');
   if (testToggle) {
     testToggle.checked = !!state.isTestMode;
     var infoBlock = document.getElementById('testModeInfoBlock');
-    if (infoBlock) infoBlock.style.display = state.isTestMode ? 'block' : 'none';
+    if (infoBlock) infoBlock.style.display = (isAdmin && state.isTestMode) ? 'block' : 'none';
   }
 
   var assignedSites = (state.currentUser.assigned_location || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
@@ -2076,31 +2080,21 @@ async function confirmEditSelfProfile() {
   if (!state.currentUser || !supabaseClient) return;
   var newU = document.getElementById('editSelfUsername').value.trim();
   var newP = document.getElementById('editSelfPin').value.trim();
-  var newDInput = document.getElementById('editSelfDisplayName');
-  var newD = newDInput ? newDInput.value.trim() : '';
 
   if (!newU) return showToast('กรุณากรอกชื่อผู้ใช้', 'error');
   if (!newP || newP.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
 
   try {
     var payload = { username: newU, pin: newP };
-    if (newD && state.currentUser.role !== 'ผู้ใช้งาน') {
-      payload.display_name = newD;
-    }
 
     var { error } = await supabaseClient.from('store_users').update(payload).eq('id', state.currentUser.id);
-    if (error && error.message && error.message.includes('display_name')) {
-      delete payload.display_name;
-      var { error: err2 } = await supabaseClient.from('store_users').update(payload).eq('id', state.currentUser.id);
-      if (err2) throw err2;
-    } else if (error) {
+    if (error) {
       if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
       throw error;
     }
 
     state.currentUser.username = newU;
     state.currentUser.pin = newP;
-    if (payload.display_name) state.currentUser.display_name = payload.display_name;
     localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
 
     showToast('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว', 'success');
@@ -3275,19 +3269,7 @@ async function fetchNotifications() {
       }
     } catch (_) {}
 
-    const visibleNotis = notis.filter(n => {
-      if (deletedSet.has(n.id)) return false;
-      // Filter test notifications: if target_username exists or title contains test icon, only show to target user
-      if (n.target_username && state.currentUser && n.target_username !== state.currentUser.username) {
-        return false;
-      }
-      if ((n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]')) {
-        if (state.currentUser && n.target_username && n.target_username !== state.currentUser.username) {
-          return false;
-        }
-      }
-      return true;
-    });
+    const visibleNotis = notis.filter(n => !deletedSet.has(n.id));
     const readIds = new Set(reads.map(r => r.notification_id));
     let unreadCount = 0;
     
@@ -3299,7 +3281,7 @@ async function fetchNotifications() {
       const dateStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
       
       return `
-        <div onclick="clickNotification('${n.id}', '${n.link_url || ''}', ${isRead})" style="padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; background:${isRead ? 'transparent' : 'rgba(59,130,246,0.1)'}; display:flex; gap:12px; align-items:flex-start; transition:background .2s; position:relative;">
+        <div id="notiItem_${n.id}" onclick="clickNotification('${n.id}', '${n.link_url || ''}', ${isRead})" style="padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; background:${isRead ? 'transparent' : 'rgba(59,130,246,0.1)'}; display:flex; gap:12px; align-items:flex-start; transition:background .2s; position:relative;">
           <div style="font-size:24px; line-height:1; flex-shrink:0;">${getNotiEmoji(n.type)}</div>
           <div style="flex:1; min-width:0; padding-right:24px;">
             <div style="font-size:14px; font-weight:700; color:${isRead ? 'var(--text)' : '#60a5fa'}; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${n.title}</div>
@@ -3348,6 +3330,8 @@ function getNotiEmoji(type) {
 async function deleteNoti(id, e) {
   if (e) e.stopPropagation();
   saveDeletedNotiIds([id]);
+  var el = document.getElementById('notiItem_' + id);
+  if (el) el.remove();
   fetchNotifications();
   showToast('ลบการแจ้งเตือนแล้ว', 'success');
 }
@@ -3411,6 +3395,11 @@ async function clearAllNotis() {
       const ids = notis.map(n => n.id);
       saveDeletedNotiIds(ids);
     }
+    const container = document.getElementById('notiList');
+    if (container) {
+      container.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--muted);">ไม่มีการแจ้งเตือน</div>';
+    }
+    document.querySelectorAll('.noti-badge').forEach(b => b.style.display = 'none');
     fetchNotifications();
     showToast('ลบการแจ้งเตือนทั้งหมดแล้ว', 'success');
   } catch (err) {
