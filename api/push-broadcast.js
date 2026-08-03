@@ -6,8 +6,6 @@ const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
 
-webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-
 // Setup Supabase
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; 
@@ -20,6 +18,13 @@ export default async function handler(req, res) {
 
   try {
     const { title, message, url } = req.body;
+
+    try {
+      webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    } catch (vErr) {
+      console.error('VAPID setup error:', vErr);
+      return res.status(500).json({ error: 'VAPID configuration error: ' + vErr.message });
+    }
 
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' });
