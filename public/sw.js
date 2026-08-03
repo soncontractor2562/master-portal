@@ -14,12 +14,9 @@ self.addEventListener('push', function(event) {
     body: data.body,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: 'store-noti-' + Date.now(),
-    renotify: true,
     data: {
       url: data.url || '/apps/store-dragdrop/'
-    },
-    vibrate: [200, 100, 200]
+    }
   };
 
   event.waitUntil(
