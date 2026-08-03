@@ -846,6 +846,7 @@ async function doLogin() {
         refreshAll();
         initPushNotifications();
         fetchNotifications();
+        initRealtimeSync();
     } else {
       showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
     }
@@ -1817,6 +1818,13 @@ async function showSettingsModal() {
   if (document.getElementById('editSelfPin')) document.getElementById('editSelfPin').value = state.currentUser.pin || '';
   if (document.getElementById('editSelfDisplayName')) document.getElementById('editSelfDisplayName').value = getUserDisplayName(state.currentUser);
   if (document.getElementById('settingsUser')) document.getElementById('settingsUser').innerText = getUserDisplayName(state.currentUser);
+
+  var testToggle = document.getElementById('testModeToggle');
+  if (testToggle) {
+    testToggle.checked = !!state.isTestMode;
+    var infoBlock = document.getElementById('testModeInfoBlock');
+    if (infoBlock) infoBlock.style.display = state.isTestMode ? 'block' : 'none';
+  }
 
   var assignedSites = (state.currentUser.assigned_location || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
   var userSiteInfoCard = document.getElementById('userSiteInfoCard');
@@ -3267,7 +3275,19 @@ async function fetchNotifications() {
       }
     } catch (_) {}
 
-    const visibleNotis = notis.filter(n => !deletedSet.has(n.id));
+    const visibleNotis = notis.filter(n => {
+      if (deletedSet.has(n.id)) return false;
+      // Filter test notifications: if target_username exists or title contains test icon, only show to target user
+      if (n.target_username && state.currentUser && n.target_username !== state.currentUser.username) {
+        return false;
+      }
+      if ((n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]')) {
+        if (state.currentUser && n.target_username && n.target_username !== state.currentUser.username) {
+          return false;
+        }
+      }
+      return true;
+    });
     const readIds = new Set(reads.map(r => r.notification_id));
     let unreadCount = 0;
     
@@ -3420,12 +3440,80 @@ function closeNotiModal() {
   document.getElementById('notiModal').style.display = 'none';
 }
 
-setInterval(() => {
-  if (state.currentUser) fetchNotifications();
-}, 60000);
+// State for developer mode
+state.isTestMode = localStorage.getItem('inv_is_test_mode') === 'true';
+
+function toggleTestMode(enabled) {
+  state.isTestMode = enabled;
+  localStorage.setItem('inv_is_test_mode', enabled ? 'true' : 'false');
+  var block = document.getElementById('testModeInfoBlock');
+  if (block) block.style.display = enabled ? 'block' : 'none';
+  showToast(enabled ? 'เปิดโหมดทดสอบระบบ (Developer Mode) แล้ว' : 'ปิดโหมดทดสอบระบบแล้ว', enabled ? 'warning' : 'info');
+}
+
+async function clearTestNotifications() {
+  if (!state.currentUser || !supabaseClient) return;
+  try {
+    const { data: notis } = await supabaseClient.from('store_notifications').select('id, title, target_username');
+    if (notis && notis.length > 0) {
+      const testIds = notis.filter(n => (n.target_username === state.currentUser.username) || (n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]')).map(n => n.id);
+      if (testIds.length > 0) {
+        saveDeletedNotiIds(testIds);
+        showToast('ล้างรายการแจ้งเตือนทดสอบเรียบร้อยแล้ว', 'success');
+        fetchNotifications();
+        return;
+      }
+    }
+    showToast('ไม่มีรายการแจ้งเตือนทดสอบ', 'info');
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+  }
+}
+
+// Auto-Sync (Realtime + 15s Polling + Tab Focus)
+function initRealtimeSync() {
+  if (!supabaseClient) return;
+  try {
+    supabaseClient
+      .channel('store_realtime_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_pending_moves' }, function() {
+        refreshAll();
+        fetchNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_history' }, function() {
+        refreshAll();
+        loadHistory(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_notifications' }, function() {
+        fetchNotifications();
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn('Realtime sync warning:', e);
+  }
+}
+
+setInterval(function() {
+  if (state.currentUser && document.visibilityState === 'visible') {
+    refreshAll();
+    fetchNotifications();
+  }
+}, 15000);
+
+window.addEventListener('focus', function() {
+  if (state.currentUser) {
+    refreshAll();
+    fetchNotifications();
+  }
+});
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && state.currentUser) {
+    refreshAll();
+    fetchNotifications();
+  }
+});
 
 async function broadcastNotification(type, title, message, linkUrl, extraData) {
-  // Auto-detect test environment or test keywords in title, message, or extra data (e.g. item names in moves)
   const isTestEnv = window.location.hostname.includes('git') || 
                     window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1';
@@ -3435,24 +3523,34 @@ async function broadcastNotification(type, title, message, linkUrl, extraData) {
                          /test|ทดสอบ|demo|sample/i.test(message) ||
                          /test|ทดสอบ|demo|sample/i.test(extraStr);
 
-  const isTestMode = isTestEnv || hasTestKeyword;
+  const isTestMode = state.isTestMode || isTestEnv || hasTestKeyword;
   const currentUsername = state.currentUser ? state.currentUser.username : null;
 
   try {
-    const { data, error } = await supabaseClient.from('store_notifications').insert({
+    var insertPayload = {
       type: type,
-      title: title,
+      title: isTestMode ? '🧪 [ทดสอบ] ' + title : title,
       message: message,
       link_url: linkUrl
-    }).select();
+    };
+    if (isTestMode && currentUsername) {
+      insertPayload.target_username = currentUsername;
+    }
+
+    const { data, error } = await supabaseClient.from('store_notifications').insert(insertPayload).select();
     
-    if (error) throw error;
+    if (error && error.message && error.message.includes('target_username')) {
+      delete insertPayload.target_username;
+      await supabaseClient.from('store_notifications').insert(insertPayload);
+    } else if (error) {
+      throw error;
+    }
     
     fetch('/api/push-broadcast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: title,
+        title: isTestMode ? '🧪 [ทดสอบ] ' + title : title,
         message: message,
         url: window.location.origin + '/apps/store-dragdrop/',
         targetUsername: isTestMode ? currentUsername : null
@@ -3462,10 +3560,8 @@ async function broadcastNotification(type, title, message, linkUrl, extraData) {
       if (!res.ok) {
         try {
           const errData = await res.json();
-          showToast('Push System Error: ' + (errData.error || res.status), 'error');
-        } catch(e) {
-          showToast('Push System Error: ' + res.status, 'error');
-        }
+          console.warn('Push API info:', errData);
+        } catch(e) {}
       }
     })
     .catch(e => console.error('Push API err:', e));

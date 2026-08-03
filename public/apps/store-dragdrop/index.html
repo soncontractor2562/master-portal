@@ -1214,6 +1214,33 @@
       </div>
     </div>
 
+    <!-- Developer Testing Mode -->
+    <div class="section-card" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:24px;">🧪</span>
+          <div>
+            <div style="font-size:14px; font-weight:700; color:#fbbf24;">โหมดทดสอบระบบ (Developer Mode)</div>
+            <div style="font-size:11px; color:var(--muted);">ทดสอบ Push Noti & กระดิ่ง เฉพาะเครื่องของคุณ โดยไม่ส่งหาคนอื่น</div>
+          </div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="testModeToggle" onchange="toggleTestMode(this.checked)" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div id="testModeInfoBlock" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed rgba(245,158,11,0.3);">
+        <div style="font-size:11px; color:#fef08a; margin-bottom:8px;">
+          ✅ <strong>เปิดโหมดทดสอบแล้ว:</strong><br>
+          • แจ้งเตือน Push Notification จะส่งเข้าเครื่องของคุณคนเดียวเท่านั้น<br>
+          • รายการกระดิ่งแจ้งเตือนจากการทดสอบจะเห็นเฉพาะคุณ (ไม่รบกวนผู้ใช้อื่น)
+        </div>
+        <button onclick="clearTestNotifications()" style="background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.4); color:#fbbf24; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; width:100%; font-family:'Sarabun',sans-serif;">
+          🧹 ลบการแจ้งเตือนทดสอบของคุณทั้งหมด
+        </button>
+      </div>
+    </div>
+
     <!-- Theme Settings -->
     <div class="section-card" style="display:flex; justify-content:space-between; align-items:center;">
       <div style="display:flex; align-items:center; gap:12px;">
