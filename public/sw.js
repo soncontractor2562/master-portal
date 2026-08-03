@@ -12,8 +12,6 @@ self.addEventListener('push', function(event) {
 
   const options = {
     body: data.body,
-    icon: '/apps/store-dragdrop/logo.png', // Fallback to app logo
-    badge: '/apps/store-dragdrop/logo.png',
     data: {
       url: data.url || '/apps/store-dragdrop/'
     },
