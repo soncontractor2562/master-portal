@@ -6,10 +6,7 @@ const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
 
-// Setup Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,6 +21,15 @@ export default async function handler(req, res) {
     } catch (vErr) {
       console.error('VAPID setup error:', vErr);
       return res.status(500).json({ error: 'VAPID configuration error: ' + vErr.message });
+    }
+
+    let supabase;
+    try {
+      const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').trim();
+      const supabaseKey = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+      supabase = createClient(supabaseUrl, supabaseKey);
+    } catch (dbInitErr) {
+      return res.status(500).json({ error: 'Supabase Config Error: ' + dbInitErr.message });
     }
 
     if (!title || !message) {
