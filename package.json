@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postbuild": "node patch-sw-push.cjs"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
