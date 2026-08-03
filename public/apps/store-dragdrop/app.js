@@ -3188,10 +3188,11 @@ async function initPushNotifications() {
       });
     }
     
-    if (state.currentUser) {
+    const activeUser = state.currentUser || JSON.parse(localStorage.getItem('inv_user') || 'null');
+    if (activeUser && activeUser.username) {
       const subObj = JSON.parse(JSON.stringify(subscription));
       const { error } = await supabaseClient.from('store_push_subscriptions').upsert({
-        username: state.currentUser.username,
+        username: activeUser.username,
         endpoint: subObj.endpoint,
         keys_p256dh: subObj.keys.p256dh,
         keys_auth: subObj.keys.auth
@@ -3548,7 +3549,12 @@ async function broadcastNotification(type, title, message, linkUrl, extraData) {
       })
     })
     .then(async res => {
-      if (!res.ok) {
+      if (res.ok) {
+        const resData = await res.json();
+        if (isTestMode && resData.sentCount === 0) {
+          showToast('⚠️ Push ไม่เด้ง: ไม่พบอุปกรณ์ของคุณในระบบ (โปรดกดปุ่ม "🔔 กดเปิดอนุญาต Push Notification" ในตั้งค่า)', 'warning');
+        }
+      } else {
         try {
           const errData = await res.json();
           console.warn('Push API info:', errData);

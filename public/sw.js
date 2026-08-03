@@ -12,6 +12,10 @@ self.addEventListener('push', function(event) {
 
   const options = {
     body: data.body,
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: 'store-noti-' + Date.now(),
+    renotify: true,
     data: {
       url: data.url || '/apps/store-dragdrop/'
     },
