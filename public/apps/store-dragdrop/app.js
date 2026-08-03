@@ -2831,6 +2831,8 @@ async function broadcastNotification(type, title, message, linkUrl) {
       })
     }).catch(e => console.error('Push API err:', e));
     
+    fetchNotifications();
+    
   } catch (err) {
     console.error('Broadcast error:', err);
   }
