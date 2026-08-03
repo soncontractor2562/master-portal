@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, message, url } = req.body;
+    const { title, message, url, targetUsername } = req.body;
 
     try {
       webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
@@ -39,10 +39,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
-    // Fetch all subscriptions from Supabase
-    const { data: subscriptions, error } = await supabase
-      .from('store_push_subscriptions')
-      .select('*');
+    // Fetch subscriptions from Supabase (filter by targetUsername if test mode)
+    let query = supabase.from('store_push_subscriptions').select('*');
+    if (targetUsername) {
+      query = query.eq('username', targetUsername);
+    }
+
+    const { data: subscriptions, error } = await query;
 
     if (error) {
       console.error('Error fetching subscriptions:', error);

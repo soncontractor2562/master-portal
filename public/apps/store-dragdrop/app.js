@@ -2835,10 +2835,8 @@ async function broadcastNotification(type, title, message, linkUrl) {
   const hasTestKeyword = /test|ทดสอบ|demo|sample/i.test(title) || 
                          /test|ทดสอบ|demo|sample/i.test(message);
 
-  if (isTestEnv || hasTestKeyword) {
-    console.log('[PUSH SKIPPED] Test detected (env or keyword):', { title, message });
-    return;
-  }
+  const isTestMode = isTestEnv || hasTestKeyword;
+  const currentUsername = state.currentUser ? state.currentUser.username : null;
 
   try {
     const { data, error } = await supabaseClient.from('store_notifications').insert({
@@ -2856,7 +2854,8 @@ async function broadcastNotification(type, title, message, linkUrl) {
       body: JSON.stringify({
         title: title,
         message: message,
-        url: window.location.origin + '/apps/store-dragdrop/'
+        url: window.location.origin + '/apps/store-dragdrop/',
+        targetUsername: isTestMode ? currentUsername : null
       })
     })
     .then(async res => {
