@@ -2646,7 +2646,16 @@ async function initPushNotifications() {
       return;
     }
     
-    const publicVapidKey = 'BGdBfRODtTZuN6JKMW0aE_MIORsiEl5LTBwkB-Mnagn5Qlzp6X0b-c6_KOuNkvkTNec6YyAy-7o08G52S7bdNho';
+    let publicVapidKey = 'BGdBfRODtTZuN6JKMW0aE_MIORsiEl5LTBwkB-Mnagn5Qlzp6X0b-c6_KOuNkvkTNec6YyAy-7o08G52S7bdNho';
+    try {
+      const vapidRes = await fetch('/api/vapid-public-key');
+      if (vapidRes.ok) {
+        const vapidData = await vapidRes.json();
+        if (vapidData.publicKey) publicVapidKey = vapidData.publicKey;
+      }
+    } catch(e) {
+      console.warn('Could not fetch dynamic VAPID key, using fallback');
+    }
     
     const urlBase64ToUint8Array = (base64String) => {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -2662,6 +2671,14 @@ async function initPushNotifications() {
     };
     
     let subscription = await registration.pushManager.getSubscription();
+    
+    const keyUpdated = localStorage.getItem('vapid_updated_v2');
+    if (subscription && !keyUpdated) {
+      await subscription.unsubscribe();
+      subscription = null;
+      localStorage.setItem('vapid_updated_v2', 'true');
+    }
+
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,

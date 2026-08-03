@@ -58,8 +58,8 @@ export default async function handler(req, res) {
         await webPush.sendNotification(pushSubscription, payload);
       } catch (err) {
         console.error('Error sending push to endpoint:', sub.endpoint, err);
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          // Subscription has expired or is no longer valid, delete it
+        if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 400 || err.statusCode === 403) {
+          // Subscription has expired or invalid VAPID, delete it
           await supabase.from('store_push_subscriptions').delete().eq('id', sub.id);
         }
       }
