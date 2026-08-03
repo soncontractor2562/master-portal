@@ -2733,7 +2733,7 @@ async function fetchNotifications() {
     
     document.querySelectorAll('.noti-badge').forEach(b => {
       if (unreadCount > 0) {
-        b.style.display = 'block';
+        b.style.display = 'flex';
         b.textContent = unreadCount > 99 ? '99+' : unreadCount;
       } else {
         b.style.display = 'none';
