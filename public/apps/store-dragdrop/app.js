@@ -754,10 +754,11 @@ function toggleRegisterForm(show) {
   }
   if (show) {
     var populateLocations = function(locs) {
+      var siteLocs = locs.filter(function(l) { return l.type === 'ไซต์งาน'; });
       var sel = document.getElementById('regAssignedLoc');
       if (sel) {
         sel.innerHTML = '<option value="">-- ไม่ระบุสถานที่ --</option>' +
-          locs.map(function(l) {
+          siteLocs.map(function(l) {
             return '<option value="' + esc(l.name) + '">' + esc(l.name) + '</option>';
           }).join('');
       }
@@ -1820,7 +1821,8 @@ async function showSettingsModal() {
     
     var cbContainer = document.getElementById('newUserLocCheckboxes');
     if (cbContainer && state.allLocations) {
-      cbContainer.innerHTML = state.allLocations.map(function(l) {
+      var siteLocations = state.allLocations.filter(function(l) { return l.type === 'ไซต์งาน'; });
+      cbContainer.innerHTML = siteLocations.map(function(l) {
         return '<label style="display:inline-flex; align-items:center; gap:4px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.08); padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; color:var(--text);">' +
           '<input type="checkbox" class="new-user-loc-cb" value="' + esc(l.name) + '" style="margin:0; cursor:pointer;" /> ' + esc(l.name) +
           '</label>';
@@ -1855,19 +1857,27 @@ async function loadUsersList() {
     var { data: users, error } = await supabaseClient.from('store_users').select('*').order('username');
     if (error) throw error;
     
+    state.usersListCache = users || [];
+
     if (!users || users.length === 0) {
       container.innerHTML = '<div style="text-align:center; color:var(--muted); padding:14px; font-size:13px;">ไม่มีผู้ใช้งานในระบบ</div>';
       return;
     }
     
+    var isStore = state.currentUser && state.currentUser.role === 'ผู้ดูแลสโตร์';
+    var siteLocations = state.allLocations.filter(function(l) { return l.type === 'ไซต์งาน'; });
+
     var html = users.map(function(u) {
       var isSelf = state.currentUser && state.currentUser.username === u.username;
+      var isTargetAdmin = u.role === 'แอดมิน';
+      var cannotEdit = isStore && isTargetAdmin;
+      
       var roleBadge = u.role === 'แอดมิน' ? '👑' : (u.role === 'ผู้ดูแลสโตร์' ? '🏭' : '👷‍♂️');
       var roleColor = u.role === 'แอดมิน' ? '#a855f7' : (u.role === 'ผู้ดูแลสโตร์' ? '#3b82f6' : '#10b981');
       var dispName = u.display_name || u.username;
       
       var userAssignedList = (u.assigned_location || '').split(',').map(function(s) { return s.trim(); });
-      var locCheckboxesHtml = state.allLocations.map(function(l) {
+      var locCheckboxesHtml = siteLocations.map(function(l) {
         var isChecked = userAssignedList.includes(l.name) ? 'checked' : '';
         return '<label style="display:inline-flex; align-items:center; gap:3px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; font-size:11px; color:#cbd5e1; cursor:pointer;">' +
           '<input type="checkbox" class="user-loc-cb-' + u.id + '" value="' + esc(l.name) + '" ' + isChecked + ' onchange="saveUserLocationChanges(\'' + u.id + '\')" style="margin:0; cursor:pointer;" /> ' + esc(l.name) +
@@ -1881,29 +1891,33 @@ async function loadUsersList() {
               <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
               <span style="font-size:11px; color:${roleColor};">(${u.role})</span>
             </div>
-            ${!isSelf ? `
+            ${(!isSelf && !cannotEdit) ? `
               <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; cursor:pointer; font-size:11px;" title="ลบผู้ใช้งาน">
                 🗑️ ลบ
               </button>
             ` : ''}
           </div>
           
-          <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px; margin-bottom:6px;">
-            <div style="display:flex; gap:6px; align-items:center;">
-              <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">User / PIN:</span>
-              <input type="text" id="editUsername_${u.id}" class="form-input" value="${esc(u.username)}" placeholder="Username..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
-              <input type="text" id="editPin_${u.id}" class="form-input" value="${esc(u.pin)}" placeholder="PIN" maxlength="6" style="padding:2px 6px; font-size:12px; height:auto; width:65px; text-align:center; color:#fbbf24; font-weight:bold;" />
+          ${cannotEdit ? `
+            <div style="font-size:11px; color:var(--muted); font-style:italic; margin-top:4px;">🔒 สิทธิ์แอดมิน (ผู้ดูแลสโตร์ไม่สามารถแก้ไขบัญชีแอดมินได้)</div>
+          ` : `
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px; margin-bottom:6px;">
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">User / PIN:</span>
+                <input type="text" id="editUsername_${u.id}" class="form-input" value="${esc(u.username)}" placeholder="Username..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+                <input type="text" id="editPin_${u.id}" class="form-input" value="${esc(u.pin)}" placeholder="PIN" maxlength="6" style="padding:2px 6px; font-size:12px; height:auto; width:65px; text-align:center; color:#fbbf24; font-weight:bold;" />
+              </div>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">ชื่อที่ใช้จริง:</span>
+                <input type="text" id="editDisplayName_${u.id}" class="form-input" value="${esc(dispName)}" placeholder="ชื่อจริง/ชื่อเล่นปฏิบัติงาน..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+                <button onclick="saveUserChanges('${u.id}')" style="background:#3b82f6; border:none; color:#fff; padding:3px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; flex-shrink:0;">💾 เซฟ</button>
+              </div>
             </div>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">ชื่อที่ใช้จริง:</span>
-              <input type="text" id="editDisplayName_${u.id}" class="form-input" value="${esc(dispName)}" placeholder="ชื่อจริง/ชื่อเล่นปฏิบัติงาน..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
-              <button onclick="saveUserChanges('${u.id}')" style="background:#3b82f6; border:none; color:#fff; padding:3px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; flex-shrink:0;">💾 เซฟ</button>
-            </div>
-          </div>
+          `}
 
-          ${u.role === 'ผู้ใช้งาน' ? `
+          ${(u.role === 'ผู้ใช้งาน' && !cannotEdit) ? `
             <div style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1);">
-              <div style="font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600;">📍 สถานที่รับผิดชอบ (ติ๊กเลือกได้หลายโครงการ):</div>
+              <div style="font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600;">📍 ไซต์งานที่รับผิดชอบ:</div>
               <div style="display:flex; flex-wrap:wrap; gap:4px; max-height:80px; overflow-y:auto;">
                 ${locCheckboxesHtml}
               </div>
@@ -1922,6 +1936,14 @@ async function loadUsersList() {
 
 async function saveUserChanges(userId) {
   if (!supabaseClient) return;
+  if (state.currentUser && state.currentUser.role === 'ผู้ดูแลสโตร์') {
+    var targetUser = state.usersListCache ? state.usersListCache.find(function(x) { return x.id === userId; }) : null;
+    if (targetUser && targetUser.role === 'แอดมิน') {
+      showToast('ผู้ดูแลสโตร์ไม่สามารถแก้ไขข้อมูลแอดมินได้', 'error');
+      return;
+    }
+  }
+
   var uInput = document.getElementById('editUsername_' + userId);
   var pInput = document.getElementById('editPin_' + userId);
   var dInput = document.getElementById('editDisplayName_' + userId);
@@ -2010,6 +2032,13 @@ async function confirmAddUser() {
 }
 
 async function confirmDeleteUser(id, username) {
+  if (state.currentUser && state.currentUser.role === 'ผู้ดูแลสโตร์') {
+    var targetUser = state.usersListCache ? state.usersListCache.find(function(x) { return x.id === id; }) : null;
+    if (targetUser && targetUser.role === 'แอดมิน') {
+      showToast('ผู้ดูแลสโตร์ไม่สามารถลบบัญชีแอดมินได้', 'error');
+      return;
+    }
+  }
   if (!confirm('คุณต้องการลบผู้ใช้งาน "' + username + '" หรือไม่?')) return;
   try {
     var { error } = await supabaseClient.from('store_users').delete().eq('id', id);
