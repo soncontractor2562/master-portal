@@ -2797,6 +2797,9 @@ function clickNotification(id, linkUrl, isRead) {
 function openNotiModal() {
   document.getElementById('notiModal').style.display = 'flex';
   fetchNotifications();
+  if ('Notification' in window && Notification.permission === 'default') {
+    initPushNotifications();
+  }
 }
 
 function closeNotiModal() {
