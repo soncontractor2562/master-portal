@@ -1712,6 +1712,91 @@ async function showSettingsModal() {
   } catch (err) {
     renderCategoryManageList();
   }
+  
+  // Load users list for user management section
+  if (!isUser) {
+    loadUsersList();
+  }
+}
+
+async function loadUsersList() {
+  var container = document.getElementById('userManageList');
+  if (!container || !supabaseClient) return;
+  try {
+    var { data: users, error } = await supabaseClient.from('store_users').select('*').order('username');
+    if (error) throw error;
+    
+    if (!users || users.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:var(--muted); padding:14px; font-size:13px;">ไม่มีผู้ใช้งานในระบบ</div>';
+      return;
+    }
+    
+    var html = users.map(function(u) {
+      var isSelf = state.currentUser && state.currentUser.username === u.username;
+      var roleBadge = u.role === 'แอดมิน' ? '👑' : (u.role === 'ผู้ดูแลสโตร์' ? '🏭' : '👷‍♂️');
+      var roleColor = u.role === 'แอดมิน' ? '#a855f7' : (u.role === 'ผู้ดูแลสโตร์' ? '#3b82f6' : '#10b981');
+      
+      return `
+        <div style="padding:10px 12px; background:rgba(15,23,42,0.5); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+              <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
+            </div>
+            <div style="font-size:12px; color:${roleColor}; margin-top:2px;">บทบาท: ${u.role} (PIN: ${u.pin})</div>
+          </div>
+          ${!isSelf ? `
+            <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px;" title="ลบผู้ใช้งาน">
+              🗑️ ลบ
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+    
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('Error loading users:', err);
+    container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:14px; font-size:13px;">เกิดข้อผิดพลาดในการโหลดผู้ใช้งาน</div>';
+  }
+}
+
+async function confirmAddUser() {
+  var u = document.getElementById('newUsername').value.trim();
+  var p = document.getElementById('newUserPin').value.trim();
+  var r = document.getElementById('newUserRole').value;
+  
+  if (!u) return showToast('กรุณากรอกชื่อผู้ใช้ (Username)', 'error');
+  if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+  
+  try {
+    var { error } = await supabaseClient.from('store_users').insert({
+      username: u,
+      pin: p,
+      role: r
+    });
+    if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
+      throw error;
+    }
+    showToast('เพิ่มผู้ใช้งาน "' + u + '" เรียบร้อยแล้ว', 'success');
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newUserPin').value = '';
+    loadUsersList();
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+  }
+}
+
+async function confirmDeleteUser(id, username) {
+  if (!confirm('คุณต้องการลบผู้ใช้งาน "' + username + '" หรือไม่?')) return;
+  try {
+    var { error } = await supabaseClient.from('store_users').delete().eq('id', id);
+    if (error) throw error;
+    showToast('ลบผู้ใช้งาน "' + username + '" เรียบร้อยแล้ว', 'success');
+    loadUsersList();
+  } catch (err) {
+    showToast('ลบผู้ใช้งานล้มเหลว: ' + err.message, 'error');
+  }
 }
 
 function closeSettingsModal(e) {
@@ -2735,6 +2820,27 @@ async function initPushNotifications() {
   }
 }
 
+function getDeletedNotiSet() {
+  if (!state.currentUser) return new Set();
+  try {
+    const raw = localStorage.getItem('inv_deleted_notis_' + state.currentUser.username);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch (_) { return new Set(); }
+}
+
+function saveDeletedNotiIds(idsToAdd) {
+  if (!state.currentUser) return;
+  const currentSet = getDeletedNotiSet();
+  idsToAdd.forEach(id => currentSet.add(id));
+  try {
+    localStorage.setItem('inv_deleted_notis_' + state.currentUser.username, JSON.stringify(Array.from(currentSet)));
+  } catch (_) {}
+  if (supabaseClient) {
+    const rows = idsToAdd.map(id => ({ notification_id: id, username: state.currentUser.username }));
+    supabaseClient.from('store_notification_deletions').upsert(rows, { onConflict: 'notification_id,username' }).catch(() => {});
+  }
+}
+
 async function autoCleanupOldNotis() {
   if (!supabaseClient) return;
   try {
@@ -2768,10 +2874,22 @@ async function fetchNotifications() {
       .eq('username', state.currentUser.username);
     if (err2) throw err2;
     
+    const deletedSet = getDeletedNotiSet();
+    try {
+      const { data: dbDeletes } = await supabaseClient
+        .from('store_notification_deletions')
+        .select('notification_id')
+        .eq('username', state.currentUser.username);
+      if (dbDeletes) {
+        dbDeletes.forEach(d => deletedSet.add(d.notification_id));
+      }
+    } catch (_) {}
+
+    const visibleNotis = notis.filter(n => !deletedSet.has(n.id));
     const readIds = new Set(reads.map(r => r.notification_id));
     let unreadCount = 0;
     
-    const notiListHtml = notis.map(n => {
+    const notiListHtml = visibleNotis.map(n => {
       const isRead = readIds.has(n.id);
       if (!isRead) unreadCount++;
       
@@ -2796,7 +2914,7 @@ async function fetchNotifications() {
     
     const container = document.getElementById('notiList');
     if (container) {
-      if (notis.length === 0) {
+      if (visibleNotis.length === 0) {
         container.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--muted);">ไม่มีการแจ้งเตือน</div>';
       } else {
         container.innerHTML = notiListHtml;
@@ -2827,15 +2945,9 @@ function getNotiEmoji(type) {
 
 async function deleteNoti(id, e) {
   if (e) e.stopPropagation();
-  if (!supabaseClient) return;
-  try {
-    await supabaseClient.from('store_notification_reads').delete().eq('notification_id', id);
-    await supabaseClient.from('store_notifications').delete().eq('id', id);
-    fetchNotifications();
-    showToast('ลบการแจ้งเตือนแล้ว', 'success');
-  } catch (err) {
-    console.error('Error deleting notification:', err);
-  }
+  saveDeletedNotiIds([id]);
+  fetchNotifications();
+  showToast('ลบการแจ้งเตือนแล้ว', 'success');
 }
 
 async function clearReadNotis() {
@@ -2848,8 +2960,7 @@ async function clearReadNotis() {
       
     if (reads && reads.length > 0) {
       const readIds = reads.map(r => r.notification_id);
-      await supabaseClient.from('store_notification_reads').delete().in('notification_id', readIds);
-      await supabaseClient.from('store_notifications').delete().in('id', readIds);
+      saveDeletedNotiIds(readIds);
       showToast('ลบการแจ้งเตือนที่อ่านแล้วเรียบร้อย', 'success');
     } else {
       showToast('ไม่มีรายการที่อ่านแล้ว', 'info');
@@ -2896,8 +3007,7 @@ async function clearAllNotis() {
     const { data: notis } = await supabaseClient.from('store_notifications').select('id');
     if (notis && notis.length > 0) {
       const ids = notis.map(n => n.id);
-      await supabaseClient.from('store_notification_reads').delete().in('notification_id', ids);
-      await supabaseClient.from('store_notifications').delete().in('id', ids);
+      saveDeletedNotiIds(ids);
     }
     fetchNotifications();
     showToast('ลบการแจ้งเตือนทั้งหมดแล้ว', 'success');

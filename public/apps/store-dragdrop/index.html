@@ -1179,6 +1179,27 @@
       <button onclick="requestNotificationPermissionUI()" class="filter-pill" id="settingsNotiBtn" style="padding:6px 12px; margin:0; cursor:pointer;">เปิดใช้งาน</button>
     </div>
 
+    <!-- User Management -->
+    <div class="section-card" id="userManagementCard">
+      <div class="section-title">👥 จัดการผู้ใช้งาน (User Management)</div>
+      <div style="font-size:12px; color:var(--muted); margin-bottom:12px;">เพิ่ม หรือ ลบผู้ใช้งานสำหรับล็อกอินเข้าสู่ระบบ</div>
+      
+      <div style="background:rgba(15,23,42,0.4); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:8px;">➕ เพิ่มผู้ใช้งานใหม่</div>
+        <input type="text" id="newUsername" class="form-input" style="margin-bottom:8px;" placeholder="ชื่อผู้ใช้ (Username)..." autocomplete="off" />
+        <input type="password" id="newUserPin" class="form-input" style="margin-bottom:8px;" placeholder="รหัส PIN (4-6 หลัก)..." maxlength="6" autocomplete="off" />
+        <select id="newUserRole" class="form-input form-select" style="margin-bottom:8px;">
+          <option value="ผู้ใช้งาน">👷‍♂️ ผู้ใช้งาน (ช่าง/ทีมงาน)</option>
+          <option value="ผู้ดูแลสโตร์">🏭 ผู้ดูแลสโตร์</option>
+          <option value="แอดมิน">👑 แอดมิน</option>
+        </select>
+        <button onclick="confirmAddUser()" class="btn-primary btn-success" style="padding:10px; width:100%; font-size:13px;">✅ เพิ่มผู้ใช้งาน</button>
+      </div>
+
+      <div style="font-size:11px; color:var(--muted); margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;">รายชื่อผู้ใช้งานในระบบ</div>
+      <div id="userManageList"><div style="text-align:center; color:var(--muted); padding:14px; font-size:13px;">⏳ กำลังโหลด...</div></div>
+    </div>
+
     <!-- Location Management -->
     <div class="section-card">
       <div class="section-title">📍 จัดการสถานที่</div>
