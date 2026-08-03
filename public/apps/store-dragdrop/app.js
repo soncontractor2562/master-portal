@@ -1084,6 +1084,10 @@ function closeMoveModalDirect() {
 }
 
 async function confirmMove() {
+  if (state.currentUser && state.currentUser.role === 'ผู้ใช้งาน') {
+    showToast('ผู้ใช้งานทั่วไปไม่สามารถทำการขนย้ายได้', 'error');
+    return;
+  }
   var inputs = document.querySelectorAll('.move-bulk-qty');
   var moves = [];
   inputs.forEach(function(inp) {
@@ -1423,6 +1427,11 @@ function closeItemDetailModal(e) {
 // ====== ADJUST MODAL ======
 function showAdjustModal(itemName, locationName) {
   if (!locationName) { showItemDetail(itemName); return; }
+  if (state.currentUser && state.currentUser.role === 'ผู้ใช้งาน' && !canUserAccessLocation(locationName)) {
+    var assigned = state.currentUser.assigned_location || 'ไม่ได้ระบุ';
+    showToast('คุณไม่มีสิทธิ์ปรับยอดสต็อกในสถานที่ "' + locationName + '" (รับผิดชอบเฉพาะ: ' + assigned + ')', 'error');
+    return;
+  }
   var item = state.items.find(function(it) { return it.name === itemName; });
   if (!item) return;
   var currentQty = item.quantities[locationName] || 0;
@@ -1468,10 +1477,9 @@ async function confirmAdjust() {
   if (!adjuster) { showToast('กรุณาระบุชื่อผู้ปรับยอด', 'error'); return; }
   
   if (state.currentUser.role === 'ผู้ใช้งาน') {
-    var locObj = state.locations.find(function(l) { return l.name === state.adjustLocation; });
-    var isSite = locObj && locObj.type === 'ไซต์งาน' && !locObj.name.includes('เช่า');
-    if (!isSite) {
-      showToast('ผู้ใช้งานปรับยอดได้เฉพาะในไซต์งานเท่านั้น', 'error');
+    if (!canUserAccessLocation(state.adjustLocation)) {
+      var assigned = state.currentUser.assigned_location || 'ไม่ได้ระบุ';
+      showToast('คุณไม่มีสิทธิ์ปรับยอดสต็อกในสถานที่ "' + state.adjustLocation + '" (รับผิดชอบเฉพาะ: ' + assigned + ')', 'error');
       return;
     }
     
@@ -1663,6 +1671,15 @@ async function confirmUndo() {
   finally { btn.disabled = false; btn.textContent = '🔙 ยืนยันการยกเลิก'; }
 }
 
+function canUserAccessLocation(locationName) {
+  if (!state.currentUser) return false;
+  if (state.currentUser.role !== 'ผู้ใช้งาน') return true;
+  var assigned = state.currentUser.assigned_location || '';
+  if (!assigned || !assigned.trim()) return false;
+  var list = assigned.split(',').map(function(s) { return s.trim(); });
+  return list.includes((locationName || '').trim());
+}
+
 // ====== SETTINGS MODAL ======
 async function showSettingsModal() {
   document.getElementById('settingsModal').style.display = 'flex';
@@ -1693,6 +1710,14 @@ async function showSettingsModal() {
     var data = await apiGet('/api/locations');
     state.allLocations = data.locations || [];
     renderLocationManageList();
+    
+    var assignedLocSelect = document.getElementById('newUserAssignedLoc');
+    if (assignedLocSelect) {
+      assignedLocSelect.innerHTML = '<option value="">-- ไม่ระบุสถานที่รับผิดชอบ (รับ/ปรับของไม่ได้) --</option>' +
+        state.allLocations.map(function(l) {
+          return '<option value="' + esc(l.name) + '">' + l.name + '</option>';
+        }).join('');
+    }
   } catch (err) {
     showToast('โหลดสถานที่ล้มเหลว: ' + err.message, 'error');
     state.allLocations = state.locations.slice();
@@ -1732,18 +1757,34 @@ async function loadUsersList() {
       var roleBadge = u.role === 'แอดมิน' ? '👑' : (u.role === 'ผู้ดูแลสโตร์' ? '🏭' : '👷‍♂️');
       var roleColor = u.role === 'แอดมิน' ? '#a855f7' : (u.role === 'ผู้ดูแลสโตร์' ? '#3b82f6' : '#10b981');
       
+      var locOptionsHtml = '<option value="">-- ไม่ระบุสถานที่ --</option>' +
+        state.allLocations.map(function(l) {
+          var sel = (u.assigned_location === l.name) ? 'selected' : '';
+          return '<option value="' + esc(l.name) + '" ' + sel + '>' + esc(l.name) + '</option>';
+        }).join('');
+
       return `
-        <div style="padding:10px 12px; background:rgba(15,23,42,0.5); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-              <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
+        <div style="padding:10px 12px; background:rgba(15,23,42,0.5); border:1px solid var(--border); border-radius:10px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+                <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
+              </div>
+              <div style="font-size:12px; color:${roleColor}; margin-top:2px;">บทบาท: ${u.role} (PIN: ${u.pin})</div>
             </div>
-            <div style="font-size:12px; color:${roleColor}; margin-top:2px;">บทบาท: ${u.role} (PIN: ${u.pin})</div>
+            ${!isSelf ? `
+              <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px;" title="ลบผู้ใช้งาน">
+                🗑️ ลบ
+              </button>
+            ` : ''}
           </div>
-          ${!isSelf ? `
-            <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px;" title="ลบผู้ใช้งาน">
-              🗑️ ลบ
-            </button>
+          ${u.role === 'ผู้ใช้งาน' ? `
+            <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+              <span style="font-size:11px; color:var(--muted); flex-shrink:0;">สถานที่รับผิดชอบ:</span>
+              <select onchange="updateUserAssignedLocation('${u.id}', this.value)" class="form-input form-select" style="padding:2px 6px; font-size:12px; height:auto; flex:1;">
+                ${locOptionsHtml}
+              </select>
+            </div>
           ` : ''}
         </div>
       `;
@@ -1756,10 +1797,22 @@ async function loadUsersList() {
   }
 }
 
+async function updateUserAssignedLocation(userId, newLoc) {
+  if (!supabaseClient) return;
+  try {
+    var { error } = await supabaseClient.from('store_users').update({ assigned_location: newLoc }).eq('id', userId);
+    if (error) throw error;
+    showToast('อัปเดตสถานที่รับผิดชอบเรียบร้อยแล้ว', 'success');
+  } catch (err) {
+    showToast('อัปเดตล้มเหลว: ' + err.message, 'error');
+  }
+}
+
 async function confirmAddUser() {
   var u = document.getElementById('newUsername').value.trim();
   var p = document.getElementById('newUserPin').value.trim();
   var r = document.getElementById('newUserRole').value;
+  var loc = document.getElementById('newUserAssignedLoc') ? document.getElementById('newUserAssignedLoc').value : '';
   
   if (!u) return showToast('กรุณากรอกชื่อผู้ใช้ (Username)', 'error');
   if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
@@ -1768,7 +1821,8 @@ async function confirmAddUser() {
     var { error } = await supabaseClient.from('store_users').insert({
       username: u,
       pin: p,
-      role: r
+      role: r,
+      assigned_location: loc
     });
     if (error) {
       if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
@@ -2166,8 +2220,14 @@ function openReceiveModal(id) {
       forceBtn.innerHTML = '🚨 บังคับจบงาน (สูญหาย)';
     }
     if (confirmBtn) {
-      confirmBtn.style.display = 'block';
-      confirmBtn.innerHTML = isStoreOrAdmin ? '🔄 ยืนยันการส่งใหม่' : '✅ ยืนยันการรับของ';
+      var hasLocAccess = canUserAccessLocation(p.to_location);
+      if (state.currentUser.role === 'ผู้ใช้งาน' && !hasLocAccess) {
+        meta.innerHTML += '<br><span style="color:#ef4444; font-weight:bold;">⚠️ คุณไม่มีสิทธิ์ตรวจรับของในสถานที่นี้ (รับผิดชอบเฉพาะ: ' + (state.currentUser.assigned_location || 'ไม่ได้ระบุ') + ')</span>';
+        confirmBtn.style.display = 'none';
+      } else {
+        confirmBtn.style.display = 'block';
+        confirmBtn.innerHTML = isStoreOrAdmin ? '🔄 ยืนยันการส่งใหม่' : '✅ ยืนยันการรับของ';
+      }
     }
     if (adjustConfirmBtn) adjustConfirmBtn.style.display = 'none';
 
@@ -2220,6 +2280,12 @@ async function cancelPendingMove(id, event) {
 
 async function confirmReceive() {
   if (!currentReceiveMove) return;
+  
+  if (state.currentUser.role === 'ผู้ใช้งาน' && !canUserAccessLocation(currentReceiveMove.to_location)) {
+    var assigned = state.currentUser.assigned_location || 'ไม่ได้ระบุ';
+    showToast('คุณไม่มีสิทธิ์ตรวจรับของในสถานที่ "' + currentReceiveMove.to_location + '" (รับผิดชอบเฉพาะ: ' + assigned + ')', 'error');
+    return;
+  }
   
   var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
   var rcvDate = document.getElementById('receiveDate').value;
