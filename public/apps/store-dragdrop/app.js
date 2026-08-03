@@ -2828,6 +2828,18 @@ setInterval(() => {
 }, 60000);
 
 async function broadcastNotification(type, title, message, linkUrl) {
+  // Auto-detect test environment or test keywords (e.g. "test", "test 2", "ทดสอบ")
+  const isTestEnv = window.location.hostname.includes('git') || 
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1';
+  const hasTestKeyword = /test|ทดสอบ|demo|sample/i.test(title) || 
+                         /test|ทดสอบ|demo|sample/i.test(message);
+
+  if (isTestEnv || hasTestKeyword) {
+    console.log('[PUSH SKIPPED] Test detected (env or keyword):', { title, message });
+    return;
+  }
+
   try {
     const { data, error } = await supabaseClient.from('store_notifications').insert({
       type: type,
