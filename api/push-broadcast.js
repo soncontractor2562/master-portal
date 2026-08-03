@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, message, url, targetUsername } = req.body;
+    const { title, message, url, targetUsername, targetRole } = req.body;
 
     try {
       webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
@@ -39,22 +39,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
-    // Fetch subscriptions from Supabase (filter by targetRole/targetUsername if test mode)
+    // Fetch subscriptions from Supabase
+    // - Normal mode (targetRole=null, targetUsername=null): send to ALL subscriptions
+    // - Test mode (targetRole='แอดมิน'): send ONLY to Admin accounts' devices
     let query = supabase.from('store_push_subscriptions').select('*');
+
     if (targetRole === 'แอดมิน' || targetRole === 'admin') {
-      const { data: adminUsers } = await supabase.from('store_users').select('username').or('role.eq.แอดมิน,role.eq.admin');
+      // Test mode: look up all admin usernames, then filter subscriptions to those users
+      const { data: adminUsers } = await supabase
+        .from('store_users')
+        .select('username')
+        .or('role.eq.แอดมิน,role.eq.admin');
+
       if (adminUsers && adminUsers.length > 0) {
         const adminUsernames = adminUsers.map(u => u.username);
-        if (targetUsername && !adminUsernames.includes(targetUsername)) {
-          adminUsernames.push(targetUsername);
-        }
         query = query.in('username', adminUsernames);
       } else if (targetUsername) {
+        // Fallback: at least target the requesting admin's own device
         query = query.ilike('username', targetUsername.trim());
+      } else {
+        // No admin accounts found at all - send to nobody
+        return res.status(200).json({ success: true, sentCount: 0, message: 'No admin subscriptions found' });
       }
-    } else if (targetUsername) {
-      query = query.ilike('username', targetUsername.trim());
     }
+    // else: Normal mode - no filter, query returns ALL subscriptions
 
     const { data: subscriptions, error } = await query;
 
