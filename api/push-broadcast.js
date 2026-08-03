@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Error fetching subscriptions:', error);
-      return res.status(500).json({ error: 'Database error' });
+      return res.status(500).json({ error: 'DB Error: ' + (error.message || JSON.stringify(error)) });
     }
 
     if (!subscriptions || subscriptions.length === 0) {
