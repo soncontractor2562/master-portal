@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     // Fetch subscriptions from Supabase (filter by targetUsername if test mode)
     let query = supabase.from('store_push_subscriptions').select('*');
     if (targetUsername) {
-      query = query.eq('username', targetUsername);
+      query = query.ilike('username', targetUsername.trim());
     }
 
     const { data: subscriptions, error } = await query;

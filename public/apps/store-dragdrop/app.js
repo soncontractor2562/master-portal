@@ -3221,7 +3221,9 @@ function saveDeletedNotiIds(idsToAdd) {
   } catch (_) {}
   if (supabaseClient) {
     const rows = idsToAdd.map(id => ({ notification_id: id, username: state.currentUser.username }));
-    supabaseClient.from('store_notification_deletions').upsert(rows, { onConflict: 'notification_id,username' }).catch(() => {});
+    try {
+      supabaseClient.from('store_notification_deletions').upsert(rows, { onConflict: 'notification_id,username' }).then(function() {});
+    } catch (_) {}
   }
 }
 
@@ -3269,7 +3271,14 @@ async function fetchNotifications() {
       }
     } catch (_) {}
 
-    const visibleNotis = notis.filter(n => !deletedSet.has(n.id));
+    const visibleNotis = notis.filter(n => {
+      if (deletedSet.has(n.id)) return false;
+      const isTestNoti = !!n.target_username || (n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]');
+      if (isTestNoti) {
+        return state.currentUser && (n.target_username === state.currentUser.username || (n.message || '').includes(state.currentUser.username));
+      }
+      return true;
+    });
     const readIds = new Set(reads.map(r => r.notification_id));
     let unreadCount = 0;
     
@@ -3437,7 +3446,10 @@ function toggleTestMode(enabled) {
   localStorage.setItem('inv_is_test_mode', enabled ? 'true' : 'false');
   var block = document.getElementById('testModeInfoBlock');
   if (block) block.style.display = enabled ? 'block' : 'none';
-  showToast(enabled ? 'เปิดโหมดทดสอบระบบ (Developer Mode) แล้ว' : 'ปิดโหมดทดสอบระบบแล้ว', enabled ? 'warning' : 'info');
+  if (enabled) {
+    initPushNotifications();
+  }
+  showToast(enabled ? 'เปิดโหมดทดสอบระบบ (Push & Bell จะส่งหาแอดมินคนเดียวเท่านั้น)' : 'ปิดโหมดทดสอบระบบแล้ว', enabled ? 'warning' : 'info');
 }
 
 async function clearTestNotifications() {
