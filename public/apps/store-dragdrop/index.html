@@ -800,7 +800,7 @@
         <div class="page-header-actions">
           <button class="icon-btn noti-bell-btn" onclick="openNotiModal()" title="การแจ้งเตือน" style="position:relative; margin-right:4px;">
             🔔
-            <span class="noti-badge" style="display:none; position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff; font-size:10px; font-weight:bold; height:16px; min-width:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:0 4px; box-shadow:0 0 0 2px #fff;">0</span>
+            <span class="noti-badge" style="display:none; position:absolute; top:-7px; right:-7px; background:#ef4444; color:#fff; font-size:10px; font-weight:bold; height:18px; min-width:18px; border-radius:99px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:0 5px; box-shadow:0 0 0 2px #0f172a, 0 2px 6px rgba(239,68,68,0.4); z-index:5;">0</span>
           </button>
         </div>
       </div>
@@ -839,14 +839,15 @@
 
     <!-- PAGE: INVENTORY -->
     <div class="page" id="page-inventory">
-      <div class="page-header">
+      <div class="page-header" style="padding-right:8px;">
         <div class="page-header-title">ทะเบียนวัสดุ</div>
-        <div class="page-header-actions">
-          
-          <button id="exportExcelBtn" onclick="exportToExcel()" class="icon-btn" title="ส่งออก Excel" style="width:auto; padding:0 12px; color:#10b981; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); font-size:13px; font-weight:600;">📊 Excel</button>
-          <button id="exportPDFBtn" onclick="exportToPDF()" class="icon-btn" title="ส่งออก PDF" style="width:auto; padding:0 12px; color:#f43f5e; border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1); font-size:13px; font-weight:600;">📄 PDF</button>
-          <button id="sortToggleBtn" onclick="toggleSortMode()" class="icon-btn" title="จัดเรียง" style="width:auto; padding:0 12px; font-size:13px; font-weight:600;">☰ Sort</button>
-          <button id="addInventoryBtn" onclick="showAddItemModal()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80;padding:8px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700; white-space:nowrap; flex-shrink:0;">+ เพิ่มของ</button>
+        <div class="page-header-actions" style="gap:6px; display:flex; align-items:center;">
+          <div style="display:flex; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:10px; padding:2px; gap:2px;">
+            <button id="exportExcelBtn" onclick="exportToExcel()" title="ส่งออก Excel" style="background:rgba(16,185,129,0.12); border:none; color:#10b981; padding:4px 8px; border-radius:7px; cursor:pointer; font-size:11px; font-weight:700; display:flex; align-items:center; gap:3px;">📊 Excel</button>
+            <button id="exportPDFBtn" onclick="exportToPDF()" title="ส่งออก PDF" style="background:rgba(244,63,94,0.12); border:none; color:#f43f5e; padding:4px 8px; border-radius:7px; cursor:pointer; font-size:11px; font-weight:700; display:flex; align-items:center; gap:3px;">📄 PDF</button>
+            <button id="sortToggleBtn" onclick="toggleSortMode()" title="จัดเรียงลำดับ" style="background:rgba(59,130,246,0.12); border:none; color:#60a5fa; padding:4px 8px; border-radius:7px; cursor:pointer; font-size:11px; font-weight:700; display:flex; align-items:center; gap:3px;">☰ เรียง</button>
+          </div>
+          <button id="addInventoryBtn" onclick="showAddItemModal()" style="background:linear-gradient(135deg,#10b981,#059669); border:none; color:#fff; padding:6px 12px; border-radius:10px; cursor:pointer; font-size:12px; font-weight:700; white-space:nowrap; flex-shrink:0; box-shadow:0 2px 8px rgba(16,185,129,0.25);">+ เพิ่มของ</button>
         </div>
       </div>
       <div class="page-body">
@@ -1204,9 +1205,12 @@
           <option value="ผู้ดูแลสโตร์">🏭 ผู้ดูแลสโตร์</option>
           <option value="แอดมิน">👑 แอดมิน</option>
         </select>
-        <select id="newUserAssignedLoc" class="form-input form-select" style="margin-bottom:8px;">
-          <option value="">-- เลือกสถานที่รับผิดชอบ (สำหรับผู้ใช้งาน) --</option>
-        </select>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">📍 สถานที่รับผิดชอบ (เลือกได้หลายโครงการ):</div>
+          <div id="newUserLocCheckboxes" style="max-height:110px; overflow-y:auto; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-wrap:wrap; gap:6px;">
+            <div style="font-size:12px; color:var(--muted); padding:4px;">⏳ กำลังโหลดสถานที่...</div>
+          </div>
+        </div>
         <button onclick="confirmAddUser()" class="btn-primary btn-success" style="padding:10px; width:100%; font-size:13px;">✅ เพิ่มผู้ใช้งาน</button>
       </div>
 

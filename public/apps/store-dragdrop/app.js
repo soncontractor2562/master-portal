@@ -1727,12 +1727,13 @@ async function showSettingsModal() {
     state.allLocations = data.locations || [];
     renderLocationManageList();
     
-    var assignedLocSelect = document.getElementById('newUserAssignedLoc');
-    if (assignedLocSelect) {
-      assignedLocSelect.innerHTML = '<option value="">-- ไม่ระบุสถานที่รับผิดชอบ (รับ/ปรับของไม่ได้) --</option>' +
-        state.allLocations.map(function(l) {
-          return '<option value="' + esc(l.name) + '">' + l.name + '</option>';
-        }).join('');
+    var cbContainer = document.getElementById('newUserLocCheckboxes');
+    if (cbContainer && state.allLocations) {
+      cbContainer.innerHTML = state.allLocations.map(function(l) {
+        return '<label style="display:inline-flex; align-items:center; gap:4px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.08); padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; color:var(--text);">' +
+          '<input type="checkbox" class="new-user-loc-cb" value="' + esc(l.name) + '" style="margin:0; cursor:pointer;" /> ' + esc(l.name) +
+          '</label>';
+      }).join('');
     }
   } catch (err) {
     showToast('โหลดสถานที่ล้มเหลว: ' + err.message, 'error');
@@ -1773,33 +1774,40 @@ async function loadUsersList() {
       var roleBadge = u.role === 'แอดมิน' ? '👑' : (u.role === 'ผู้ดูแลสโตร์' ? '🏭' : '👷‍♂️');
       var roleColor = u.role === 'แอดมิน' ? '#a855f7' : (u.role === 'ผู้ดูแลสโตร์' ? '#3b82f6' : '#10b981');
       
-      var locOptionsHtml = '<option value="">-- ไม่ระบุสถานที่ --</option>' +
-        state.allLocations.map(function(l) {
-          var sel = (u.assigned_location === l.name) ? 'selected' : '';
-          return '<option value="' + esc(l.name) + '" ' + sel + '>' + esc(l.name) + '</option>';
-        }).join('');
+      var userAssignedList = (u.assigned_location || '').split(',').map(function(s) { return s.trim(); });
+      var locCheckboxesHtml = state.allLocations.map(function(l) {
+        var isChecked = userAssignedList.includes(l.name) ? 'checked' : '';
+        return '<label style="display:inline-flex; align-items:center; gap:3px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; font-size:11px; color:#cbd5e1; cursor:pointer;">' +
+          '<input type="checkbox" class="user-loc-cb-' + u.id + '" value="' + esc(l.name) + '" ' + isChecked + ' onchange="saveUserLocationChanges(\'' + u.id + '\')" style="margin:0; cursor:pointer;" /> ' + esc(l.name) +
+          '</label>';
+      }).join('');
 
       return `
         <div style="padding:10px 12px; background:rgba(15,23,42,0.5); border:1px solid var(--border); border-radius:10px; margin-bottom:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-                <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
-              </div>
-              <div style="font-size:12px; color:${roleColor}; margin-top:2px;">บทบาท: ${u.role} (PIN: ${u.pin})</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+              <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
+              <span style="font-size:11px; color:${roleColor};">(${u.role})</span>
             </div>
             ${!isSelf ? `
-              <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:12px;" title="ลบผู้ใช้งาน">
+              <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; cursor:pointer; font-size:11px;" title="ลบผู้ใช้งาน">
                 🗑️ ลบ
               </button>
             ` : ''}
           </div>
+          
+          <div style="display:flex; gap:6px; align-items:center; margin-top:6px; margin-bottom:6px;">
+            <input type="text" id="editUsername_${u.id}" class="form-input" value="${esc(u.username)}" placeholder="ชื่อ..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+            <input type="password" id="editPin_${u.id}" class="form-input" value="${esc(u.pin)}" placeholder="PIN" maxlength="6" style="padding:2px 6px; font-size:12px; height:auto; width:60px; text-align:center;" />
+            <button onclick="saveUserChanges('${u.id}')" style="background:#3b82f6; border:none; color:#fff; padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600;">💾 เซฟ</button>
+          </div>
+
           ${u.role === 'ผู้ใช้งาน' ? `
-            <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
-              <span style="font-size:11px; color:var(--muted); flex-shrink:0;">สถานที่รับผิดชอบ:</span>
-              <select onchange="updateUserAssignedLocation('${u.id}', this.value)" class="form-input form-select" style="padding:2px 6px; font-size:12px; height:auto; flex:1;">
-                ${locOptionsHtml}
-              </select>
+            <div style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1);">
+              <div style="font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600;">📍 สถานที่รับผิดชอบ (ติ๊กเลือกได้หลายโครงการ):</div>
+              <div style="display:flex; flex-wrap:wrap; gap:4px; max-height:80px; overflow-y:auto;">
+                ${locCheckboxesHtml}
+              </div>
             </div>
           ` : ''}
         </div>
@@ -1813,10 +1821,41 @@ async function loadUsersList() {
   }
 }
 
-async function updateUserAssignedLocation(userId, newLoc) {
+async function saveUserChanges(userId) {
   if (!supabaseClient) return;
+  var uInput = document.getElementById('editUsername_' + userId);
+  var pInput = document.getElementById('editPin_' + userId);
+  if (!uInput || !pInput) return;
+  
+  var newU = uInput.value.trim();
+  var newP = pInput.value.trim();
+  if (!newU) return showToast('กรุณากรอกชื่อผู้ใช้', 'error');
+  if (!newP || newP.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+  
   try {
-    var { error } = await supabaseClient.from('store_users').update({ assigned_location: newLoc }).eq('id', userId);
+    var { error } = await supabaseClient.from('store_users').update({
+      username: newU,
+      pin: newP
+    }).eq('id', userId);
+    
+    if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
+      throw error;
+    }
+    
+    showToast('บันทึกข้อมูลผู้ใช้ "' + newU + '" เรียบร้อยแล้ว', 'success');
+    loadUsersList();
+  } catch (err) {
+    showToast('อัปเดตล้มเหลว: ' + err.message, 'error');
+  }
+}
+
+async function saveUserLocationChanges(userId) {
+  if (!supabaseClient) return;
+  var cbs = document.querySelectorAll('.user-loc-cb-' + userId + ':checked');
+  var newLocStr = Array.from(cbs).map(function(cb) { return cb.value; }).join(', ');
+  try {
+    var { error } = await supabaseClient.from('store_users').update({ assigned_location: newLocStr }).eq('id', userId);
     if (error) {
       if (error.message && error.message.includes('assigned_location')) {
         alert('กรุณารันคำสั่ง SQL นี้ใน Supabase SQL Editor เพื่อเพิ่มคอลัมน์ assigned_location ในตาราง store_users:\n\nALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;');
@@ -1835,7 +1874,8 @@ async function confirmAddUser() {
   var u = document.getElementById('newUsername').value.trim();
   var p = document.getElementById('newUserPin').value.trim();
   var r = document.getElementById('newUserRole').value;
-  var loc = document.getElementById('newUserAssignedLoc') ? document.getElementById('newUserAssignedLoc').value : '';
+  var checkedLocs = Array.from(document.querySelectorAll('.new-user-loc-cb:checked')).map(function(cb) { return cb.value; });
+  var loc = checkedLocs.join(', ');
   
   if (!u) return showToast('กรุณากรอกชื่อผู้ใช้ (Username)', 'error');
   if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
