@@ -2646,7 +2646,7 @@ async function initPushNotifications() {
       return;
     }
     
-    let publicVapidKey = 'BGdBfRODtTZuN6JKMW0aE_MIORsiEl5LTBwkB-Mnagn5Qlzp6X0b-c6_KOuNkvkTNec6YyAy-7o08G52S7bdNho';
+    let publicVapidKey = 'BA4xMBm2GNpJZGC5Ogp3t71czEqE_xpzw4DhuQxcnf_pYzRfSmX6Y2v5MmK14mJ0DLDP8hMgHz6hYUhn4sSzmZ0';
     try {
       const vapidRes = await fetch('/api/vapid-public-key');
       if (vapidRes.ok) {
@@ -2672,11 +2672,11 @@ async function initPushNotifications() {
     
     let subscription = await registration.pushManager.getSubscription();
     
-    const keyUpdated = localStorage.getItem('vapid_updated_v2');
+    const keyUpdated = localStorage.getItem('vapid_updated_v3');
     if (subscription && !keyUpdated) {
       await subscription.unsubscribe();
       subscription = null;
-      localStorage.setItem('vapid_updated_v2', 'true');
+      localStorage.setItem('vapid_updated_v3', 'true');
     }
 
     if (!subscription) {
