@@ -397,7 +397,7 @@ async function apiPost(pathStr, body) {
           
           histories.push({
             date: d,
-            type: 'ขนย้าย',
+            type: body.toLocation === 'สูญหาย' ? 'สูญหาย' : 'ขนย้าย',
             itemName: m.itemName,
             quantity: qty,
             fromLocation: body.fromLocation,
@@ -658,9 +658,25 @@ async function apiPost(pathStr, body) {
           if (last.toLocation) item.quantities[last.toLocation] = Math.max(0, Number(item.quantities[last.toLocation] || 0) - qty);
         } else if (last.type === 'ปรับยอด' && last.balanceFrom !== null && last.balanceFrom !== undefined) {
           if (last.fromLocation) item.quantities[last.fromLocation] = Number(last.balanceFrom);
+        } else if (last.type === 'ตั้งยอดยกมา') {
+          const qty = Number(last.quantity) || 0;
+          if (last.fromLocation) item.quantities[last.fromLocation] = Math.max(0, Number(item.quantities[last.fromLocation] || 0) - qty);
         }
-        const { error: err3 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
-        if (err3) throw err3;
+        
+        let totalQty = 0;
+        if (item.quantities) {
+          for (const loc in item.quantities) {
+             totalQty += Number(item.quantities[loc] || 0);
+          }
+        }
+        
+        if (last.type === 'ตั้งยอดยกมา' && totalQty === 0) {
+          const { error: err3 } = await supabaseClient.from('store_items').delete().eq('id', item.id);
+          if (err3) throw err3;
+        } else {
+          const { error: err3 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+          if (err3) throw err3;
+        }
       }
       const { error: err4 } = await supabaseClient.from('store_history').delete().eq('id', last.id);
       if (err4) throw err4;
