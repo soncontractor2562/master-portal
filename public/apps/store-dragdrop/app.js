@@ -597,7 +597,7 @@ async function apiPost(pathStr, body) {
           toLocation: '',
           balanceFrom: 0,
           balanceTo: body.initQty,
-          reporter: 'System',
+          reporter: body.reporter || 'System',
           remark: 'ตั้งยอดเริ่มต้น'
         }]);
       }
@@ -1314,7 +1314,7 @@ async function confirmAddItem() {
   if (!category) { showToast('กรุณาระบุหมวดหมู่', 'error'); return; }
   if (!unit) { showToast('กรุณาระบุหน่วยนับ', 'error'); return; }
   try {
-    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty });
+    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty, reporter: state.currentUser ? state.currentUser.username : 'System' });
     showToast(res.message, 'success');
     document.getElementById('addItemModal').style.display = 'none';
     await loadInventory();

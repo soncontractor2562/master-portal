@@ -18,8 +18,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,webmanifest}'],
       },
       manifest: {
-        name: 'Store Manager',
-        short_name: 'Store Manager',
+        name: 'SON Store Manager',
+        short_name: 'SON',
         description: 'ระบบจัดการสโตร์ ไซต์งาน และวัสดุอุปกรณ์',
         theme_color: '#090d16',
         background_color: '#090d16',
