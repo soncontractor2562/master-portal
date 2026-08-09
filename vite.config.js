@@ -10,10 +10,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png', 'favicon.ico'],
-      workbox: {
-        navigateFallbackDenylist: [/^\/apps\//],
-        runtimeCaching: [],
-        additionalManifestEntries: []
+      // Use injectManifest so our custom sw.js (with push handlers) is preserved
+      strategies: 'injectManifest',
+      srcDir: 'public',
+      filename: 'sw.js',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,png,webmanifest}'],
       },
       manifest: {
         name: 'Store Manager',

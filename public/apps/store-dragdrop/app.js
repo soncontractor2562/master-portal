@@ -729,6 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
       refreshAll();
       initPushNotifications();
       fetchNotifications();
+      initRealtimeSync();
     } catch(e) {
       document.getElementById('loginModal').style.display = 'flex';
     }
