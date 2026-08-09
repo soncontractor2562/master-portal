@@ -1332,6 +1332,9 @@ async function confirmAddItem() {
   try {
     var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty, reporter: state.currentUser ? state.currentUser.username : 'System' });
     showToast(res.message, 'success');
+    let notiMsg = `เพิ่มวัสดุใหม่ "${name}" ลงในระบบ`;
+    if (initQty > 0) notiMsg += ` พร้อมตั้งยอด ${initQty} ${unit} ที่ ${initLoc}`;
+    broadcastNotification('add', '➕ เพิ่มรายการใหม่', notiMsg, 'inventory');
     document.getElementById('addItemModal').style.display = 'none';
     await loadInventory();
     if (state.reopenMoveModal) { state.reopenMoveModal = false; setTimeout(openMoveModal, 200); }
@@ -1801,6 +1804,7 @@ async function confirmUndo() {
   try {
     var res = await apiPost('/api/history/undo', { id: state.undoTargetId });
     showToast(res.message, 'success');
+    broadcastNotification('undo', '🔙 ยกเลิกรายการ', res.message, 'history');
     document.getElementById('undoModal').style.display = 'none';
     await loadInventory(); await loadHistory(true);
   } catch (err) { showToast(err.message, 'error'); }
