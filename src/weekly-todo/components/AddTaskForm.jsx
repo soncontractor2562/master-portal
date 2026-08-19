@@ -13,7 +13,10 @@ const formatSafeDate = (dateObj) => {
   }
 };
 
+import { useLanguage } from '../LanguageContext';
+
 const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees = [] }) => {
+  const { t } = useLanguage();
   useEffect(() => {
     document.body.classList.add('modal-open');
     return () => {
@@ -49,14 +52,14 @@ const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add New Task</h2>
+          <h2>{t('addTaskTitle')}</h2>
           <button className="close-btn" onClick={onClose}>
             <X size={24} />
           </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Project Name</label>
+            <label>{t('project')}</label>
             <input 
               type="text" 
               name="project"
@@ -83,7 +86,7 @@ const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees 
           </div>
           
           <div className="form-group">
-            <label>Task Description *</label>
+            <label>{t('taskDesc')}</label>
             <input 
               type="text" 
               name="taskName"
@@ -96,7 +99,7 @@ const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees 
           </div>
           
           <div className="form-group">
-            <label>Assignee</label>
+            <label>{t('assignee')}</label>
             <input 
               type="text" 
               name="assignee"
@@ -129,7 +132,7 @@ const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees 
           </div>
 
           <div className="form-group date-picker-group">
-            <label>Due Date</label>
+            <label>{t('dueDate')}</label>
             <DatePicker 
               selected={selectedDate} 
               onChange={(date) => setSelectedDate(date)} 
@@ -139,8 +142,8 @@ const AddTaskForm = ({ onClose, onAdd, existingProjects = [], existingAssignees 
           </div>
           
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary">Add Task</button>
+            <button type="button" className="btn-secondary" onClick={onClose}>{t('cancel')}</button>
+            <button type="submit" className="btn-primary">{t('addBtn')}</button>
           </div>
         </form>
       </div>

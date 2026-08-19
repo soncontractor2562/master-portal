@@ -3,7 +3,10 @@ import { Droppable } from '@hello-pangea/dnd';
 import TaskCard from './TaskCard';
 import { CircleDashed, CheckCircle2, Clock } from 'lucide-react';
 
+import { useLanguage } from '../LanguageContext';
+
 const Column = ({ column, tasks, onEditClick, onMoveRight, hasNextColumn }) => {
+  const { t } = useLanguage();
   
   const getIcon = (title) => {
     if (title.toLowerCase().includes('done')) return <CheckCircle2 size={18} color="#10b981" />;
@@ -16,7 +19,7 @@ const Column = ({ column, tasks, onEditClick, onMoveRight, hasNextColumn }) => {
       <div className="column-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {getIcon(column.title)}
-          <h3 className="column-title">{column.title}</h3>
+          <h3 className="column-title">{t(column.title)}</h3>
         </div>
         <span className="task-count">{tasks.length}</span>
       </div>

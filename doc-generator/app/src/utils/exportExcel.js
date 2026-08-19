@@ -11,33 +11,32 @@ export async function exportToExcel(data) {
     const worksheet = workbook.worksheets[0]; // First sheet
 
     // General Info
-    worksheet.getCell('E3').value = data.projectName || '';
+    worksheet.getCell('E3').value = data.project || '';
     worksheet.getCell('E4').value = data.date || '';
     
     // Workday type (Normal vs Holiday)
     worksheet.getCell('R4').value = '';
-    // Assuming U4 is the checkbox for holiday based on nearby columns
     worksheet.getCell('U4').value = ''; 
     
-    if (data.workDay === 'ปกติ') {
+    if (data.workType === 'ปกติ') {
       worksheet.getCell('R4').value = 'ü';
-    } else if (data.workDay === 'วันหยุด') {
-      // Find the cell next to "วันหยุด" and put 'ü'. Let's just put it in U4.
+    } else if (data.workType === 'วันหยุด') {
       worksheet.getCell('U4').value = 'ü'; 
     }
     
-    worksheet.getCell('Y4').value = data.workHours || '8.00 - 17.00 น.';
+    worksheet.getCell('Y4').value = data.time || '8.00 - 17.00 น.';
 
     // Tasks (Starts at row 8, max ~13 rows)
     const taskStartRow = 8;
-    for (let i = 0; i < Math.min(data.tasks.length, 13); i++) {
+    const tasks = data.tasks || [];
+    for (let i = 0; i < Math.min(tasks.length, 13); i++) {
       const row = taskStartRow + i;
-      const task = data.tasks[i];
+      const task = tasks[i];
       worksheet.getCell(`A${row}`).value = i + 1;
-      worksheet.getCell(`C${row}`).value = task.description || '';
-      worksheet.getCell(`U${row}`).value = task.amount || '';
+      worksheet.getCell(`C${row}`).value = task.item || '';
+      worksheet.getCell(`U${row}`).value = task.qty || '';
       worksheet.getCell(`W${row}`).value = task.unit || '';
-      worksheet.getCell(`Y${row}`).value = task.remark || '';
+      worksheet.getCell(`Y${row}`).value = task.note || '';
     }
 
     // Dynamic Row Finding for Problems and Manpower
@@ -53,26 +52,30 @@ export async function exportToExcel(data) {
     });
 
     if (problemRow !== -1) {
-      worksheet.getCell(`C${problemRow}`).value = data.problems || '';
+      worksheet.getCell(`C${problemRow}`).value = data.issues || '';
     }
 
     if (manpowerRow !== -1) {
+      const labor = data.labor || [];
+      const equip = data.equip || [];
+      const mat = data.mat || [];
+
       // Manpower (Col A = Position, G = Amount)
-      for (let i = 0; i < Math.min(data.manpower.length, 15); i++) {
-        worksheet.getCell(`A${manpowerRow + i}`).value = data.manpower[i].position || '';
-        worksheet.getCell(`G${manpowerRow + i}`).value = data.manpower[i].amount || '';
+      for (let i = 0; i < Math.min(labor.length, 15); i++) {
+        worksheet.getCell(`A${manpowerRow + i}`).value = labor[i].name || '';
+        worksheet.getCell(`G${manpowerRow + i}`).value = labor[i].qty || '';
       }
       
       // Machinery (Col J = Item, Q = Amount)
-      for (let i = 0; i < Math.min(data.machinery.length, 15); i++) {
-        worksheet.getCell(`J${manpowerRow + i}`).value = data.machinery[i].item || '';
-        worksheet.getCell(`Q${manpowerRow + i}`).value = data.machinery[i].amount || '';
+      for (let i = 0; i < Math.min(equip.length, 15); i++) {
+        worksheet.getCell(`J${manpowerRow + i}`).value = equip[i].name || '';
+        worksheet.getCell(`Q${manpowerRow + i}`).value = equip[i].qty || '';
       }
       
       // Materials (Col T = Item, AB = Amount)
-      for (let i = 0; i < Math.min(data.materials.length, 15); i++) {
-        worksheet.getCell(`T${manpowerRow + i}`).value = data.materials[i].item || '';
-        worksheet.getCell(`AB${manpowerRow + i}`).value = data.materials[i].amount || '';
+      for (let i = 0; i < Math.min(mat.length, 15); i++) {
+        worksheet.getCell(`T${manpowerRow + i}`).value = mat[i].name || '';
+        worksheet.getCell(`AB${manpowerRow + i}`).value = mat[i].qty || '';
       }
     }
 

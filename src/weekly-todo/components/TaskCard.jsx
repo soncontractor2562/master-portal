@@ -19,7 +19,10 @@ const getStatusColor = (columnId) => {
   return '#6366f1';
 };
 
+import { useLanguage } from '../LanguageContext';
+
 const TaskCard = ({ task, index, onEditClick, columnId, onMoveRight, hasNextColumn }) => {
+  const { t } = useLanguage();
   const projectColor = getProjectColor(task.project);
   const statusColor = getStatusColor(columnId);
 
@@ -58,7 +61,7 @@ const TaskCard = ({ task, index, onEditClick, columnId, onMoveRight, hasNextColu
                  }}
                  title="Move to next status"
                >
-                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Move</span>
+                 <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' }}>{t('move')}</span>
                </button>
             )}
           </div>
@@ -66,7 +69,7 @@ const TaskCard = ({ task, index, onEditClick, columnId, onMoveRight, hasNextColu
           <div className="card-footer" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '0.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                {(task.assignee || 'Unassigned').split(',').map((a, i) => {
+                {(task.assignee || t('unassigned')).split(',').map((a, i) => {
                   const trimmed = a.trim();
                   if (!trimmed) return null;
                   return (
@@ -89,7 +92,7 @@ const TaskCard = ({ task, index, onEditClick, columnId, onMoveRight, hasNextColu
             {task.completedDate && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: 'var(--success)', fontWeight: '500' }}>
                 <CheckCircle2 size={12} />
-                <span>Done: {task.completedDate}</span>
+                <span>{t('done')}: {task.completedDate}</span>
               </div>
             )}
           </div>

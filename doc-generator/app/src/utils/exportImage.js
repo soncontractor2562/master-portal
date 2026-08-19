@@ -1,7 +1,6 @@
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 
-export async function exportToPdf(elementId, filename) {
+export async function exportToImage(elementId, filename) {
   try {
     const element = document.getElementById(elementId);
     if (!element) {
@@ -9,12 +8,12 @@ export async function exportToPdf(elementId, filename) {
       return false;
     }
     
-    // Temporarily position element visible for capture
+    // Temporarily ensure element is visible for capture
     const originalDisplay = element.style.display;
     element.style.display = 'block';
     
     const canvas = await html2canvas(element, {
-      scale: 2, // High resolution capture
+      scale: 2, // High resolution (300 DPI target)
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
@@ -23,20 +22,21 @@ export async function exportToPdf(elementId, filename) {
     
     element.style.display = originalDisplay;
     
+    // Convert to Image Data URL
     const imgData = canvas.toDataURL('image/png');
     
-    // A4 dimensions in mm: 210 x 297
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${filename}.pdf`);
+    // Create download link
+    const a = document.createElement('a');
+    a.href = imgData;
+    a.download = `${filename}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     
     return true;
   } catch (error) {
-    console.error('Error exporting PDF:', error);
-    alert('เกิดข้อผิดพลาดในการบันทึกเป็น PDF');
+    console.error('Error exporting Image:', error);
+    alert('เกิดข้อผิดพลาดในการบันทึกเป็นรูปภาพ');
     return false;
   }
 }
