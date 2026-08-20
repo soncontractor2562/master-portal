@@ -88,7 +88,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Status</label>
+            <label>{t('status') || 'สถานะ'}</label>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {columns.map(col => {
                 const isActive = status === col.id;
