@@ -1,3 +1,4 @@
+import './index.css';
 import React, { useState, useEffect } from 'react';
 import { exportToPdf } from './utils/exportPdf';
 import { exportToImage } from './utils/exportImage';

@@ -36,7 +36,19 @@ const modules = [
     iconBg: 'bg-amber-500/20',
     iconColor: 'text-amber-400',
     glow: 'shadow-amber-500/10',
-    emoji: '📦',
+    emoji: '📝',
+  },
+  {
+    id: 'docgen',
+    label: 'Doc Generator',
+    desc: 'สร้างรายงานประจำวันและขออนุมัติ',
+    icon: FileSpreadsheet,
+    gradient: 'from-blue-600/25 to-cyan-600/15',
+    border: 'border-blue-500/30',
+    iconBg: 'bg-blue-500/20',
+    iconColor: 'text-blue-400',
+    glow: 'shadow-blue-500/10',
+    emoji: '📄',
   },
 ];
 

@@ -33,6 +33,15 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
       activeBg: 'from-amber-600/30 to-orange-600/20 border-amber-500/40',
       activeIcon: 'bg-amber-500',
     },
+    {
+      id: 'docgen',
+      label: 'Doc Generator',
+      icon: FileSpreadsheet,
+      desc: 'สร้างรายงานประจำวันและขออนุมัติ',
+      color: 'text-blue-400',
+      activeBg: 'from-blue-600/30 to-cyan-600/20 border-blue-500/40',
+      activeIcon: 'bg-blue-500',
+    },
   ];
 
   const handleSelect = (tabId) => {
