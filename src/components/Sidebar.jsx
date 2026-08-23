@@ -35,9 +35,9 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
     },
     {
       id: 'docgen',
-      label: 'Doc Generator',
+      label: 'Request Report',
       icon: FileSpreadsheet,
-      desc: 'สร้างรายงานประจำวันและขออนุมัติ',
+      desc: 'สร้างเอกสารรายงานประจำวัน',
       color: 'text-blue-400',
       activeBg: 'from-blue-600/30 to-cyan-600/20 border-blue-500/40',
       activeIcon: 'bg-blue-500',

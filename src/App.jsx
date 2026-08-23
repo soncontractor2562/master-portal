@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar.jsx';
 import WeeklyTodoView from './components/WeeklyTodoView.jsx';
 import StoreDragDropView from './components/StoreDragDropView.jsx';
 import PrPoView from './components/PrPoView.jsx';
-import DocGeneratorApp from './doc-generator/App.jsx';
+import DocGeneratorView from './components/DocGeneratorView.jsx';
 import { ThemeProvider, useTheme } from './ThemeContext.jsx';
 
 function useMediaQuery(query) {
@@ -79,7 +79,7 @@ export default function App() {
             {activeTab === 'todo' && <WeeklyTodoView />}
             {activeTab === 'store' && <StoreDragDropView />}
             {activeTab === 'prpo' && <PrPoView />}
-            {activeTab === 'docgen' && <DocGeneratorApp />}
+            {activeTab === 'docgen' && <DocGeneratorView />}
           </div>
         </div>
       </ThemeProvider>

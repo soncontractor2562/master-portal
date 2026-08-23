@@ -40,8 +40,8 @@ const modules = [
   },
   {
     id: 'docgen',
-    label: 'Doc Generator',
-    desc: 'สร้างรายงานประจำวันและขออนุมัติ',
+    label: 'Request Report',
+    desc: 'สร้างเอกสารรายงานประจำวัน',
     icon: FileSpreadsheet,
     gradient: 'from-blue-600/25 to-cyan-600/15',
     border: 'border-blue-500/30',

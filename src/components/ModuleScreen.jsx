@@ -3,13 +3,13 @@ import { ChevronLeft } from 'lucide-react';
 import WeeklyTodoView from './WeeklyTodoView.jsx';
 import StoreDragDropView from './StoreDragDropView.jsx';
 import PrPoView from './PrPoView.jsx';
-import DocGeneratorApp from '../doc-generator/App.jsx';
+import DocGeneratorView from './DocGeneratorView.jsx';
 
 const MODULE_LABELS = {
   todo:  'Weekly Todo List',
   store: 'Store Manager',
   prpo:  'PR / PO System',
-  docgen: 'Doc Generator',
+  docgen: 'Request Report',
 };
 
 export default function ModuleScreen({ moduleId, onBack }) {
@@ -87,7 +87,7 @@ export default function ModuleScreen({ moduleId, onBack }) {
         {moduleId === 'todo' && <WeeklyTodoView />}
         {moduleId === 'store' && <StoreDragDropView />}
         {moduleId === 'prpo' && <PrPoView />}
-        {moduleId === 'docgen' && <DocGeneratorApp />}
+        {moduleId === 'docgen' && <DocGeneratorView />}
       </div>
     </div>
   );
