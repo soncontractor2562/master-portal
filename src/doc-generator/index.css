@@ -163,8 +163,14 @@
   font-weight: 500;
 }
 
-.doc-gen-root input[type=text], .doc-gen-root input[type=date], .doc-gen-root input[type=number], .doc-gen-root textarea, .doc-gen-root select {
+.doc-gen-root input[type=text],
+.doc-gen-root input[type=date],
+.doc-gen-root input[type=number],
+.doc-gen-root textarea,
+.doc-gen-root select {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 6px 8px;
@@ -172,6 +178,7 @@
   font-family: inherit;
   background: #fff;
   color: var(--ink);
+  transition: all 0.2s;
 }
 
 .doc-gen-root textarea {
@@ -1087,6 +1094,8 @@
     font-size: 14px;
     padding: 8px 10px;
     border-radius: 6px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* --- BUTTONS --- */
@@ -1116,16 +1125,15 @@
   }
 
   .doc-gen-root table.entry-table thead,
-  .doc-gen-root table.entry-table tbody,
-  .doc-gen-root table.entry-table tr {
+  .doc-gen-root table.entry-table tbody {
     display: table;
+    min-width: 600px;
     width: 100%;
-    table-layout: fixed;
   }
 
   .doc-gen-root table.entry-table th, .doc-gen-root table.entry-table td {
     padding: 6px 4px;
-    word-break: break-word;
+    /* Removed word-break: break-word to avoid aggressive wrapping */
   }
 
   .doc-gen-root table.entry-table input {
