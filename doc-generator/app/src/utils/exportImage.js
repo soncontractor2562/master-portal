@@ -1,7 +1,6 @@
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 
-export async function exportToPdf(containerId, filename) {
+export async function exportToImage(containerId, filename) {
   try {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -9,17 +8,9 @@ export async function exportToPdf(containerId, filename) {
       return false;
     }
     
-    // Check if there are multiple A4 pages
     const pages = container.querySelectorAll('.a4-page');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
     if (pages && pages.length > 0) {
       for (let i = 0; i < pages.length; i++) {
-        if (i > 0) {
-          pdf.addPage('a4', 'p');
-        }
         const pageEl = pages[i];
         const canvas = await html2canvas(pageEl, {
           scale: 2, // High resolution (300 DPI target)
@@ -28,8 +19,19 @@ export async function exportToPdf(containerId, filename) {
           backgroundColor: '#ffffff',
           windowWidth: 794
         });
+        
         const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const a = document.createElement('a');
+        a.href = imgData;
+        a.download = pages.length === 1 ? `${filename}.png` : `${filename}_page${i + 1}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Small delay between downloads if multiple pages
+        if (i < pages.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
     } else {
       const canvas = await html2canvas(container, {
@@ -39,15 +41,20 @@ export async function exportToPdf(containerId, filename) {
         backgroundColor: '#ffffff',
         windowWidth: 794
       });
+      
       const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width);
+      const a = document.createElement('a');
+      a.href = imgData;
+      a.download = `${filename}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
     
-    pdf.save(`${filename}.pdf`);
     return true;
   } catch (error) {
-    console.error('Error exporting PDF:', error);
-    alert('เกิดข้อผิดพลาดในการบันทึกเป็น PDF');
+    console.error('Error exporting Image:', error);
+    alert('เกิดข้อผิดพลาดในการบันทึกเป็นรูปภาพ');
     return false;
   }
 }
