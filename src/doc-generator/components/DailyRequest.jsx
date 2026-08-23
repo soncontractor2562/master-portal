@@ -60,17 +60,17 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
         </table>
 
         {/* Signatures Redesign */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'stretch', marginTop: '40px', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start', marginTop: '40px', gap: '20px' }}>
           
           {/* Requester */}
-          <div className="signer-box" style={{ position: 'relative', width: '220px', display: 'flex', flexDirection: 'column', paddingTop: '20px' }}>
+          <div className="signer-box" style={{ position: 'relative', width: '260px', display: 'flex', flexDirection: 'column', padding: '20px 24px', border: '1px solid transparent' }}>
             <div style={{ fontWeight: 'bold', fontSize: '13px', textAlign: 'center' }}>ผู้ขออนุมัติ</div>
             
-            <div style={{ marginTop: 'auto', width: '100%', textAlign: 'center', position: 'relative', paddingTop: '60px' }}>
+            <div style={{ marginTop: '48px', width: '100%', textAlign: 'center', position: 'relative' }}>
               {data.requesterSignature && (
                 <img src={data.requesterSignature} alt="signature" style={{ position: 'absolute', bottom: '65px', left: '50%', transform: 'translateX(-50%)', maxHeight: '55px', maxWidth: '100%', objectFit: 'contain' }} />
               )}
-              <div className="signer-line" style={{ width: '160px', margin: '0 auto 8px', borderBottom: '1px solid currentColor' }}></div>
+              <div className="signer-line" style={{ width: '160px', margin: '0 auto 12px', borderBottom: '1px solid currentColor' }}></div>
               <div className="signer-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>({data.requesterName || '...................................................'})</div>
               <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.requesterRole || 'ผู้จัดการโครงการ'}</div>
               <div className="signer-date">วันที่: {formatThaiDate(data.requesterDate || data.date)}</div>
@@ -96,7 +96,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
                ...........................................................................................
             </div>
 
-            <div className="signer-box" style={{ position: 'relative', width: '100%', minWidth: 'auto', textAlign: 'center', marginTop: 'auto' }}>
+            <div className="signer-box" style={{ position: 'relative', width: '100%', minWidth: 'auto', textAlign: 'center' }}>
               <div className="signer-line" style={{ width: '160px', margin: '0 auto 12px', borderBottom: '1px solid currentColor' }}></div>
               <div className="signer-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>({data.approverName || '...................................................'})</div>
               <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.approverRole || 'ที่ปรึกษาโครงการฯ'}</div>
