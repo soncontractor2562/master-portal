@@ -3,6 +3,7 @@ import { exportToPdf } from './utils/exportPdf';
 import { exportToImage } from './utils/exportImage';
 import SignaturePad from './components/SignaturePad';
 import { DailyRequestView, createDefaultRequestTasks } from './components/DailyRequest';
+import { docGeneratorService } from './services/supabaseService';
 
 const STORAGE_KEY = 'daily_reports_v1';
 const COMPANY_KEY = 'daily_reports_company_v1';
@@ -147,75 +148,93 @@ function App() {
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
 
+  const [presetsList, setPresetsList] = useState([]);
+  const [selectedPresetName, setSelectedPresetName] = useState('');
+
   useEffect(() => {
-    try {
-      const storedComp = JSON.parse(localStorage.getItem(COMPANY_KEY));
-      if (storedComp) setCompany(storedComp);
+    const fetchData = async () => {
+      try {
+        const comp = await docGeneratorService.getCompanySettings();
+        if (comp) setCompany(comp);
 
-      const storedProjects = JSON.parse(localStorage.getItem(PROJECTS_KEY));
-      if (storedProjects) setProjects(storedProjects);
-      else {
-        const initProj = [{ id: '1', name: 'ปรับปรุงสำนักงานศูนย์บริการรถยนต์โตโยต้า บริษัท โตโยต้า นครพิงค์ เชียงใหม่ จำกัด', owner: 'บริษัท โตโยต้า นครพิงค์ เชียงใหม่ จำกัด' }];
-        setProjects(initProj);
-        localStorage.setItem(PROJECTS_KEY, JSON.stringify(initProj));
+        const projs = await docGeneratorService.getProjects();
+        setProjects(projs);
+
+        const currentPresetType = docType === 'report' ? 'report_preset' : 'request_preset';
+        const pList = await docGeneratorService.getPresets(currentPresetType);
+        setPresetsList(pList);
+
+        const docs = await docGeneratorService.getDocuments();
+        setReports(docs.map(d => ({
+          ...d.document_data,
+          id: d.id,
+          docType: d.doc_type,
+          savedAt: d.created_at,
+          date: d.date,
+          project: d.project_name
+        })));
+      } catch (e) {
+        console.error('Error fetching data:', e);
       }
+    };
+    fetchData();
+  }, [docType]);
 
-      const storedPreset = JSON.parse(localStorage.getItem(PRESET_KEY));
-      if (storedPreset) {
-        setPreset(storedPreset);
-        setFormData(prev => ({
-          ...prev,
-          project: storedPreset.defaultProject || prev.project,
-          owner: storedPreset.defaultOwner || prev.owner,
-          workType: storedPreset.defaultWorkType || prev.workType,
-          time: storedPreset.defaultTime || prev.time,
-          tasks: storedPreset.defaultTasks || prev.tasks,
-          issues: storedPreset.defaultIssues !== undefined ? storedPreset.defaultIssues : prev.issues,
-          clock: storedPreset.defaultClock || prev.clock,
-          labor: storedPreset.defaultLabor || prev.labor,
-          equip: storedPreset.defaultEquip || prev.equip,
-          mat: storedPreset.defaultMat || prev.mat,
-          signerRole: storedPreset.defaultSignerRole || prev.signerRole,
-          signerName: storedPreset.defaultSignerName || prev.signerName,
-          signatureImage: storedPreset.defaultSignatureImage || prev.signatureImage,
-          date: todayStr(),
-          signerDate: todayStr()
-        }));
-        setReqData(prev => ({
-          ...prev,
-          project: storedPreset.reqDefaultProject || storedPreset.defaultProject || prev.project,
-          owner: storedPreset.reqDefaultOwner || storedPreset.defaultOwner || prev.owner,
-          workType: storedPreset.reqDefaultWorkType || prev.workType,
-          time: storedPreset.reqDefaultTime || storedPreset.defaultTime || prev.time,
-          tasks: storedPreset.reqDefaultTasks || prev.tasks,
-          requesterName: storedPreset.reqDefaultRequesterName || prev.requesterName,
-          requesterRole: storedPreset.reqDefaultRequesterRole || prev.requesterRole,
-          requesterSignature: storedPreset.reqDefaultRequesterSignature || prev.requesterSignature,
-          approverName: storedPreset.reqDefaultApproverName || prev.approverName,
-          approverRole: storedPreset.reqDefaultApproverRole || prev.approverRole,
-          date: tomorrowStr(),
-          requesterDate: todayStr()
-        }));
-      }
-
-      const storedReports = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      setReports(storedReports);
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
-
-  const handleSaveCompany = () => {
-    try {
-      localStorage.setItem(COMPANY_KEY, JSON.stringify(company));
-      alert('บันทึกการตั้งค่าบริษัทแล้ว');
-    } catch (e) {
-      alert('เกิดข้อผิดพลาด: พื้นที่จัดเก็บเต็ม กรุณาลดขนาดโลโก้');
+  // Load a named preset into form
+  const applyPresetToForm = (presetData) => {
+    if (!presetData) return;
+    if (docType === 'report') {
+      setFormData(prev => ({
+        ...prev,
+        project: presetData.defaultProject || prev.project,
+        owner: presetData.defaultOwner || prev.owner,
+        workType: presetData.defaultWorkType || prev.workType,
+        time: presetData.defaultTime || prev.time,
+        tasks: presetData.defaultTasks ? JSON.parse(JSON.stringify(presetData.defaultTasks)) : prev.tasks,
+        issues: presetData.defaultIssues !== undefined ? presetData.defaultIssues : prev.issues,
+        clock: presetData.defaultClock ? [...presetData.defaultClock] : prev.clock,
+        labor: presetData.defaultLabor ? JSON.parse(JSON.stringify(presetData.defaultLabor)) : prev.labor,
+        equip: presetData.defaultEquip ? JSON.parse(JSON.stringify(presetData.defaultEquip)) : prev.equip,
+        mat: presetData.defaultMat ? JSON.parse(JSON.stringify(presetData.defaultMat)) : prev.mat,
+        signerRole: presetData.defaultSignerRole || prev.signerRole,
+        signerName: presetData.defaultSignerName || prev.signerName,
+        signatureImage: presetData.defaultSignatureImage || prev.signatureImage,
+        date: todayStr(),
+        signerDate: todayStr()
+      }));
+    } else {
+      setReqData(prev => ({
+        ...prev,
+        project: presetData.reqDefaultProject || prev.project,
+        owner: presetData.reqDefaultOwner || prev.owner,
+        workType: presetData.reqDefaultWorkType || prev.workType,
+        time: presetData.reqDefaultTime || prev.time,
+        tasks: presetData.reqDefaultTasks ? JSON.parse(JSON.stringify(presetData.reqDefaultTasks)) : prev.tasks,
+        requesterName: presetData.reqDefaultRequesterName || prev.requesterName,
+        requesterRole: presetData.reqDefaultRequesterRole || prev.requesterRole,
+        requesterSignature: presetData.reqDefaultRequesterSignature || prev.requesterSignature,
+        approverName: presetData.reqDefaultApproverName || prev.approverName,
+        approverRole: presetData.reqDefaultApproverRole || prev.approverRole,
+        date: tomorrowStr(),
+        requesterDate: todayStr()
+      }));
     }
   };
 
-  const handleSavePreset = () => {
+  const handleSaveCompany = async () => {
     try {
+      await docGeneratorService.saveCompanySettings(company);
+      alert('บันทึกการตั้งค่าบริษัทแล้ว');
+    } catch (e) {
+      alert('เกิดข้อผิดพลาดในการบันทึกบริษัทลง Cloud');
+    }
+  };
+
+  const handleSavePreset = async () => {
+    try {
+      const presetName = prompt('กรุณาตั้งชื่อข้อมูลเริ่มต้นชุดนี้ (เช่น ทีมโครงสร้าง-A, ช่างไฟ):', '');
+      if (!presetName) return;
+
       const isReq = docType === 'request';
       const newPreset = { ...preset };
       if (isReq) {
@@ -244,11 +263,33 @@ function App() {
         newPreset.defaultSignerName = formData.signerName;
         newPreset.defaultSignatureImage = formData.signatureImage;
       }
-      setPreset(newPreset);
-      localStorage.setItem(PRESET_KEY, JSON.stringify(newPreset));
-      alert(`บันทึกข้อมูล ${isReq ? 'Daily Request' : 'Daily Report'} เป็นค่าเริ่มต้นเรียบร้อยแล้ว\n(ระบบจะจำข้อมูลทั้งหมดไว้ และรันวันที่ตามวันปัจจุบันเสมอ)`);
+      
+      const currentPresetType = docType === 'report' ? 'report_preset' : 'request_preset';
+      await docGeneratorService.savePreset(currentPresetType, presetName, newPreset);
+      
+      // Refresh presets list
+      const pList = await docGeneratorService.getPresets(currentPresetType);
+      setPresetsList(pList);
+      setSelectedPresetName(presetName);
+      
+      alert(`บันทึกข้อมูลตั้งต้นชุด "${presetName}" เรียบร้อยแล้ว`);
     } catch (e) {
-      alert('เกิดข้อผิดพลาดในการบันทึกค่าเริ่มต้น (อาจเกิดจากขนาดรูปลายเซ็นใหญ่เกินไป)');
+      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูลตั้งต้น (อาจเกิดจากขนาดรูปลายเซ็นใหญ่เกินไป)');
+    }
+  };
+
+  const handleDeletePreset = async () => {
+    if (!selectedPresetName) return;
+    if (!window.confirm(`ต้องการลบข้อมูลตั้งต้นชุด "${selectedPresetName}" ใช่หรือไม่?`)) return;
+    
+    const presetObj = presetsList.find(p => p.name === selectedPresetName);
+    if (presetObj) {
+      await docGeneratorService.deletePreset(presetObj.id);
+      const currentPresetType = docType === 'report' ? 'report_preset' : 'request_preset';
+      const pList = await docGeneratorService.getPresets(currentPresetType);
+      setPresetsList(pList);
+      setSelectedPresetName('');
+      alert('ลบเรียบร้อยแล้ว');
     }
   };
 
@@ -258,71 +299,63 @@ function App() {
     const compressed = await compressImage(file, 400, 0.9, 'image/png');
     const updated = { ...company, logo: compressed };
     setCompany(updated);
-    localStorage.setItem(COMPANY_KEY, JSON.stringify(updated));
+    await docGeneratorService.saveCompanySettings(updated);
   };
 
-  const handleClearAllStorage = () => {
-    if (window.confirm('คุณต้องการลบข้อมูลประวัติทั้งหมดที่บันทึกไว้ใช่หรือไม่?')) {
-      localStorage.removeItem(STORAGE_KEY);
+  const handleClearAllStorage = async () => {
+    if (window.confirm('คุณต้องการลบข้อมูลประวัติทั้งหมดที่บันทึกไว้ใช่หรือไม่? (ลบจาก Cloud)')) {
+      for (const r of reports) {
+        await docGeneratorService.deleteDocument(r.id);
+      }
       setReports([]);
       alert('ลบข้อมูลประวัติเรียบร้อยแล้ว');
     }
   };
 
   const handleClearForm = () => {
-    if (!window.confirm('ต้องการล้างข้อมูลในฟอร์มเพื่อกลับไปเป็นค่าเริ่มต้นหรือไม่?')) return;
+    if (!window.confirm('ต้องการล้างข้อมูลในฟอร์มเพื่อกลับไปเป็นฟอร์มว่างหรือไม่?')) return;
     setCurrentEditId(null);
+    setSelectedPresetName('');
     if (docType === 'report') {
       setFormData({
-        project: preset.defaultProject || '',
-        owner: preset.defaultOwner || '',
-        date: todayStr(),
-        workType: preset.defaultWorkType || 'ปกติ',
-        time: preset.defaultTime || '8.00 - 17.00 น.',
-        tasks: preset.defaultTasks ? JSON.parse(JSON.stringify(preset.defaultTasks)) : createDefaultTasks(),
-        issues: preset.defaultIssues || '',
-        clock: preset.defaultClock ? [...preset.defaultClock] : new Array(12).fill(0),
-        labor: preset.defaultLabor ? JSON.parse(JSON.stringify(preset.defaultLabor)) : defaultLaborList,
-        equip: preset.defaultEquip ? JSON.parse(JSON.stringify(preset.defaultEquip)) : defaultEquipList,
-        mat: preset.defaultMat ? JSON.parse(JSON.stringify(preset.defaultMat)) : [{ name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }],
-        photos: [],
-        signerName: preset.defaultSignerName || '',
-        signerRole: preset.defaultSignerRole || 'วิศวกรโครงการ',
-        signerDate: todayStr(),
-        signatureImage: preset.defaultSignatureImage || null
+        project: '', owner: '', date: todayStr(), workType: 'ปกติ', time: '8.00 - 17.00 น.',
+        tasks: createDefaultTasks(), issues: '', clock: new Array(12).fill(0),
+        labor: defaultLaborList, equip: defaultEquipList,
+        mat: [{ name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }],
+        photos: [], signerName: '', signerRole: 'วิศวกรโครงการ', signerDate: todayStr(), signatureImage: null
       });
     } else {
       setReqData({
-        project: preset.reqDefaultProject || preset.defaultProject || '',
-        owner: preset.reqDefaultOwner || preset.defaultOwner || '',
-        date: tomorrowStr(),
-        workType: preset.reqDefaultWorkType || 'ปกติ',
-        time: preset.reqDefaultTime || preset.defaultTime || '8.00 - 17.00 น.',
-        tasks: preset.reqDefaultTasks ? JSON.parse(JSON.stringify(preset.reqDefaultTasks)) : createDefaultRequestTasks(),
-        requesterName: preset.reqDefaultRequesterName || '',
-        requesterRole: preset.reqDefaultRequesterRole || 'ผู้จัดการโครงการ',
-        requesterDate: todayStr(),
-        requesterSignature: preset.reqDefaultRequesterSignature || null,
-        approverName: preset.reqDefaultApproverName || '',
-        approverRole: preset.reqDefaultApproverRole || 'ที่ปรึกษาโครงการฯ'
+        project: '', owner: '', date: tomorrowStr(), workType: 'ปกติ', time: '8.00 - 17.00 น.',
+        tasks: createDefaultRequestTasks(), requesterName: '', requesterRole: 'ผู้จัดการโครงการ', requesterDate: todayStr(), requesterSignature: null,
+        approverName: '', approverRole: 'ที่ปรึกษาโครงการฯ'
       });
     }
   };
 
-  const handleSaveDoc = () => {
+  const handleSaveDoc = async () => {
     try {
       const currentData = docType === 'report' ? formData : reqData;
-      const dataToSave = { ...currentData, id: currentEditId || uid(), docType, savedAt: new Date().toISOString() };
-      let list = [...reports];
-      const idx = list.findIndex(r => r.id === dataToSave.id);
-      if (idx >= 0) list[idx] = dataToSave;
-      else list.push(dataToSave);
-      setReports(list);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-      setCurrentEditId(dataToSave.id);
-      alert(`บันทึก ${docType === 'report' ? 'Daily Report' : 'Daily Request'} ลงในระบบเรียบร้อยแล้ว`);
+      const dataToSave = { ...currentData, docType, savedAt: new Date().toISOString() };
+      
+      const savedObj = await docGeneratorService.saveDocument(
+        docType, 
+        currentData.date, 
+        currentData.project, 
+        dataToSave,
+        currentEditId
+      );
+      
+      if (savedObj) {
+        setCurrentEditId(savedObj.id);
+        const docs = await docGeneratorService.getDocuments();
+        setReports(docs.map(d => ({
+          ...d.document_data, id: d.id, docType: d.doc_type, savedAt: d.created_at, date: d.date, project: d.project_name
+        })));
+        alert(`บันทึก ${docType === 'report' ? 'Daily Report' : 'Daily Request'} ลงในระบบ (Cloud) เรียบร้อยแล้ว`);
+      }
     } catch (e) {
-      alert('เกิดข้อผิดพลาดในการบันทึก: พื้นที่ในเครื่องเต็ม (แนะนำให้ลดขนาด/จำนวนรูปภาพ)');
+      alert('เกิดข้อผิดพลาดในการบันทึก: พื้นที่ข้อมูลใหญ่เกินไป');
     }
   };
 
@@ -349,11 +382,11 @@ function App() {
     setActiveTab('form');
   };
 
-  const handleDeleteDoc = (id) => {
+  const handleDeleteDoc = async (id) => {
     if (!window.confirm('ลบเอกสารนี้ใช่หรือไม่?')) return;
+    await docGeneratorService.deleteDocument(id);
     const updated = reports.filter(r => r.id !== id);
     setReports(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
   const handlePreview = () => {
@@ -381,9 +414,27 @@ function App() {
 
   const renderGeneralInfo = (data, setData) => (
     <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-        <h2>ข้อมูลทั่วไป ({docType === 'report' ? 'Daily Report' : 'Daily Request'})</h2>
-        <button className="btn ghost" onClick={handleSavePreset} style={{ fontSize: '11px', padding: '4px 8px', color: '#6b6558', borderColor: '#c9c2ab' }}>+ ตั้งเป็นค่าเริ่มต้น</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+        <h2 style={{ margin: 0 }}>ข้อมูลทั่วไป ({docType === 'report' ? 'Daily Report' : 'Daily Request'})</h2>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <select 
+            value={selectedPresetName} 
+            onChange={(e) => {
+              const val = e.target.value;
+              setSelectedPresetName(val);
+              const p = presetsList.find(x => x.name === val);
+              if (p) applyPresetToForm(p.data);
+            }}
+            style={{ padding: '4px 8px', fontSize: '11.5px', maxWidth: '160px' }}
+          >
+            <option value="">-- ไม่ใช้ข้อมูลเริ่มต้น --</option>
+            {presetsList.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+          </select>
+          <button className="btn primary" onClick={handleSavePreset} style={{ fontSize: '11px', padding: '4px 8px' }}>บันทึกตั้งต้น</button>
+          {selectedPresetName && (
+             <button className="btn ghost" onClick={handleDeletePreset} style={{ fontSize: '11px', padding: '4px 8px', color: 'var(--danger)', borderColor: '#e2b6ab' }}>ลบ</button>
+          )}
+        </div>
       </div>
       <div className="grid">
         <div className="field">
@@ -948,13 +999,12 @@ function App() {
                 <input type="text" id="newProjOwner" placeholder="เช่น บริษัท โตโยต้า นครพิงค์ เชียงใหม่ จำกัด" />
               </div>
               <div>
-                <button className="btn primary" style={{ height: '38px', whiteSpace: 'nowrap' }} onClick={() => {
+                <button className="btn primary" style={{ height: '38px', whiteSpace: 'nowrap' }} onClick={async () => {
                   const n = document.getElementById('newProjName').value.trim();
                   const o = document.getElementById('newProjOwner').value.trim();
                   if(n){
-                    const upd = [...projects, { id: Date.now().toString(), name: n, owner: o }];
-                    setProjects(upd);
-                    localStorage.setItem(PROJECTS_KEY, JSON.stringify(upd));
+                    const newProj = await docGeneratorService.addProject(n, o);
+                    if (newProj) setProjects([...projects, newProj]);
                     document.getElementById('newProjName').value = '';
                     document.getElementById('newProjOwner').value = '';
                   } else {
@@ -984,9 +1034,11 @@ function App() {
                           value={p.name}
                           onChange={e => {
                             const val = e.target.value;
-                            const upd = projects.map(x => x.id === p.id ? { ...x, name: val } : x);
-                            setProjects(upd);
-                            localStorage.setItem(PROJECTS_KEY, JSON.stringify(upd));
+                            setProjects(projects.map(x => x.id === p.id ? { ...x, name: val } : x));
+                          }}
+                          onBlur={async e => {
+                            const val = e.target.value;
+                            await docGeneratorService.updateProject(p.id, { name: val });
                           }}
                           placeholder="ชื่อโครงการ"
                         />
@@ -997,9 +1049,11 @@ function App() {
                           value={p.owner}
                           onChange={e => {
                             const val = e.target.value;
-                            const upd = projects.map(x => x.id === p.id ? { ...x, owner: val } : x);
-                            setProjects(upd);
-                            localStorage.setItem(PROJECTS_KEY, JSON.stringify(upd));
+                            setProjects(projects.map(x => x.id === p.id ? { ...x, owner: val } : x));
+                          }}
+                          onBlur={async e => {
+                            const val = e.target.value;
+                            await docGeneratorService.updateProject(p.id, { owner: val });
                           }}
                           placeholder="เจ้าของโครงการ"
                         />
@@ -1008,11 +1062,10 @@ function App() {
                         <button
                           className="icon-btn danger"
                           title="ลบโครงการ"
-                          onClick={() => {
+                          onClick={async () => {
                             if(window.confirm(`ลบโครงการ "${p.name}" ออกจากทะเบียน?`)) {
-                              const upd = projects.filter(x => x.id !== p.id);
-                              setProjects(upd);
-                              localStorage.setItem(PROJECTS_KEY, JSON.stringify(upd));
+                              await docGeneratorService.deleteProject(p.id);
+                              setProjects(projects.filter(x => x.id !== p.id));
                             }
                           }}
                         >

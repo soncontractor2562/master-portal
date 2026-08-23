@@ -38,6 +38,18 @@ const modules = [
     glow: 'shadow-amber-500/10',
     emoji: '📦',
   },
+  {
+    id: 'docgen',
+    label: 'Doc Generator',
+    desc: 'รายงานและขออนุมัติปฏิบัติงาน',
+    icon: FileSpreadsheet,
+    gradient: 'from-sky-600/25 to-blue-600/15',
+    border: 'border-sky-500/30',
+    iconBg: 'bg-sky-500/20',
+    iconColor: 'text-sky-400',
+    glow: 'shadow-sky-500/10',
+    emoji: '📄',
+  },
 ];
 
 export default function HomeScreen({ onSelect }) {
