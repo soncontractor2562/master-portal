@@ -142,7 +142,7 @@ function App() {
 
   const [reqData, setReqData] = useState({
     project: '', owner: '', date: tomorrowStr(), workType: 'ปกติ', time: '8.00 - 17.00 น.',
-    tasks: defaultFormCache?.tasks ? JSON.parse(JSON.stringify(defaultFormCache.tasks)) : createDefaultRequestTasks(), requesterName: '', requesterRole: 'ผู้จัดการโครงการ', requesterDate: todayStr(), requesterSignature: null,
+    tasks: createDefaultRequestTasks(), requesterName: '', requesterRole: 'ผู้จัดการโครงการ', requesterDate: todayStr(), requesterSignature: null,
     approverName: '', approverRole: 'ที่ปรึกษาโครงการฯ'
   });
 
