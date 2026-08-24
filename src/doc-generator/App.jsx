@@ -650,7 +650,7 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {(data.tasks || []).map((t, i) => (
+              {([...(data.tasks || []), ...new Array(8).fill({ item: '', qty: '', unit: '', note: '' })].slice(0, Math.max(8, (data.tasks || []).length))).map((t, i) => (
                 <tr key={i}>
                   <td style={{ textAlign: 'center' }}>{i + 1}</td>
                   <td>{t.item}</td>
