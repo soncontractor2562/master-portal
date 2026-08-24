@@ -151,6 +151,7 @@ function App() {
 
   const [presetsList, setPresetsList] = useState([]);
   const [selectedPresetName, setSelectedPresetName] = useState('');
+  const [defaultTasksList, setDefaultTasksList] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -209,6 +210,12 @@ function App() {
         // -----------------------------------------------------------
 
         setPresetsList(pList);
+
+        // Load hidden default tasks
+        try {
+          const defTasks = await docGeneratorService.getDefaultTasks(docType);
+          if (defTasks && defTasks.tasks) setDefaultTasksList(defTasks.tasks);
+        } catch(e) {}
 
         const docs = await docGeneratorService.getDocuments();
         setReports(docs.map(d => ({
@@ -385,7 +392,7 @@ function App() {
     if (docType === 'report') {
       setFormData({
         project: '', owner: '', date: todayStr(), workType: 'ปกติ', time: '8.00 - 17.00 น.',
-        tasks: createDefaultTasks(), issues: '', clock: new Array(12).fill(0),
+        tasks: defaultTasksList ? JSON.parse(JSON.stringify(defaultTasksList)) : createDefaultTasks(), issues: '', clock: new Array(12).fill(0),
         labor: defaultLaborList, equip: defaultEquipList,
         mat: [{ name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }],
         photos: [], signerName: '', signerRole: 'วิศวกรโครงการ', signerDate: todayStr(), signatureImage: null
@@ -396,6 +403,17 @@ function App() {
         tasks: createDefaultRequestTasks(), requesterName: '', requesterRole: 'ผู้จัดการโครงการ', requesterDate: todayStr(), requesterSignature: null,
         approverName: '', approverRole: 'ที่ปรึกษาโครงการฯ'
       });
+    }
+  };
+
+  const handleSaveDefaultTasks = async () => {
+    if (!window.confirm('บันทึกรายการปฏิบัติงานชุดนี้เป็นค่าเริ่มต้น?\nเมื่อล้างฟอร์ม จะได้รายการนี้โดยอัตโนมัติ')) return;
+    try {
+      await docGeneratorService.saveDefaultTasks(docType, formData.tasks);
+      setDefaultTasksList(JSON.parse(JSON.stringify(formData.tasks)));
+      alert('บันทึกรายการเริ่มต้นเรียบร้อยแล้ว!');
+    } catch(e) {
+      alert('เกิดข้อผิดพลาดในการบันทึก');
     }
   };
 
@@ -767,28 +785,98 @@ function App() {
 
               <div className="card">
                 <h2>รายการปฏิบัติงานประจำวัน</h2>
-                <div className="table-scroll-wrap"><table className="entry-table">
-                  <thead><tr><th style={{ width: '40px', textAlign: 'center' }}>ลำดับ</th><th>รายการ</th><th style={{ width: '80px' }}>จำนวน</th><th style={{ width: '80px' }}>หน่วย</th><th>หมายเหตุ</th></tr></thead>
-                  <tbody>
-                    {formData.tasks.map((t, i) => (
-                      <tr key={i}>
-                        <td style={{ textAlign: 'center' }}>{i + 1}</td>
-                        <td><input type="text" value={t.item} onChange={e => {
+
+                {/* PC Table */}
+                <div className="table-scroll-wrap task-table-desktop">
+                  <table className="entry-table" style={{ width: '100%' }}>
+                    <thead><tr>
+                      <th style={{ width: '40px', textAlign: 'center' }}>ลำดับ</th>
+                      <th>รายการ</th>
+                      <th style={{ width: '80px' }}>จำนวน</th>
+                      <th style={{ width: '80px' }}>หน่วย</th>
+                      <th>หมายเหตุ</th>
+                      <th style={{ width: '36px' }}></th>
+                    </tr></thead>
+                    <tbody>
+                      {formData.tasks.map((t, i) => (
+                        <tr key={i}>
+                          <td style={{ textAlign: 'center' }}>{i + 1}</td>
+                          <td><input type="text" value={t.item} onChange={e => {
+                            const n = [...formData.tasks]; n[i].item = e.target.value; setFormData({ ...formData, tasks: n });
+                          }} /></td>
+                          <td><input type="text" value={t.qty} onChange={e => {
+                            const n = [...formData.tasks]; n[i].qty = e.target.value; setFormData({ ...formData, tasks: n });
+                          }} /></td>
+                          <td><input type="text" value={t.unit} onChange={e => {
+                            const n = [...formData.tasks]; n[i].unit = e.target.value; setFormData({ ...formData, tasks: n });
+                          }} /></td>
+                          <td><input type="text" value={t.note} onChange={e => {
+                            const n = [...formData.tasks]; n[i].note = e.target.value; setFormData({ ...formData, tasks: n });
+                          }} /></td>
+                          <td style={{ textAlign: 'center' }}>
+                            <button className="icon-btn danger" onClick={() => {
+                              setFormData({ ...formData, tasks: formData.tasks.filter((_, idx) => idx !== i) });
+                            }} title="ลบแถว">✕</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="task-cards-mobile">
+                  {formData.tasks.map((t, i) => (
+                    <div key={i} className="task-mobile-card">
+                      <div className="task-mobile-card-header">
+                        <span>รายการที่ {i + 1}</span>
+                        <button className="icon-btn danger" onClick={() => {
+                          setFormData({ ...formData, tasks: formData.tasks.filter((_, idx) => idx !== i) });
+                        }}>✕</button>
+                      </div>
+                      <div className="field">
+                        <label>รายการงาน</label>
+                        <input type="text" value={t.item} placeholder="ระบุรายการงาน" onChange={e => {
                           const n = [...formData.tasks]; n[i].item = e.target.value; setFormData({ ...formData, tasks: n });
-                        }} /></td>
-                        <td><input type="text" value={t.qty} onChange={e => {
-                          const n = [...formData.tasks]; n[i].qty = e.target.value; setFormData({ ...formData, tasks: n });
-                        }} /></td>
-                        <td><input type="text" value={t.unit} onChange={e => {
-                          const n = [...formData.tasks]; n[i].unit = e.target.value; setFormData({ ...formData, tasks: n });
-                        }} /></td>
-                        <td><input type="text" value={t.note} onChange={e => {
+                        }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div className="field">
+                          <label>จำนวน</label>
+                          <input type="text" value={t.qty} placeholder="เช่น 150" onChange={e => {
+                            const n = [...formData.tasks]; n[i].qty = e.target.value; setFormData({ ...formData, tasks: n });
+                          }} />
+                        </div>
+                        <div className="field">
+                          <label>หน่วย</label>
+                          <input type="text" value={t.unit} placeholder="งาน / ตร.ม." onChange={e => {
+                            const n = [...formData.tasks]; n[i].unit = e.target.value; setFormData({ ...formData, tasks: n });
+                          }} />
+                        </div>
+                      </div>
+                      <div className="field">
+                        <label>หมายเหตุ</label>
+                        <input type="text" value={t.note} placeholder="หมายเหตุ (ถ้ามี)" onChange={e => {
                           const n = [...formData.tasks]; n[i].note = e.target.value; setFormData({ ...formData, tasks: n });
-                        }} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table></div>
+                        }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Shared buttons */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button className="add-row-btn" onClick={() => {
+                    setFormData({ ...formData, tasks: [...formData.tasks, { item: '', qty: '', unit: 'งาน', note: '' }] });
+                  }}>+ เพิ่มรายการ</button>
+                  <button className="btn ghost" style={{ fontSize: '12px', padding: '5px 12px' }} onClick={handleSaveDefaultTasks}
+                    title="บันทึกรายการชุดนี้เป็นค่าเริ่มต้น เมื่อล้างฟอร์มจะได้รายการนี้">
+                    💾 บันทึกเป็นรายการเริ่มต้น
+                  </button>
+                  {defaultTasksList && (
+                    <span style={{ fontSize: '11px', color: '#6b6558' }}>✅ มีรายการเริ่มต้นบันทึกไว้แล้ว</span>
+                  )}
+                </div>
               </div>
 
               <div className="card">

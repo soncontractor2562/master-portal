@@ -34,6 +34,21 @@ export const docGeneratorService = {
     if (error) throw error;
   },
 
+  // Hidden "Default Tasks" preset — not shown in the dropdown
+  async getDefaultTasks(docType) {
+    const key = docType === 'report' ? '__default_tasks_report__' : '__default_tasks_request__';
+    const { data, error } = await supabase.from('doc_generator_presets')
+      .select('data').eq('type', key).is('name', null).maybeSingle();
+    if (error) console.error('Error fetching default tasks:', error);
+    return data ? data.data : null;
+  },
+  async saveDefaultTasks(docType, tasks) {
+    const key = docType === 'report' ? '__default_tasks_report__' : '__default_tasks_request__';
+    const { error } = await supabase.from('doc_generator_presets')
+      .upsert({ type: key, name: null, data: { tasks }, updated_at: new Date().toISOString() }, { onConflict: 'type, name' });
+    if (error) console.error('Error saving default tasks:', error);
+  },
+
   // 3. Projects Registry
   async getProjects() {
     const { data, error } = await supabase.from('doc_generator_projects').select('*').order('created_at', { ascending: true });

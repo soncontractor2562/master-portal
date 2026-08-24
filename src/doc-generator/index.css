@@ -272,6 +272,11 @@
   font-weight: 500;
 }
 
+/* Mobile card view hidden by default (shown only via mobile media query) */
+.doc-gen-root .task-cards-mobile {
+  display: none;
+}
+
 .doc-gen-root .clock-wrap {
   display: flex;
   gap: 18px;
@@ -1069,7 +1074,40 @@
     min-width: 0;
   }
 
+  /* --- TASK TABLE: hide PC table, show mobile cards on small screens --- */
+  .doc-gen-root .task-table-desktop {
+    display: none !important;
+  }
+
+  .doc-gen-root .task-cards-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .doc-gen-root .task-mobile-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .doc-gen-root .task-mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
   /* --- CARDS & FORM LAYOUT --- */
+
   .doc-gen-root .card {
     padding: 12px 10px;
     margin-bottom: 10px;
