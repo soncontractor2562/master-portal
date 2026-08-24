@@ -213,8 +213,8 @@ function App() {
 
         // Load hidden default tasks
         try {
-          const defTasks = await docGeneratorService.getDefaultTasks(docType);
-          if (defTasks && defTasks.tasks) setDefaultTasksList(defTasks.tasks);
+          const defTasks = await docGeneratorService.getDefaultForm(docType);
+          if (defTasks && defTasks.tasks) 
         } catch(e) {}
 
         const docs = await docGeneratorService.getDocuments();
@@ -392,7 +392,7 @@ function App() {
     if (docType === 'report') {
       setFormData({
         project: '', owner: '', date: todayStr(), workType: 'ปกติ', time: '8.00 - 17.00 น.',
-        tasks: defaultTasksList ? JSON.parse(JSON.stringify(defaultTasksList)) : createDefaultTasks(), issues: '', clock: new Array(12).fill(0),
+        tasks: defaultFormCache?.tasks ? JSON.parse(JSON.stringify(defaultFormCache.tasks)) : createDefaultTasks(), issues: '', clock: new Array(12).fill(0),
         labor: defaultLaborList, equip: defaultEquipList,
         mat: [{ name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }, { name: '', qty: '', unit: '' }],
         photos: [], signerName: '', signerRole: 'วิศวกรโครงการ', signerDate: todayStr(), signatureImage: null
@@ -406,15 +406,21 @@ function App() {
     }
   };
 
-  const handleSaveDefaultForm = async () => {
-    if (!window.confirm('บันทึกรายการปฏิบัติงานชุดนี้เป็นค่าเริ่มต้น?\nเมื่อล้างฟอร์ม จะได้รายการนี้โดยอัตโนมัติ')) return;
-    try {
-      await docGeneratorService.saveDefaultTasks(docType, formData.tasks);
-      setDefaultTasksList(JSON.parse(JSON.stringify(formData.tasks)));
-      alert('บันทึกรายการเริ่มต้นเรียบร้อยแล้ว!');
-    } catch(e) {
-      alert('เกิดข้อผิดพลาดในการบันทึก');
-    }
+  const handleSaveDefaultForm = async () => {
+    if (!window.confirm('บันทึกค่าในตาราง (รายการงาน, แรงงาน, เครื่องจักร, วัสดุ) เป็นค่าเริ่มต้น?\nเมื่อล้างฟอร์ม จะได้ค่าเหล่านี้โดยอัตโนมัติ')) return;
+    try {
+      const dataToSave = {
+        tasks: formData.tasks,
+        labor: formData.labor,
+        equip: formData.equip,
+        mat: formData.mat
+      };
+      await docGeneratorService.saveDefaultForm(docType, dataToSave);
+      setDefaultFormCache(JSON.parse(JSON.stringify(dataToSave)));
+      alert('บันทึกค่าตารางเริ่มต้นเรียบร้อยแล้ว!');
+    } catch(e) {
+      alert('เกิดข้อผิดพลาดในการบันทึก');
+    }
   };
 
   const handleSaveDoc = async () => {
