@@ -1154,7 +1154,7 @@
     padding: 8px 12px;
   }
 
-  /* --- ENTRY TABLES (form tables) - keep PC layout, allow horizontal scroll --- */
+  /* --- ENTRY TABLES (for Labor & Equip on mobile) --- */
   .doc-gen-root .table-scroll-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -1162,20 +1162,19 @@
 
   .doc-gen-root table.entry-table {
     font-size: 12px;
-    min-width: 480px;
-    width: max-content;
+    width: 100%;
     display: table;
   }
 
   .doc-gen-root table.entry-table th, .doc-gen-root table.entry-table td {
     padding: 6px 4px;
-    white-space: nowrap;
+    word-break: break-word;
   }
 
   .doc-gen-root table.entry-table input {
     font-size: 12px;
     padding: 4px;
-    width: 80px;
+    width: 100%;
   }
 
   /* --- HISTORY LIST CARDS --- */

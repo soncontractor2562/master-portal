@@ -48,7 +48,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
             </tr>
           </thead>
           <tbody>
-            {data.tasks.map((t, i) => (
+            {([...(data.tasks || []), ...new Array(8).fill({ item: '', qty: '', unit: '', note: '' })].slice(0, Math.max(8, (data.tasks || []).length))).map((t, i) => (
               <tr key={i}>
                 <td style={{ textAlign: 'center', height: '36px' }}>{i + 1}</td>
                 <td style={{ padding: '4px 8px' }}>{t.item}</td>
