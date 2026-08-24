@@ -1116,29 +1116,28 @@
     padding: 8px 12px;
   }
 
-  /* --- ENTRY TABLES (form tables) --- */
-  .doc-gen-root table.entry-table {
-    font-size: 12px;
-    display: block;
+  /* --- ENTRY TABLES (form tables) - keep PC layout, allow horizontal scroll --- */
+  .doc-gen-root .table-scroll-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .doc-gen-root table.entry-table thead,
-  .doc-gen-root table.entry-table tbody {
+  .doc-gen-root table.entry-table {
+    font-size: 12px;
+    min-width: 480px;
+    width: max-content;
     display: table;
-    min-width: 600px;
-    width: 100%;
   }
 
   .doc-gen-root table.entry-table th, .doc-gen-root table.entry-table td {
     padding: 6px 4px;
-    /* Removed word-break: break-word to avoid aggressive wrapping */
+    white-space: nowrap;
   }
 
   .doc-gen-root table.entry-table input {
-    font-size: 13px;
+    font-size: 12px;
     padding: 4px;
+    width: 80px;
   }
 
   /* --- HISTORY LIST CARDS --- */

@@ -767,7 +767,7 @@ function App() {
 
               <div className="card">
                 <h2>รายการปฏิบัติงานประจำวัน</h2>
-                <table className="entry-table">
+                <div className="table-scroll-wrap"><table className="entry-table">
                   <thead><tr><th style={{ width: '40px', textAlign: 'center' }}>ลำดับ</th><th>รายการ</th><th style={{ width: '80px' }}>จำนวน</th><th style={{ width: '80px' }}>หน่วย</th><th>หมายเหตุ</th></tr></thead>
                   <tbody>
                     {formData.tasks.map((t, i) => (
@@ -788,7 +788,7 @@ function App() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
 
               <div className="card">
@@ -814,7 +814,7 @@ function App() {
               <div className="grid">
                 <div className="card">
                   <h2>แรงงาน</h2>
-                  <table className="entry-table">
+                  <div className="table-scroll-wrap"><table className="entry-table">
                     <thead><tr><th>รายการ</th><th style={{ width: '100px' }}>จำนวน (คน)</th><th style={{ width: '40px' }}></th></tr></thead>
                     <tbody>
                       {formData.labor.map((x, i) => (
@@ -829,13 +829,13 @@ function App() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                   <button className="add-row-btn" style={{ marginTop: '10px' }} onClick={() => setFormData({ ...formData, labor: [...formData.labor, { name: '', qty: '' }] })}>+ เพิ่มรายการ</button>
                 </div>
                 
                 <div className="card">
                   <h3 style={{ marginTop: 0, marginBottom: '10px', fontSize: '15px' }}>เครื่องจักร - อุปกรณ์</h3>
-                  <table className="entry-table">
+                  <div className="table-scroll-wrap"><table className="entry-table">
                     <thead><tr><th>รายการ</th><th style={{ width: '100px' }}>จำนวน</th><th style={{ width: '40px' }}></th></tr></thead>
                     <tbody>
                       {formData.equip.map((x, i) => (
@@ -850,14 +850,14 @@ function App() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                   <button className="add-row-btn" style={{ marginTop: '10px' }} onClick={() => setFormData({ ...formData, equip: [...formData.equip, { name: '', qty: '' }] })}>+ เพิ่มรายการ</button>
                 </div>
               </div>
 
               <div className="card">
                 <h2>วัสดุที่เข้าหน่วยงาน</h2>
-                <table className="entry-table">
+                <div className="table-scroll-wrap"><table className="entry-table">
                   <thead><tr><th>รายการ</th><th style={{ width: '80px' }}>จำนวน</th><th style={{ width: '80px' }}>หน่วย</th><th style={{ width: '40px' }}></th></tr></thead>
                   <tbody>
                     {formData.mat.map((x, i) => (
@@ -875,7 +875,7 @@ function App() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
                 <button className="add-row-btn" onClick={() => setFormData({ ...formData, mat: [...formData.mat, { name: '', qty: '', unit: '' }] })}>+ เพิ่มรายการ</button>
               </div>
 
@@ -929,7 +929,7 @@ function App() {
               
               <div className="card">
                 <h2>รายการขอปฏิบัติงาน</h2>
-                <table className="entry-table">
+                <div className="table-scroll-wrap"><table className="entry-table">
                   <thead>
                     <tr>
                       <th style={{ width: '40px', textAlign: 'center' }}>ลำดับ</th>
@@ -954,7 +954,7 @@ function App() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
 
               <div className="card">
@@ -1083,7 +1083,7 @@ function App() {
               </div>
             </div>
 
-            <table className="entry-table" style={{ width: '100%' }}>
+            <div className="table-scroll-wrap"><table className="entry-table" style={{ width: '100%' }}>
                <thead>
                  <tr>
                    <th style={{ width: '45px', textAlign: 'center' }}>ลำดับ</th>
@@ -1144,7 +1144,7 @@ function App() {
                     </tr>
                   ))}
                </tbody>
-            </table>
+            </table></div>
 
           </div>
         </div>
