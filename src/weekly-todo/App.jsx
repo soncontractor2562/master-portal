@@ -46,7 +46,11 @@ const sanitizeBoardData = (rawStateInput) => {
   };
 };
 
-function App() {
+import { LanguageProvider, useLanguage } from './LanguageContext';
+import { Globe } from 'lucide-react';
+
+function AppContent() {
+  const { t, toggleLang, lang } = useLanguage();
   const [data, setData] = useState(() => sanitizeBoardData(initialData));
   const [fetchError, setFetchError] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -119,9 +123,7 @@ function App() {
   }, [data, isLoaded]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    try { return (localStorage.getItem('todo_theme') || 'dark') === 'dark'; } catch { return true; }
-  });
+  const [isDarkMode, setIsDarkMode] = useState(true);
   
   // Filters
   const [filterProject, setFilterProject] = useState('');
@@ -135,9 +137,9 @@ function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [editingTaskColumn, setEditingTaskColumn] = useState(null);
 
-  // Save theme state locally
+  // Apply theme
   useEffect(() => {
-    localStorage.setItem('todo_theme', isDarkMode ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
   const handleWeekChange = (offset) => {
@@ -156,7 +158,9 @@ function App() {
   };
 
   const formatShortDate = (date) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsTh = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const months = lang === 'th' ? monthsTh : monthsEn;
     return `${date.getDate()} ${months[date.getMonth()]}`;
   };
 
@@ -165,9 +169,9 @@ function App() {
     const startStr = formatShortDate(monday);
     const endStr = formatShortDate(sunday);
     
-    if (weekOffset === 0) return `This Week (${startStr} - ${endStr})`;
-    if (weekOffset === -1) return `Last Week (${startStr} - ${endStr})`;
-    if (weekOffset === 1) return `Next Week (${startStr} - ${endStr})`;
+    if (weekOffset === 0) return `${t('thisWeek')} (${startStr} - ${endStr})`;
+    if (weekOffset === -1) return `${t('lastWeek')} (${startStr} - ${endStr})`;
+    if (weekOffset === 1) return `${t('nextWeek')} (${startStr} - ${endStr})`;
     return `${startStr} - ${endStr}`;
   };
 
@@ -380,10 +384,10 @@ function App() {
   }, [data]);
 
   return (
-    <div className="app-container weekly-todo-root" data-theme={isDarkMode ? 'dark' : 'light'}>
+    <div className="app-container">
       {fetchError && (
         <div style={{ backgroundColor: '#ef4444', color: 'white', padding: '1rem', textAlign: 'center', fontWeight: 'bold' }}>
-          Database Connection Error: {fetchError}. Falling back to sample data.
+          {t('dbError')}{fetchError}. {t('fallbackMsg')}
         </div>
       )}
       <header className="app-header">
@@ -391,15 +395,19 @@ function App() {
           <div className="title-and-add">
             <div className="header-title">
               <LayoutDashboard size={28} />
-              <h1>Weekly Todo List</h1>
+              <h1>{t('title')}</h1>
             </div>
             <button type="button" className="add-btn mobile-add-btn" onClick={() => setIsAddModalOpen(true)}>
               <Plus size={18} />
-              New Task
+              {t('newTask')}
             </button>
           </div>
           
           <div className="header-actions">
+            <button type="button" className="icon-btn" onClick={toggleLang} title={lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'} style={{ fontWeight: 'bold', fontSize: '13px' }}>
+              <Globe size={18} style={{ marginRight: '4px' }} />
+              {lang === 'th' ? 'EN' : 'TH'}
+            </button>
             <button type="button" className="icon-btn" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle Theme">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -419,19 +427,19 @@ function App() {
             
             <button type="button" className="add-btn desktop-add-btn" onClick={() => setIsAddModalOpen(true)}>
               <Plus size={18} />
-              New Task
+              {t('newTask')}
             </button>
           </div>
         </div>
 
         <div className={`filters-container ${showFilters ? 'show' : ''}`}>
           <div className="filter-group">
-            <div className="filter-label">โครงการ</div>
+            <div className="filter-label">{t('project')}</div>
             <div className="filter-row">
               <button 
                 className={`filter-pill ${filterProject === '' ? 'active' : ''}`}
                 onClick={() => setFilterProject('')}
-              >ทั้งหมด</button>
+              >{t('allProjects')}</button>
               {uniqueProjects.map(proj => {
                 const projColor = getProjectColor(proj);
                 const isActive = filterProject === proj;
@@ -453,12 +461,14 @@ function App() {
           </div>
 
           <div className="filter-group">
-            <div className="filter-label">ผู้รับผิดชอบ</div>
+            <div className="filter-label">{t('assignee')}</div>
             <div className="filter-row">
               <button 
                 className={`filter-pill ${filterAssignee === '' ? 'active' : ''}`}
                 onClick={() => setFilterAssignee('')}
-              >ทั้งหมด</button>
+              >
+                {t('allAssignees')}
+              </button>
               {uniqueAssignees.map(assignee => (
                 <button 
                   key={assignee}
@@ -512,4 +522,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
+  );
+}

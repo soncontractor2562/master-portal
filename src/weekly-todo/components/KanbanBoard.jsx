@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import Column from './Column';
 
+import { useLanguage } from '../LanguageContext';
+
 const KanbanBoard = ({ data, setData, filterProject, filterAssignee, weekOffset, onEditClick, onDragEnd, onMoveRight }) => {
   const [activeTab, setActiveTab] = useState(data.columnOrder[0]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -23,7 +26,7 @@ const KanbanBoard = ({ data, setData, filterProject, filterAssignee, weekOffset,
               className={`tab-btn ${activeTab === column.id ? 'active' : ''}`}
               onClick={() => setActiveTab(column.id)}
             >
-              {column.title}
+              {t(column.title)}
             </button>
           );
         })}

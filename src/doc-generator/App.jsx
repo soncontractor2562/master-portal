@@ -214,7 +214,7 @@ function App() {
         // Load hidden default tasks
         try {
           const defTasks = await docGeneratorService.getDefaultForm(docType);
-          if (defTasks && defTasks.tasks) 
+          if (defTasks && defTasks.tasks) { setDefaultFormCache(defTasks); }
         } catch(e) {}
 
         const docs = await docGeneratorService.getDocuments();

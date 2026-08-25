@@ -36,7 +36,10 @@ const formatSafeDate = (dateObj) => {
   }
 };
 
+import { useLanguage } from '../LanguageContext';
+
 const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelete, existingProjects = [], existingAssignees = [] }) => {
+  const { t } = useLanguage();
   useEffect(() => {
     document.body.classList.add('modal-open');
     return () => {
@@ -77,7 +80,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Edit Task</h2>
+          <h2>{t('editTaskTitle')}</h2>
           <button className="close-btn" onClick={onClose}>
             <X size={24} />
           </button>
@@ -85,7 +88,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Status (Column)</label>
+            <label>{t('status') || 'สถานะ'}</label>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {columns.map(col => {
                 const isActive = status === col.id;
@@ -112,7 +115,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
                       fontSize: '0.85rem'
                     }}
                   >
-                    {col.title}
+                    {t(col.title)}
                   </button>
                 );
               })}
@@ -120,7 +123,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
           </div>
 
           <div className="form-group">
-            <label>Project Name</label>
+            <label>{t('project')}</label>
             <input 
               type="text" 
               name="project"
@@ -147,7 +150,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
           </div>
           
           <div className="form-group">
-            <label>Task Description *</label>
+            <label>{t('taskDesc')}</label>
             <input 
               type="text" 
               name="taskName"
@@ -160,7 +163,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
           </div>
           
           <div className="form-group">
-            <label>Assignee</label>
+            <label>{t('assignee')}</label>
             <input 
               type="text" 
               name="assignee"
@@ -193,7 +196,7 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
           </div>
 
           <div className="form-group date-picker-group">
-            <label>Due Date</label>
+            <label>{t('dueDate')}</label>
             <DatePicker 
               selected={selectedDate} 
               onChange={(date) => setSelectedDate(date)} 
@@ -208,16 +211,16 @@ const EditTaskForm = ({ task, columns, currentColumnId, onClose, onSave, onDelet
               className="btn-secondary" 
               style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
               onClick={() => {
-                if(window.confirm('คุณต้องการลบงานนี้ใช่หรือไม่?')) {
+                if(window.confirm(t('confirmDelete'))) {
                   onDelete(task.id);
                 }
               }}
             >
-              Delete Task
+              {t('deleteBtn')}
             </button>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-              <button type="submit" className="btn-primary">Save Changes</button>
+              <button type="button" className="btn-secondary" onClick={onClose}>{t('cancel')}</button>
+              <button type="submit" className="btn-primary">{t('saveBtn')}</button>
             </div>
           </div>
         </form>

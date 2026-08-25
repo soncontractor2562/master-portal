@@ -1,4 +1,4 @@
-.weekly-todo-root {
+:root {
   /* Dark Theme (Default) */
   --bg-primary: #121212;
   --bg-secondary: #1e1e1e;
@@ -18,7 +18,7 @@
   --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
-.weekly-todo-root[data-theme='light'] {
+:root[data-theme='light'] {
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
   --bg-glass: rgba(255, 255, 255, 0.8);
@@ -38,7 +38,7 @@
   padding: 0;
 }
 
-.weekly-todo-root {
+body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
   background-image: var(--bg-gradient);
@@ -70,6 +70,10 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  background-image: var(--bg-gradient);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
@@ -107,7 +111,7 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.weekly-todo-root[data-theme='light'] .header-title {
+:root[data-theme='light'] .header-title {
   background: linear-gradient(135deg, #4f46e5, #3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
