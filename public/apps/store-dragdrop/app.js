@@ -397,7 +397,7 @@ async function apiPost(pathStr, body) {
           
           histories.push({
             date: d,
-            type: 'ขนย้าย',
+            type: body.toLocation === 'สูญหาย' ? 'สูญหาย' : 'ขนย้าย',
             itemName: m.itemName,
             quantity: qty,
             fromLocation: body.fromLocation,
@@ -597,7 +597,7 @@ async function apiPost(pathStr, body) {
           toLocation: '',
           balanceFrom: 0,
           balanceTo: body.initQty,
-          reporter: 'System',
+          reporter: body.reporter || 'System',
           remark: 'ตั้งยอดเริ่มต้น'
         }]);
       }
@@ -658,9 +658,25 @@ async function apiPost(pathStr, body) {
           if (last.toLocation) item.quantities[last.toLocation] = Math.max(0, Number(item.quantities[last.toLocation] || 0) - qty);
         } else if (last.type === 'ปรับยอด' && last.balanceFrom !== null && last.balanceFrom !== undefined) {
           if (last.fromLocation) item.quantities[last.fromLocation] = Number(last.balanceFrom);
+        } else if (last.type === 'ตั้งยอดยกมา') {
+          const qty = Number(last.quantity) || 0;
+          if (last.fromLocation) item.quantities[last.fromLocation] = Math.max(0, Number(item.quantities[last.fromLocation] || 0) - qty);
         }
-        const { error: err3 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
-        if (err3) throw err3;
+        
+        let totalQty = 0;
+        if (item.quantities) {
+          for (const loc in item.quantities) {
+             totalQty += Number(item.quantities[loc] || 0);
+          }
+        }
+        
+        if (last.type === 'ตั้งยอดยกมา' && totalQty === 0) {
+          const { error: err3 } = await supabaseClient.from('store_items').delete().eq('id', item.id);
+          if (err3) throw err3;
+        } else {
+          const { error: err3 } = await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+          if (err3) throw err3;
+        }
       }
       const { error: err4 } = await supabaseClient.from('store_history').delete().eq('id', last.id);
       if (err4) throw err4;
@@ -727,6 +743,9 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('loginModal').style.display = 'none';
       applyUserRole();
       refreshAll();
+      initPushNotifications();
+      fetchNotifications();
+      initRealtimeSync();
     } catch(e) {
       document.getElementById('loginModal').style.display = 'flex';
     }
@@ -737,6 +756,96 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+function getUserDisplayName(user) {
+  if (!user) return '';
+  return user.display_name || user.username;
+}
+
+function toggleRegisterForm(show) {
+  var loginBlock = document.getElementById('loginFormBlock');
+  var regBlock = document.getElementById('registerFormBlock');
+  if (loginBlock && regBlock) {
+    loginBlock.style.display = show ? 'none' : 'block';
+    regBlock.style.display = show ? 'block' : 'none';
+  }
+  if (show) {
+    var populateLocations = function(locs) {
+      var siteLocs = locs.filter(function(l) { return l.type === 'ไซต์งาน'; });
+      var sel = document.getElementById('regAssignedLoc');
+      if (sel) {
+        sel.innerHTML = '<option value="">-- ไม่ระบุสถานที่ --</option>' +
+          siteLocs.map(function(l) {
+            return '<option value="' + esc(l.name) + '">' + esc(l.name) + '</option>';
+          }).join('');
+      }
+    };
+    if (state.allLocations && state.allLocations.length > 0) {
+      populateLocations(state.allLocations);
+    } else {
+      apiGet('/api/locations').then(function(data) {
+        state.allLocations = data.locations || [];
+        populateLocations(state.allLocations);
+      }).catch(function(_) {});
+    }
+  }
+}
+
+async function doRegisterUser() {
+  var u = document.getElementById('regUsername').value.trim();
+  var p = document.getElementById('regPin').value.trim();
+  var d = document.getElementById('regDisplayName').value.trim();
+  var loc = document.getElementById('regAssignedLoc') ? document.getElementById('regAssignedLoc').value : '';
+  
+  if (!u) return showToast('กรุณากรอกชื่อผู้ใช้สำหรับล็อกอิน (Username)', 'error');
+  if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+  if (!d) return showToast('กรุณากรอกชื่อที่ใช้ในการปฏิบัติงาน (Display Name)', 'error');
+  
+  try {
+    var payload = { username: u, pin: p, role: 'ผู้ใช้งาน', display_name: d };
+    if (loc) payload.assigned_location = loc;
+    
+    var { error } = await supabaseClient.from('store_users').insert(payload);
+    
+    if (error && error.message && error.message.includes('assigned_location')) {
+      delete payload.assigned_location;
+      var { error: err2 } = await supabaseClient.from('store_users').insert(payload);
+      if (err2) throw err2;
+    } else if (error && error.message && error.message.includes('display_name')) {
+      delete payload.display_name;
+      var { error: err3 } = await supabaseClient.from('store_users').insert(payload);
+      if (err3) throw err3;
+    } else if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น');
+      throw error;
+    }
+    
+    showToast('สมัครสมาชิกสำเร็จเรียบร้อย! สามารถล็อกอินเข้าใช้งานได้เลย', 'success');
+    document.getElementById('regUsername').value = '';
+    document.getElementById('regPin').value = '';
+    document.getElementById('regDisplayName').value = '';
+    document.getElementById('loginUsername').value = u;
+    toggleRegisterForm(false);
+  } catch (err) {
+    showToast('สมัครสมาชิกไม่สำเร็จ: ' + err.message, 'error');
+  }
+}
+
+async function forceLogoutAllUsers() {
+  if (!confirm('คุณต้องการสั่งบังคับให้ผู้ใช้งานทุกเครื่องในระบบออกจากระบบ (Log Out) ใช่หรือไม่?')) return;
+  try {
+    var logoutToken = new Date().getTime().toString();
+    if (supabaseClient) {
+      await supabaseClient.from('store_settings').upsert({ key: 'force_logout', value: logoutToken });
+    }
+    localStorage.setItem('inv_force_logout', logoutToken);
+    showToast('ส่งคำสั่งออกจากระบบทุกเครื่องเรียบร้อยแล้ว', 'success');
+    setTimeout(function() { logout(); }, 1000);
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+    logout();
+  }
+}
 
 async function doLogin() {
   var u = document.getElementById('loginUsername').value.trim();
@@ -754,6 +863,7 @@ async function doLogin() {
         refreshAll();
         initPushNotifications();
         fetchNotifications();
+        initRealtimeSync();
     } else {
       showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
     }
@@ -782,11 +892,7 @@ function applyUserRole() {
     document.getElementById('snav-move').style.display = 'flex';
   }
   
-  if (isUser && state.currentPage === 'move') {
-    switchPage('pending');
-  } else if (!isUser && state.currentPage === 'pending') {
-    // switchPage('move');
-  }
+  // Removed user redirection to 'pending' to keep app on 'move' (main menu)
   
   // Update username UI
   if (document.getElementById('settingsUser')) {
@@ -798,6 +904,16 @@ async function refreshAll() {
   var btn = document.getElementById('refreshBtn');
   if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
   try {
+    if (state.currentUser && state.currentUser.id && supabaseClient) {
+      try {
+        var { data: freshUser } = await supabaseClient.from('store_users').select('*').eq('id', state.currentUser.id).maybeSingle();
+        if (freshUser) {
+          state.currentUser = freshUser;
+          localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+        }
+      } catch (_) {}
+    }
+
     // Load settings, inventory, and pending in parallel
     var [settingsRes, _, __] = await Promise.all([
       apiGet('/api/settings').catch(function(){ return { settings: {} }; }),
@@ -1063,8 +1179,16 @@ function openMoveModal(itemIndex) {
   document.getElementById('moveSender').value = '';
   document.getElementById('moveReceiver').value = '';
   document.getElementById('moveCarrier').value = '';
-  document.getElementById('moveReporter').value = '';
   document.getElementById('moveRemark').value = '';
+  
+  var reporterInput = document.getElementById('moveReporter');
+  if (reporterInput && state.currentUser) {
+    reporterInput.value = getUserDisplayName(state.currentUser);
+    reporterInput.readOnly = true;
+    reporterInput.style.background = 'rgba(15,23,42,0.5)';
+    reporterInput.style.color = '#60a5fa';
+    reporterInput.style.fontWeight = 'bold';
+  }
   
   var btn = document.getElementById('confirmMoveBtn');
   if (btn) { btn.disabled = false; btn.textContent = '✅ ยืนยันการขนย้าย'; }
@@ -1155,6 +1279,7 @@ async function confirmMove() {
     });
     showToast(res.message, 'success');
     document.getElementById('moveModal').style.display = 'none';
+    broadcastNotification('move', '🚚 ขนย้ายสินค้า', `${state.sourceLocation} ➔ ${state.destLocation} (${moves.length} รายการ)`, 'pending', moves);
     cancelMove(); 
     await loadInventory();
     await loadPending();
@@ -1205,8 +1330,11 @@ async function confirmAddItem() {
   if (!category) { showToast('กรุณาระบุหมวดหมู่', 'error'); return; }
   if (!unit) { showToast('กรุณาระบุหน่วยนับ', 'error'); return; }
   try {
-    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty });
+    var res = await apiPost('/api/inventory/add-item', { name: name, category: category, unit: unit, note: note, initLoc: initLoc, initQty: initQty, reporter: state.currentUser ? state.currentUser.username : 'System' });
     showToast(res.message, 'success');
+    let notiMsg = `เพิ่มวัสดุใหม่ "${name}" ลงในระบบ`;
+    if (initQty > 0) notiMsg += ` พร้อมตั้งยอด ${initQty} ${unit} ที่ ${initLoc}`;
+    broadcastNotification('add', '➕ เพิ่มรายการใหม่', notiMsg, 'inventory');
     document.getElementById('addItemModal').style.display = 'none';
     await loadInventory();
     if (state.reopenMoveModal) { state.reopenMoveModal = false; setTimeout(openMoveModal, 200); }
@@ -1428,6 +1556,11 @@ function closeItemDetailModal(e) {
 // ====== ADJUST MODAL ======
 function showAdjustModal(itemName, locationName) {
   if (!locationName) { showItemDetail(itemName); return; }
+  if (state.currentUser && state.currentUser.role === 'ผู้ใช้งาน' && !canUserAccessLocation(locationName)) {
+    var assigned = state.currentUser.assigned_location || 'ไม่ได้ระบุ';
+    showToast('คุณไม่มีสิทธิ์ปรับยอดสต็อกในสถานที่ "' + locationName + '" (รับผิดชอบเฉพาะ: ' + assigned + ')', 'error');
+    return;
+  }
   var item = state.items.find(function(it) { return it.name === itemName; });
   if (!item) return;
   var currentQty = item.quantities[locationName] || 0;
@@ -1436,8 +1569,16 @@ function showAdjustModal(itemName, locationName) {
   document.getElementById('adjustCurrentQty').textContent = currentQty;
   document.getElementById('adjustUnit').textContent = item.unit;
   document.getElementById('adjustNewQty').value = '';
-  document.getElementById('adjustAdjuster').value = '';
   document.getElementById('adjustRemark').value = '';
+  
+  var adjusterInput = document.getElementById('adjustAdjuster');
+  if (adjusterInput && state.currentUser) {
+    adjusterInput.value = getUserDisplayName(state.currentUser);
+    adjusterInput.readOnly = true;
+    adjusterInput.style.background = 'rgba(15,23,42,0.5)';
+    adjusterInput.style.color = '#60a5fa';
+    adjusterInput.style.fontWeight = 'bold';
+  }
   document.getElementById('adjustDiffDisplay').style.display = 'none';
   document.getElementById('itemDetailModal').style.display = 'none';
   document.getElementById('adjustModal').style.display = 'flex';
@@ -1473,10 +1614,9 @@ async function confirmAdjust() {
   if (!adjuster) { showToast('กรุณาระบุชื่อผู้ปรับยอด', 'error'); return; }
   
   if (state.currentUser.role === 'ผู้ใช้งาน') {
-    var locObj = state.locations.find(function(l) { return l.name === state.adjustLocation; });
-    var isSite = locObj && locObj.type === 'ไซต์งาน' && !locObj.name.includes('เช่า');
-    if (!isSite) {
-      showToast('ผู้ใช้งานปรับยอดได้เฉพาะในไซต์งานเท่านั้น', 'error');
+    if (!canUserAccessLocation(state.adjustLocation)) {
+      var assigned = state.currentUser.assigned_location || 'ไม่ได้ระบุ';
+      showToast('คุณไม่มีสิทธิ์ปรับยอดสต็อกในสถานที่ "' + state.adjustLocation + '" (รับผิดชอบเฉพาะ: ' + assigned + ')', 'error');
       return;
     }
     
@@ -1488,6 +1628,7 @@ async function confirmAdjust() {
       });
       showToast(res.message, 'success');
       document.getElementById('adjustModal').style.display = 'none';
+      broadcastNotification('adjust', '⚖️ ปรับยอดสต็อก', `ขอปรับยอด ${state.adjustItem}`, 'pending');
       await loadInventory();
       return;
     } catch (err) {
@@ -1503,6 +1644,7 @@ async function confirmAdjust() {
     });
     showToast(res.message, 'success');
     document.getElementById('adjustModal').style.display = 'none';
+    broadcastNotification('adjust', '⚖️ ปรับยอดสต็อก', `สโตร์ปรับยอด ${state.adjustItem}`, 'history');
     await loadInventory();
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -1572,10 +1714,12 @@ function renderHistoryList() {
       }
     }
       
-    var metaHtml = (first.reporter || first.carrier || first.remark) ?
+    var rName = first.receiver || (isMove && (first.toLocation.includes('สโตร์') || first.toLocation.includes('Store')) ? 'Store' : '');
+    var metaHtml = (first.reporter || first.carrier || rName || first.remark) ?
       '<div style="font-size:11px;color:#64748b;margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap;">' +
-      (first.reporter ? '<span>👤 ' + first.reporter + '</span>' : '') +
-      (first.carrier && first.carrier !== first.reporter ? '<span>🚛 ' + first.carrier + '</span>' : '') +
+      (first.reporter ? '<span>👤 ผู้บันทึก: ' + first.reporter + '</span>' : '') +
+      (rName ? '<span>📥 ผู้รับ: ' + rName + '</span>' : '') +
+      (first.carrier && first.carrier !== first.reporter ? '<span>🚛 ผู้ขนส่ง: ' + first.carrier + '</span>' : '') +
       (first.remark ? '<span>📝 ' + first.remark + '</span>' : '') +
       '</div>' : '';
 
@@ -1660,10 +1804,25 @@ async function confirmUndo() {
   try {
     var res = await apiPost('/api/history/undo', { id: state.undoTargetId });
     showToast(res.message, 'success');
+    broadcastNotification('undo', '🔙 ยกเลิกรายการ', res.message, 'history');
     document.getElementById('undoModal').style.display = 'none';
     await loadInventory(); await loadHistory(true);
   } catch (err) { showToast(err.message, 'error'); }
   finally { btn.disabled = false; btn.textContent = '🔙 ยืนยันการยกเลิก'; }
+}
+
+function canUserAccessLocation(locationName) {
+  if (!state.currentUser) return false;
+  if (state.currentUser.role !== 'ผู้ใช้งาน') return true;
+  var assigned = state.currentUser.assigned_location || '';
+  if (!assigned || !assigned.trim()) return false;
+  
+  var targetLoc = (locationName || '').trim().toLowerCase();
+  var list = assigned.split(',').map(function(s) { return s.trim().toLowerCase(); });
+  
+  return list.some(function(site) {
+    return site && (targetLoc.includes(site) || site.includes(targetLoc) || site === targetLoc);
+  });
 }
 
 // ====== SETTINGS MODAL ======
@@ -1675,11 +1834,93 @@ async function showSettingsModal() {
       el.style.display = isUser ? 'none' : 'block';
     }
   });
+
+  if (document.getElementById('editSelfUsername')) document.getElementById('editSelfUsername').value = state.currentUser.username || '';
+  if (document.getElementById('editSelfPin')) document.getElementById('editSelfPin').value = state.currentUser.pin || '';
+  if (document.getElementById('editSelfDisplayName')) document.getElementById('editSelfDisplayName').value = getUserDisplayName(state.currentUser);
+  if (document.getElementById('settingsUser')) document.getElementById('settingsUser').innerText = getUserDisplayName(state.currentUser);
+
+  var isAdmin = state.currentUser && state.currentUser.role === 'แอดมิน';
+  var devCard = document.getElementById('developerModeCard');
+  if (devCard) devCard.style.display = isAdmin ? 'block' : 'none';
+
+  var testToggle = document.getElementById('testModeToggle');
+  if (testToggle) {
+    testToggle.checked = !!state.isTestMode;
+    var infoBlock = document.getElementById('testModeInfoBlock');
+    if (infoBlock) infoBlock.style.display = (isAdmin && state.isTestMode) ? 'block' : 'none';
+  }
+
+  var assignedSites = (state.currentUser.assigned_location || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var userSiteInfoCard = document.getElementById('userSiteInfoCard');
+  if (isUser) {
+    if (!userSiteInfoCard) {
+      userSiteInfoCard = document.createElement('div');
+      userSiteInfoCard.id = 'userSiteInfoCard';
+      var modalSheet = document.querySelector('#settingsModal .modal-sheet');
+      if (modalSheet) {
+        var titleEl = modalSheet.querySelector('.modal-title');
+        modalSheet.insertBefore(userSiteInfoCard, titleEl ? titleEl.nextSibling : modalSheet.firstChild);
+      }
+    }
+    userSiteInfoCard.style.display = 'block';
+    var siteBadges = assignedSites.map(function(s) {
+      return '<span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3); color:#4ade80; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; margin-right:6px; margin-bottom:6px;">🏗️ ' + esc(s) + '</span>';
+    }).join('');
+    
+    userSiteInfoCard.innerHTML = `
+      <div style="padding:14px; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:12px; margin-bottom:14px;">
+        <div style="font-size:14px; font-weight:700; color:#60a5fa; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          📍 ไซต์งานที่คุณมีสิทธิ์จัดการ (${assignedSites.length} ไซต์)
+        </div>
+        ${assignedSites.length > 0 ? `
+          <div style="margin-bottom:8px;">${siteBadges}</div>
+          <div style="font-size:11px; color:#cbd5e1; background:rgba(30,41,59,0.5); padding:8px 10px; border-radius:8px; border-left:3px solid #3b82f6;">
+            ✅ <strong>สิทธิ์ของคุณในไซต์เหล่านี้:</strong><br>
+            • 📥 <strong>กดตรวจรับวัสดุ</strong> ที่จัดส่งมายังไซต์ของคุณ<br>
+            • ⚖️ <strong>ปรับยอดสต็อกวัสดุ</strong> คงเหลือในไซต์ของคุณ
+          </div>
+        ` : `
+          <div style="font-size:12px; color:#f87171; background:rgba(239,68,68,0.1); padding:8px 10px; border-radius:8px;">
+            ⚠️ คุณยังไม่มีไซต์งานที่ได้รับมอบหมาย (ติดต่อสโตร์หรือแอดมินเพื่อเพิ่มสิทธิ์ไซต์งาน)
+          </div>
+        `}
+      </div>
+    `;
+  } else if (userSiteInfoCard) {
+    userSiteInfoCard.style.display = 'none';
+  }
+  
+  if ('Notification' in window) {
+    var notiBtn = document.getElementById('settingsNotiBtn');
+    if (notiBtn) {
+      if (Notification.permission === 'granted') {
+        notiBtn.innerText = 'อนุญาตแล้ว';
+        notiBtn.style.background = '#10b981';
+        notiBtn.style.color = '#fff';
+      } else {
+        notiBtn.innerText = 'เปิดใช้งาน';
+        notiBtn.style.background = '';
+        notiBtn.style.color = '';
+      }
+    }
+  }
+
   // Also load all locations for the location section
   try {
     var data = await apiGet('/api/locations');
     state.allLocations = data.locations || [];
     renderLocationManageList();
+    
+    var cbContainer = document.getElementById('newUserLocCheckboxes');
+    if (cbContainer && state.allLocations) {
+      var siteLocations = state.allLocations.filter(function(l) { return l.type === 'ไซต์งาน'; });
+      cbContainer.innerHTML = siteLocations.map(function(l) {
+        return '<label style="display:inline-flex; align-items:center; gap:4px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.08); padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; color:var(--text);">' +
+          '<input type="checkbox" class="new-user-loc-cb" value="' + esc(l.name) + '" style="margin:0; cursor:pointer;" /> ' + esc(l.name) +
+          '</label>';
+      }).join('');
+    }
   } catch (err) {
     showToast('โหลดสถานที่ล้มเหลว: ' + err.message, 'error');
     state.allLocations = state.locations.slice();
@@ -1694,6 +1935,249 @@ async function showSettingsModal() {
     }
   } catch (err) {
     renderCategoryManageList();
+  }
+  
+  // Load users list for user management section
+  if (!isUser) {
+    loadUsersList();
+  }
+}
+
+async function loadUsersList() {
+  var container = document.getElementById('userManageList');
+  if (!container || !supabaseClient) return;
+  try {
+    var { data: users, error } = await supabaseClient.from('store_users').select('*').order('username');
+    if (error) throw error;
+    
+    state.usersListCache = users || [];
+
+    if (!users || users.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:var(--muted); padding:14px; font-size:13px;">ไม่มีผู้ใช้งานในระบบ</div>';
+      return;
+    }
+    
+    var isStore = state.currentUser && state.currentUser.role === 'ผู้ดูแลสโตร์';
+    var siteLocations = state.allLocations.filter(function(l) { return l.type === 'ไซต์งาน'; });
+
+    var html = users.map(function(u) {
+      var isSelf = state.currentUser && state.currentUser.username === u.username;
+      var isTargetAdmin = u.role === 'แอดมิน';
+      var cannotEdit = isStore && isTargetAdmin;
+      
+      var roleBadge = u.role === 'แอดมิน' ? '👑' : (u.role === 'ผู้ดูแลสโตร์' ? '🏭' : '👷‍♂️');
+      var roleColor = u.role === 'แอดมิน' ? '#a855f7' : (u.role === 'ผู้ดูแลสโตร์' ? '#3b82f6' : '#10b981');
+      var dispName = u.display_name || u.username;
+      
+      var userAssignedList = (u.assigned_location || '').split(',').map(function(s) { return s.trim(); });
+      var locCheckboxesHtml = siteLocations.map(function(l) {
+        var isChecked = userAssignedList.includes(l.name) ? 'checked' : '';
+        return '<label style="display:inline-flex; align-items:center; gap:3px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; font-size:11px; color:#cbd5e1; cursor:pointer;">' +
+          '<input type="checkbox" class="user-loc-cb-' + u.id + '" value="' + esc(l.name) + '" ' + isChecked + ' onchange="saveUserLocationChanges(\'' + u.id + '\')" style="margin:0; cursor:pointer;" /> ' + esc(l.name) +
+          '</label>';
+      }).join('');
+
+      return `
+        <div style="padding:10px 12px; background:rgba(15,23,42,0.5); border:1px solid var(--border); border-radius:10px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+              <span>${roleBadge}</span> ${u.username} ${isSelf ? '<span style="font-size:10px; background:rgba(59,130,246,0.2); color:#60a5fa; padding:1px 6px; border-radius:99px;">คุณ</span>' : ''}
+              <span style="font-size:11px; color:${roleColor};">(${u.role})</span>
+            </div>
+            ${(!isSelf && !cannotEdit) ? `
+              <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; cursor:pointer; font-size:11px;" title="ลบผู้ใช้งาน">
+                🗑️ ลบ
+              </button>
+            ` : ''}
+          </div>
+          
+          ${cannotEdit ? `
+            <div style="font-size:11px; color:var(--muted); font-style:italic; margin-top:4px;">🔒 สิทธิ์แอดมิน (ผู้ดูแลสโตร์ไม่สามารถแก้ไขบัญชีแอดมินได้)</div>
+          ` : `
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px; margin-bottom:6px;">
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">User / PIN:</span>
+                <input type="text" id="editUsername_${u.id}" class="form-input" value="${esc(u.username)}" placeholder="Username..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+                <input type="text" id="editPin_${u.id}" class="form-input" value="${esc(u.pin)}" placeholder="PIN" maxlength="6" style="padding:2px 6px; font-size:12px; height:auto; width:65px; text-align:center; color:#fbbf24; font-weight:bold;" />
+              </div>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span style="font-size:11px; color:var(--muted); width:70px; flex-shrink:0;">ชื่อที่ใช้จริง:</span>
+                <input type="text" id="editDisplayName_${u.id}" class="form-input" value="${esc(dispName)}" placeholder="ชื่อจริง/ชื่อเล่นปฏิบัติงาน..." style="padding:2px 6px; font-size:12px; height:auto; flex:1;" />
+                <button onclick="saveUserChanges('${u.id}')" style="background:#3b82f6; border:none; color:#fff; padding:3px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; flex-shrink:0;">💾 เซฟ</button>
+              </div>
+            </div>
+          `}
+
+          ${(u.role === 'ผู้ใช้งาน' && !cannotEdit) ? `
+            <div style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1);">
+              <div style="font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600;">📍 ไซต์งานที่รับผิดชอบ:</div>
+              <div style="display:flex; flex-wrap:wrap; gap:4px; max-height:80px; overflow-y:auto;">
+                ${locCheckboxesHtml}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+    
+    container.innerHTML = html;
+  } catch (err) {
+    console.error('Error loading users:', err);
+    container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:14px; font-size:13px;">เกิดข้อผิดพลาดในการโหลดผู้ใช้งาน</div>';
+  }
+}
+
+async function saveUserChanges(userId) {
+  if (!supabaseClient) return;
+  if (state.currentUser && state.currentUser.role === 'ผู้ดูแลสโตร์') {
+    var targetUser = state.usersListCache ? state.usersListCache.find(function(x) { return x.id === userId; }) : null;
+    if (targetUser && targetUser.role === 'แอดมิน') {
+      showToast('ผู้ดูแลสโตร์ไม่สามารถแก้ไขข้อมูลแอดมินได้', 'error');
+      return;
+    }
+  }
+
+  var uInput = document.getElementById('editUsername_' + userId);
+  var pInput = document.getElementById('editPin_' + userId);
+  var dInput = document.getElementById('editDisplayName_' + userId);
+  if (!uInput || !pInput) return;
+  
+  var newU = uInput.value.trim();
+  var newP = pInput.value.trim();
+  var newD = dInput ? dInput.value.trim() : '';
+  if (!newU) return showToast('กรุณากรอกชื่อผู้ใช้', 'error');
+  if (!newP || newP.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+  
+  try {
+    var payload = { username: newU, pin: newP };
+    if (newD) payload.display_name = newD;
+    
+    var { error } = await supabaseClient.from('store_users').update(payload).eq('id', userId);
+    if (error && error.message && error.message.includes('display_name')) {
+      delete payload.display_name;
+      var { error: err2 } = await supabaseClient.from('store_users').update(payload).eq('id', userId);
+      if (err2) throw err2;
+    } else if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
+      throw error;
+    }
+    
+    showToast('บันทึกข้อมูลผู้ใช้ "' + newU + '" เรียบร้อยแล้ว', 'success');
+    loadUsersList();
+  } catch (err) {
+    showToast('อัปเดตล้มเหลว: ' + err.message, 'error');
+  }
+}
+
+async function saveUserLocationChanges(userId) {
+  if (!supabaseClient) return;
+  var cbs = document.querySelectorAll('.user-loc-cb-' + userId + ':checked');
+  var newLocStr = Array.from(cbs).map(function(cb) { return cb.value; }).join(', ');
+  try {
+    var { error } = await supabaseClient.from('store_users').update({ assigned_location: newLocStr }).eq('id', userId);
+    if (error) {
+      if (error.message && error.message.includes('assigned_location')) {
+        alert('กรุณารันคำสั่ง SQL นี้ใน Supabase SQL Editor เพื่อเพิ่มคอลัมน์ assigned_location ในตาราง store_users:\n\nALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;');
+        showToast('ยังไม่ได้เพิ่มคอลัมน์ assigned_location ในตาราง store_users ใน Supabase', 'error');
+        return;
+      }
+      throw error;
+    }
+    if (state.currentUser && state.currentUser.id === userId) {
+      state.currentUser.assigned_location = newLocStr;
+      localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+    }
+    if (state.usersListCache) {
+      var cached = state.usersListCache.find(function(x) { return x.id === userId; });
+      if (cached) cached.assigned_location = newLocStr;
+    }
+    showToast('อัปเดตไซต์งานที่รับผิดชอบเรียบร้อยแล้ว', 'success');
+  } catch (err) {
+    showToast('อัปเดตล้มเหลว: ' + err.message, 'error');
+  }
+}
+
+async function confirmEditSelfProfile() {
+  if (!state.currentUser || !supabaseClient) return;
+  var newU = document.getElementById('editSelfUsername').value.trim();
+  var newP = document.getElementById('editSelfPin').value.trim();
+
+  if (!newU) return showToast('กรุณากรอกชื่อผู้ใช้', 'error');
+  if (!newP || newP.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+
+  try {
+    var payload = { username: newU, pin: newP };
+
+    var { error } = await supabaseClient.from('store_users').update(payload).eq('id', state.currentUser.id);
+    if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
+      throw error;
+    }
+
+    state.currentUser.username = newU;
+    state.currentUser.pin = newP;
+    localStorage.setItem('inv_user', JSON.stringify(state.currentUser));
+
+    showToast('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว', 'success');
+    if (document.getElementById('settingsUser')) {
+      document.getElementById('settingsUser').innerText = getUserDisplayName(state.currentUser);
+    }
+  } catch (err) {
+    showToast('แก้ไขข้อมูลส่วนตัวล้มเหลว: ' + err.message, 'error');
+  }
+}
+
+async function confirmAddUser() {
+  var u = document.getElementById('newUsername').value.trim();
+  var p = document.getElementById('newUserPin').value.trim();
+  var r = document.getElementById('newUserRole').value;
+  var checkedLocs = Array.from(document.querySelectorAll('.new-user-loc-cb:checked')).map(function(cb) { return cb.value; });
+  var loc = checkedLocs.join(', ');
+  
+  if (!u) return showToast('กรุณากรอกชื่อผู้ใช้ (Username)', 'error');
+  if (!p || p.length < 4) return showToast('กรุณากรอกรหัส PIN อย่างน้อย 4 หลัก', 'error');
+  
+  try {
+    var payload = { username: u, pin: p, role: r };
+    if (loc) payload.assigned_location = loc;
+    
+    var { error } = await supabaseClient.from('store_users').insert(payload);
+    if (error && error.message && error.message.includes('assigned_location')) {
+      delete payload.assigned_location;
+      var { error: err2 } = await supabaseClient.from('store_users').insert(payload);
+      if (err2) throw err2;
+      alert('กรุณารันคำสั่ง SQL นี้ใน Supabase SQL Editor เพื่อเพิ่มคอลัมน์ assigned_location ในตาราง store_users:\n\nALTER TABLE store_users ADD COLUMN IF NOT EXISTS assigned_location text;');
+      showToast('เพิ่มผู้ใช้งานแล้ว (กรุณาเพิ่มคอลัมน์ assigned_location ใน Supabase)', 'warning');
+    } else if (error) {
+      if (error.code === '23505') throw new Error('ชื่อผู้ใช้นี้มีในระบบแล้ว');
+      throw error;
+    } else {
+      showToast('เพิ่มผู้ใช้งาน "' + u + '" เรียบร้อยแล้ว', 'success');
+    }
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newUserPin').value = '';
+    loadUsersList();
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+  }
+}
+
+async function confirmDeleteUser(id, username) {
+  if (state.currentUser && state.currentUser.role === 'ผู้ดูแลสโตร์') {
+    var targetUser = state.usersListCache ? state.usersListCache.find(function(x) { return x.id === id; }) : null;
+    if (targetUser && targetUser.role === 'แอดมิน') {
+      showToast('ผู้ดูแลสโตร์ไม่สามารถลบบัญชีแอดมินได้', 'error');
+      return;
+    }
+  }
+  if (!confirm('คุณต้องการลบผู้ใช้งาน "' + username + '" หรือไม่?')) return;
+  try {
+    var { error } = await supabaseClient.from('store_users').delete().eq('id', id);
+    if (error) throw error;
+    showToast('ลบผู้ใช้งาน "' + username + '" เรียบร้อยแล้ว', 'success');
+    loadUsersList();
+  } catch (err) {
+    showToast('ลบผู้ใช้งานล้มเหลว: ' + err.message, 'error');
   }
 }
 
@@ -2068,8 +2552,14 @@ function openReceiveModal(id) {
       forceBtn.innerHTML = '🚨 บังคับจบงาน (สูญหาย)';
     }
     if (confirmBtn) {
-      confirmBtn.style.display = 'block';
-      confirmBtn.innerHTML = isStoreOrAdmin ? '🔄 ยืนยันการส่งใหม่' : '✅ ยืนยันการรับของ';
+      var hasLocAccess = canUserAccessLocation(p.to_location);
+      if (state.currentUser.role === 'ผู้ใช้งาน' && !hasLocAccess) {
+        meta.innerHTML += '<br><span style="color:#ef4444; font-weight:bold;">⚠️ คุณไม่มีสิทธิ์ตรวจรับของในสถานที่นี้ (รับผิดชอบเฉพาะ: ' + (state.currentUser.assigned_location || 'ไม่ได้ระบุ') + ')</span>';
+        confirmBtn.style.display = 'none';
+      } else {
+        confirmBtn.style.display = 'block';
+        confirmBtn.innerHTML = isStoreOrAdmin ? '🔄 ยืนยันการส่งใหม่' : '✅ ยืนยันการรับของ';
+      }
     }
     if (adjustConfirmBtn) adjustConfirmBtn.style.display = 'none';
 
@@ -2085,9 +2575,20 @@ function openReceiveModal(id) {
       }
     }
     var receiverInput = document.getElementById('receiveReceiver');
-    if (receiverInput) {
-      if (savedReceiver) receiverInput.value = savedReceiver;
-      else receiverInput.value = '';
+    if (receiverInput && state.currentUser) {
+      if (state.currentUser.role === 'ผู้ใช้งาน') {
+        receiverInput.value = getUserDisplayName(state.currentUser);
+        receiverInput.readOnly = true;
+        receiverInput.style.background = 'rgba(15,23,42,0.5)';
+        receiverInput.style.color = '#60a5fa';
+        receiverInput.style.fontWeight = 'bold';
+      } else {
+        receiverInput.value = savedReceiver || (p.to_location.includes('สโตร์') || p.to_location.includes('Store') ? 'Store' : '');
+        receiverInput.readOnly = false;
+        receiverInput.style.background = '';
+        receiverInput.style.color = 'var(--text)';
+        receiverInput.style.fontWeight = 'normal';
+      }
     }
   }
 
@@ -2122,6 +2623,12 @@ async function cancelPendingMove(id, event) {
 
 async function confirmReceive() {
   if (!currentReceiveMove) return;
+  
+  if (state.currentUser.role === 'ผู้ใช้งาน' && !canUserAccessLocation(currentReceiveMove.to_location)) {
+    var assigned = state.currentUser.assigned_location || 'ไม่ได้ระบุ';
+    showToast('คุณไม่มีสิทธิ์ตรวจรับของในสถานที่ "' + currentReceiveMove.to_location + '" (รับผิดชอบเฉพาะ: ' + assigned + ')', 'error');
+    return;
+  }
   
   var isStoreOrAdmin = (state.currentUser.role === 'ผู้ดูแลสโตร์' || state.currentUser.role === 'แอดมิน');
   var rcvDate = document.getElementById('receiveDate').value;
@@ -2202,6 +2709,9 @@ async function confirmReceive() {
       try {
         var res = await apiPost('/api/pending/complete', { move: currentReceiveMove });
         showToast(res.message, 'success');
+        var fromLoc = currentReceiveMove.from_location;
+        var toLoc = currentReceiveMove.to_location;
+        broadcastNotification('receive', '📥 รับของเรียบร้อย', `${toLoc} รับของจาก ${fromLoc} ครบถ้วน`, 'history');
         closeReceiveModal();
         loadPending();
         loadInventory();
@@ -2214,6 +2724,9 @@ async function confirmReceive() {
     try {
       var res = await apiPost('/api/pending/receive', { id: currentReceiveMove.id, items: updatedItems });
       showToast('บันทึกยอดรับแล้ว (ยอดยังไม่ตรงกัน โปรดให้สโตร์ตรวจสอบ)', 'success');
+      var fromLoc = currentReceiveMove.from_location;
+      var toLoc = currentReceiveMove.to_location;
+      broadcastNotification('mismatch', '⚠️ แจ้งเตือนด่วน', `${toLoc} รับของจาก ${fromLoc} ไม่ครบ รอการตรวจสอบ`, 'pending');
       closeReceiveModal();
       loadPending();
     } catch (e) {
@@ -2277,6 +2790,9 @@ async function forceCompleteReceive() {
   try {
     var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
     showToast(res.message, 'success');
+    var fromLoc = currentReceiveMove.from_location;
+    var toLoc = currentReceiveMove.to_location;
+    broadcastNotification('lost', '❌ บันทึกของสูญหาย', `เคลียร์รายการขนย้าย ${fromLoc} ➔ ${toLoc} เรียบร้อยแล้ว`, 'history');
     closeReceiveModal();
     loadPending();
     loadInventory();
@@ -2425,6 +2941,9 @@ async function confirmAdjustReceive() {
   try {
     var res = await apiPost('/api/pending/force-complete', { move: currentReceiveMove });
     showToast(res.message, 'success');
+    var fromLoc = currentReceiveMove.from_location;
+    var toLoc = currentReceiveMove.to_location;
+    broadcastNotification('lost', '❌ บันทึกของสูญหาย', `เคลียร์รายการขนย้าย ${fromLoc} ➔ ${toLoc} เรียบร้อยแล้ว`, 'history');
     closeReceiveModal();
     await loadPending();
   } catch (err) {
@@ -2621,6 +3140,27 @@ window.handleModalBack = function(btn) {
 // NOTIFICATION SYSTEM (In-App + PWA Push)
 // ==========================================
 
+function requestNotificationPermissionUI() {
+  if (!('Notification' in window)) {
+    showToast('เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน', 'error');
+    return;
+  }
+  Notification.requestPermission().then(function(permission) {
+    if (permission === 'granted') {
+      showToast('อนุญาตการแจ้งเตือนแล้ว', 'success');
+      initPushNotifications();
+      var btn = document.getElementById('settingsNotiBtn');
+      if (btn) {
+        btn.innerText = 'อนุญาตแล้ว';
+        btn.style.background = '#10b981';
+        btn.style.color = '#fff';
+      }
+    } else {
+      showToast('ปฏิเสธการแจ้งเตือน (กรุณาเปิดในตั้งค่าเบราว์เซอร์)', 'error');
+    }
+  });
+}
+
 async function initPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.warn('Push messaging is not supported');
@@ -2637,7 +3177,8 @@ async function initPushNotifications() {
       return;
     }
     
-    const publicVapidKey = 'BGdBfRODtTZuN6JKMW0aE_MIORsiEl5LTBwkB-Mnagn5Qlzp6X0b-c6_KOuNkvkTNec6YyAy-7o08G52S7bdNho';
+    // VAPID public key must match the server's VITE_VAPID_PUBLIC_KEY env var
+    const publicVapidKey = 'BA4xMBm2GNpJZGC5Ogp3t71czEqE_xpzw4DhuQxcnf_pYzRfSmX6Y2v5MmK14mJ0DLDP8hMgHz6hYUhn4sSzmZ0';
     
     const urlBase64ToUint8Array = (base64String) => {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -2653,6 +3194,14 @@ async function initPushNotifications() {
     };
     
     let subscription = await registration.pushManager.getSubscription();
+    
+    const keyUpdated = localStorage.getItem('vapid_updated_v3');
+    if (subscription && !keyUpdated) {
+      await subscription.unsubscribe();
+      subscription = null;
+      localStorage.setItem('vapid_updated_v3', 'true');
+    }
+
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -2660,10 +3209,11 @@ async function initPushNotifications() {
       });
     }
     
-    if (state.currentUser) {
+    const activeUser = state.currentUser || JSON.parse(localStorage.getItem('inv_user') || 'null');
+    if (activeUser && activeUser.username) {
       const subObj = JSON.parse(JSON.stringify(subscription));
       const { error } = await supabaseClient.from('store_push_subscriptions').upsert({
-        username: state.currentUser.username,
+        username: activeUser.username,
         endpoint: subObj.endpoint,
         keys_p256dh: subObj.keys.p256dh,
         keys_auth: subObj.keys.auth
@@ -2676,8 +3226,48 @@ async function initPushNotifications() {
   }
 }
 
+function getDeletedNotiSet() {
+  if (!state.currentUser) return new Set();
+  try {
+    const raw = localStorage.getItem('inv_deleted_notis_' + state.currentUser.username);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch (_) { return new Set(); }
+}
+
+function saveDeletedNotiIds(idsToAdd) {
+  if (!state.currentUser) return;
+  const currentSet = getDeletedNotiSet();
+  idsToAdd.forEach(id => currentSet.add(id));
+  try {
+    localStorage.setItem('inv_deleted_notis_' + state.currentUser.username, JSON.stringify(Array.from(currentSet)));
+  } catch (_) {}
+  if (supabaseClient) {
+    const rows = idsToAdd.map(id => ({ notification_id: id, username: state.currentUser.username }));
+    try {
+      supabaseClient.from('store_notification_deletions').upsert(rows, { onConflict: 'notification_id,username' }).then(function() {});
+    } catch (_) {}
+  }
+}
+
+async function autoCleanupOldNotis() {
+  if (!supabaseClient) return;
+  try {
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: oldNotis } = await supabaseClient
+      .from('store_notifications')
+      .select('id')
+      .lt('created_at', cutoff);
+    if (oldNotis && oldNotis.length > 0) {
+      const oldIds = oldNotis.map(n => n.id);
+      await supabaseClient.from('store_notification_reads').delete().in('notification_id', oldIds);
+      await supabaseClient.from('store_notifications').delete().lt('created_at', cutoff);
+    }
+  } catch (_) {}
+}
+
 async function fetchNotifications() {
   if (!state.currentUser || !supabaseClient) return;
+  autoCleanupOldNotis();
   try {
     const { data: notis, error: err1 } = await supabaseClient
       .from('store_notifications')
@@ -2692,10 +3282,29 @@ async function fetchNotifications() {
       .eq('username', state.currentUser.username);
     if (err2) throw err2;
     
+    const deletedSet = getDeletedNotiSet();
+    try {
+      const { data: dbDeletes } = await supabaseClient
+        .from('store_notification_deletions')
+        .select('notification_id')
+        .eq('username', state.currentUser.username);
+      if (dbDeletes) {
+        dbDeletes.forEach(d => deletedSet.add(d.notification_id));
+      }
+    } catch (_) {}
+
+    const visibleNotis = notis.filter(n => {
+      if (deletedSet.has(n.id)) return false;
+      const isTestNoti = (n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]');
+      if (isTestNoti && state.currentUser && state.currentUser.role !== 'แอดมิน') {
+        return false;
+      }
+      return true;
+    });
     const readIds = new Set(reads.map(r => r.notification_id));
     let unreadCount = 0;
     
-    const notiListHtml = notis.map(n => {
+    const notiListHtml = visibleNotis.map(n => {
       const isRead = readIds.has(n.id);
       if (!isRead) unreadCount++;
       
@@ -2703,13 +3312,16 @@ async function fetchNotifications() {
       const dateStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
       
       return `
-        <div onclick="clickNotification('${n.id}', '${n.link_url || ''}', ${isRead})" style="padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; background:${isRead ? 'transparent' : 'rgba(59,130,246,0.1)'}; display:flex; gap:12px; align-items:flex-start; transition:background .2s;">
+        <div id="notiItem_${n.id}" onclick="clickNotification('${n.id}', '${n.link_url || ''}', ${isRead})" style="padding:14px 20px; border-bottom:1px solid var(--border); cursor:pointer; background:${isRead ? 'transparent' : 'rgba(59,130,246,0.1)'}; display:flex; gap:12px; align-items:flex-start; transition:background .2s; position:relative;">
           <div style="font-size:24px; line-height:1; flex-shrink:0;">${getNotiEmoji(n.type)}</div>
-          <div style="flex:1; min-width:0;">
+          <div style="flex:1; min-width:0; padding-right:24px;">
             <div style="font-size:14px; font-weight:700; color:${isRead ? 'var(--text)' : '#60a5fa'}; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${n.title}</div>
             <div style="font-size:13px; color:var(--muted); line-height:1.4;">${n.message}</div>
             <div style="font-size:11px; color:#475569; margin-top:6px;">${dateStr}</div>
           </div>
+          <button onclick="deleteNoti('${n.id}', event)" title="ลบการแจ้งเตือนนี้" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:4px; opacity:0.6; transition:opacity .2s;" onmouseover="this.style.opacity=1;this.style.color='#ef4444';" onmouseout="this.style.opacity=0.6;">
+            🗑️
+          </button>
           ${!isRead ? '<div style="width:8px; height:8px; background:#3b82f6; border-radius:50%; flex-shrink:0; margin-top:8px;"></div>' : ''}
         </div>
       `;
@@ -2717,7 +3329,7 @@ async function fetchNotifications() {
     
     const container = document.getElementById('notiList');
     if (container) {
-      if (notis.length === 0) {
+      if (visibleNotis.length === 0) {
         container.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--muted);">ไม่มีการแจ้งเตือน</div>';
       } else {
         container.innerHTML = notiListHtml;
@@ -2726,7 +3338,7 @@ async function fetchNotifications() {
     
     document.querySelectorAll('.noti-badge').forEach(b => {
       if (unreadCount > 0) {
-        b.style.display = 'block';
+        b.style.display = 'flex';
         b.textContent = unreadCount > 99 ? '99+' : unreadCount;
       } else {
         b.style.display = 'none';
@@ -2744,6 +3356,36 @@ function getNotiEmoji(type) {
   if (type === 'lost') return '❌';
   if (type === 'adjust') return '⚖️';
   return '🔔';
+}
+
+async function deleteNoti(id, e) {
+  if (e) e.stopPropagation();
+  saveDeletedNotiIds([id]);
+  var el = document.getElementById('notiItem_' + id);
+  if (el) el.remove();
+  fetchNotifications();
+  showToast('ลบการแจ้งเตือนแล้ว', 'success');
+}
+
+async function clearReadNotis() {
+  if (!state.currentUser || !supabaseClient) return;
+  try {
+    const { data: reads } = await supabaseClient
+      .from('store_notification_reads')
+      .select('notification_id')
+      .eq('username', state.currentUser.username);
+      
+    if (reads && reads.length > 0) {
+      const readIds = reads.map(r => r.notification_id);
+      saveDeletedNotiIds(readIds);
+      showToast('ลบการแจ้งเตือนที่อ่านแล้วเรียบร้อย', 'success');
+    } else {
+      showToast('ไม่มีรายการที่อ่านแล้ว', 'info');
+    }
+    fetchNotifications();
+  } catch (err) {
+    console.error('Error clearing read notifications:', err);
+  }
 }
 
 async function markNotiAsRead(id) {
@@ -2775,6 +3417,27 @@ async function markAllNotiAsRead() {
   }
 }
 
+async function clearAllNotis() {
+  if (!confirm('คุณต้องการลบการแจ้งเตือนทั้งหมดหรือไม่?')) return;
+  if (!supabaseClient) return;
+  try {
+    const { data: notis } = await supabaseClient.from('store_notifications').select('id');
+    if (notis && notis.length > 0) {
+      const ids = notis.map(n => n.id);
+      saveDeletedNotiIds(ids);
+    }
+    const container = document.getElementById('notiList');
+    if (container) {
+      container.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--muted);">ไม่มีการแจ้งเตือน</div>';
+    }
+    document.querySelectorAll('.noti-badge').forEach(b => b.style.display = 'none');
+    fetchNotifications();
+    showToast('ลบการแจ้งเตือนทั้งหมดแล้ว', 'success');
+  } catch (err) {
+    console.error('Error clearing all notifications:', err);
+  }
+}
+
 function clickNotification(id, linkUrl, isRead) {
   if (!isRead) {
     markNotiAsRead(id);
@@ -2788,38 +3451,156 @@ function clickNotification(id, linkUrl, isRead) {
 function openNotiModal() {
   document.getElementById('notiModal').style.display = 'flex';
   fetchNotifications();
+  if ('Notification' in window && Notification.permission === 'default') {
+    initPushNotifications();
+  }
 }
 
 function closeNotiModal() {
   document.getElementById('notiModal').style.display = 'none';
 }
 
-setInterval(() => {
-  if (state.currentUser) fetchNotifications();
-}, 60000);
+// State for developer mode
+state.isTestMode = localStorage.getItem('inv_is_test_mode') === 'true';
 
-async function broadcastNotification(type, title, message, linkUrl) {
+function toggleTestMode(enabled) {
+  state.isTestMode = enabled;
+  localStorage.setItem('inv_is_test_mode', enabled ? 'true' : 'false');
+  var block = document.getElementById('testModeInfoBlock');
+  if (block) block.style.display = enabled ? 'block' : 'none';
+  if (enabled) {
+    initPushNotifications();
+  }
+  showToast(enabled ? 'เปิดโหมดทดสอบระบบ (Push & Bell จะส่งหาแอดมินคนเดียวเท่านั้น)' : 'ปิดโหมดทดสอบระบบแล้ว', enabled ? 'warning' : 'info');
+}
+
+async function clearTestNotifications() {
+  if (!state.currentUser || !supabaseClient) return;
   try {
-    const { data, error } = await supabaseClient.from('store_notifications').insert({
+    const { data: notis } = await supabaseClient.from('store_notifications').select('id, title, target_username');
+    if (notis && notis.length > 0) {
+      const testIds = notis.filter(n => (n.target_username === state.currentUser.username) || (n.title || '').includes('🧪') || (n.title || '').includes('[ทดสอบ]')).map(n => n.id);
+      if (testIds.length > 0) {
+        saveDeletedNotiIds(testIds);
+        showToast('ล้างรายการแจ้งเตือนทดสอบเรียบร้อยแล้ว', 'success');
+        fetchNotifications();
+        return;
+      }
+    }
+    showToast('ไม่มีรายการแจ้งเตือนทดสอบ', 'info');
+  } catch (err) {
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+  }
+}
+
+// Auto-Sync (Realtime + 15s Polling + Tab Focus)
+function initRealtimeSync() {
+  if (!supabaseClient) return;
+  try {
+    supabaseClient
+      .channel('store_realtime_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_pending_moves' }, function() {
+        refreshAll();
+        fetchNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_history' }, function() {
+        refreshAll();
+        loadHistory(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_notifications' }, function() {
+        fetchNotifications();
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn('Realtime sync warning:', e);
+  }
+}
+
+setInterval(function() {
+  if (state.currentUser && document.visibilityState === 'visible') {
+    refreshAll();
+    fetchNotifications();
+  }
+}, 15000);
+
+window.addEventListener('focus', function() {
+  if (state.currentUser) {
+    refreshAll();
+    fetchNotifications();
+  }
+});
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && state.currentUser) {
+    refreshAll();
+    fetchNotifications();
+  }
+});
+
+function toggleSelfPinEye() {
+  var pinInp = document.getElementById('editSelfPin');
+  var btn = document.getElementById('selfPinEyeBtn');
+  if (!pinInp) return;
+  if (pinInp.type === 'password') {
+    pinInp.type = 'text';
+    if (btn) btn.innerText = '👁️';
+  } else {
+    pinInp.type = 'password';
+    if (btn) btn.innerText = '🙈';
+  }
+}
+
+async function broadcastNotification(type, title, message, linkUrl, extraData) {
+  const isTestMode = !!state.isTestMode;
+  const currentUsername = state.currentUser ? state.currentUser.username : null;
+  const displayTitle = isTestMode ? '🧪 [ทดสอบ] ' + title : title;
+  const displayMsg = isTestMode ? message + ' (โหมดทดสอบโดย ' + (currentUsername || 'แอดมิน') + ')' : message;
+
+  // 1. Insert into Supabase store_notifications table for In-App Bell
+  try {
+    const insertPayload = {
       type: type,
-      title: title,
-      message: message,
+      title: displayTitle,
+      message: displayMsg,
       link_url: linkUrl
-    }).select();
-    
-    if (error) throw error;
-    
+    };
+    await supabaseClient.from('store_notifications').insert(insertPayload);
+  } catch (err) {
+    console.error('DB Notification Insert error:', err);
+  }
+
+  // 2. Refresh In-App Bell notifications
+  try {
+    fetchNotifications();
+  } catch (_) {}
+
+  // 3. Trigger WebPush Broadcast API
+  try {
     fetch('/api/push-broadcast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: title,
-        message: message,
-        url: window.location.origin + '/apps/store-dragdrop/'
+        title: displayTitle,
+        message: displayMsg,
+        url: window.location.origin + '/apps/store-dragdrop/',
+        targetRole: isTestMode ? 'แอดมิน' : null,
+        targetUsername: isTestMode ? currentUsername : null
       })
-    }).catch(e => console.error('Push API err:', e));
-    
+    })
+    .then(async res => {
+      if (res.ok) {
+        const resData = await res.json();
+        if (isTestMode && resData.sentCount === 0) {
+          showToast('⚠️ Push ไม่เด้ง: ไม่พบอุปกรณ์ของคุณในระบบ (โปรดกดปุ่ม "🔔 กดเปิดอนุญาต Push Notification" ในตั้งค่า)', 'warning');
+        }
+      } else {
+        try {
+          const errData = await res.json();
+          console.warn('Push API info:', errData);
+        } catch(e) {}
+      }
+    })
+    .catch(e => console.error('Push API err:', e));
   } catch (err) {
-    console.error('Broadcast error:', err);
+    console.error('Push broadcast fetch error:', err);
   }
 }

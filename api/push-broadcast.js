@@ -6,12 +6,7 @@ const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
 
-webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
-// Setup Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; 
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,20 +14,61 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { title, message, url } = req.body;
+    const { title, message, url, targetUsername, targetRole } = req.body;
+
+    try {
+      webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    } catch (vErr) {
+      console.error('VAPID setup error:', vErr);
+      return res.status(500).json({ error: 'VAPID configuration error: ' + vErr.message });
+    }
+
+    let supabase;
+    let supabaseUrl;
+    try {
+      supabaseUrl = (process.env.VITE_SUPABASE_URL || '').trim();
+      let supabaseKey = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+      supabaseUrl = supabaseUrl.replace(/^["']|["']$/g, '');
+      supabaseKey = supabaseKey.replace(/^["']|["']$/g, '');
+      supabase = createClient(supabaseUrl, supabaseKey);
+    } catch (dbInitErr) {
+      return res.status(500).json({ error: 'Supabase Config Error: ' + dbInitErr.message });
+    }
 
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
-    // Fetch all subscriptions from Supabase
-    const { data: subscriptions, error } = await supabase
-      .from('store_push_subscriptions')
-      .select('*');
+    // Fetch subscriptions from Supabase
+    // - Normal mode (targetRole=null, targetUsername=null): send to ALL subscriptions
+    // - Test mode (targetRole='แอดมิน'): send ONLY to Admin accounts' devices
+    let query = supabase.from('store_push_subscriptions').select('*');
+
+    if (targetRole === 'แอดมิน' || targetRole === 'admin') {
+      // Test mode: look up all admin usernames, then filter subscriptions to those users
+      const { data: adminUsers } = await supabase
+        .from('store_users')
+        .select('username')
+        .or('role.eq.แอดมิน,role.eq.admin');
+
+      if (adminUsers && adminUsers.length > 0) {
+        const adminUsernames = adminUsers.map(u => u.username);
+        query = query.in('username', adminUsernames);
+      } else if (targetUsername) {
+        // Fallback: at least target the requesting admin's own device
+        query = query.ilike('username', targetUsername.trim());
+      } else {
+        // No admin accounts found at all - send to nobody
+        return res.status(200).json({ success: true, sentCount: 0, message: 'No admin subscriptions found' });
+      }
+    }
+    // else: Normal mode - no filter, query returns ALL subscriptions
+
+    const { data: subscriptions, error } = await query;
 
     if (error) {
       console.error('Error fetching subscriptions:', error);
-      return res.status(500).json({ error: 'Database error' });
+      return res.status(500).json({ error: `DB Error [${supabaseUrl}]: ` + (error.message || JSON.stringify(error)) });
     }
 
     if (!subscriptions || subscriptions.length === 0) {
@@ -58,8 +94,8 @@ export default async function handler(req, res) {
         await webPush.sendNotification(pushSubscription, payload);
       } catch (err) {
         console.error('Error sending push to endpoint:', sub.endpoint, err);
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          // Subscription has expired or is no longer valid, delete it
+        if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 400 || err.statusCode === 403) {
+          // Subscription has expired or invalid VAPID, delete it
           await supabase.from('store_push_subscriptions').delete().eq('id', sub.id);
         }
       }

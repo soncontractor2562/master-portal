@@ -10,11 +10,15 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png', 'favicon.ico'],
-      workbox: {
-        navigateFallbackDenylist: [/^\/apps\//]
+      // Use injectManifest so our custom sw.js (with push handlers) is preserved
+      strategies: 'injectManifest',
+      srcDir: 'public',
+      filename: 'sw.js',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,png,webmanifest}'],
       },
       manifest: {
-        name: 'SON CONTRACTOR',
+        name: 'SON Store Manager',
         short_name: 'SON',
         description: 'ระบบจัดการสโตร์ ไซต์งาน และวัสดุอุปกรณ์',
         theme_color: '#090d16',
