@@ -630,12 +630,12 @@ function App() {
   };
 
   const handleExportPdfA4 = () => {
-    const targetId = reportTheme === 'modern' ? 'active-report-modern' : 'active-report-classic';
+    exportToPdf('exportStagingContainer', `${docType === 'report' ? 'Daily_Report' : 'Daily_Request'}_${previewData?.date}`);
     exportToPdf(targetId, `${docType === 'report' ? 'Daily_Report' : 'Daily_Request'}_${previewData?.date}`);
   };
 
   const handleExportImageA4 = () => {
-    const targetId = reportTheme === 'modern' ? 'active-report-modern' : 'active-report-classic';
+    exportToImage('exportStagingContainer', `${docType === 'report' ? 'Daily_Report' : 'Daily_Request'}_${previewData?.date}`);
     exportToImage(targetId, `${docType === 'report' ? 'Daily_Report' : 'Daily_Request'}_${previewData?.date}`);
   };
 
@@ -1580,15 +1580,27 @@ function App() {
         </div>
       )}
 
-      {previewData && (
-        <div id="printableCard" style={{ display: 'none' }}>
-          <div className="a4-container">
-            {docType === 'report' 
-                ? renderFullReportPages(previewData, reportTheme === 'modern' ? 'modern-theme' : 'classic-theme', 1) 
-                : <ScaledA4Page scale={1}><DailyRequestView data={previewData} company={company} themeClass={reportTheme === 'modern' ? 'modern-theme' : 'classic-theme'} formatThaiDate={formatThaiDate} /></ScaledA4Page>}
-          </div>
-        </div>
-      )}
+      {previewData && (
+        <div 
+          id="exportStagingContainer" 
+          style={{ 
+            position: "fixed", 
+            left: "-9999px", 
+            top: 0, 
+            width: "794px", 
+            zIndex: -9999, 
+            opacity: 1, 
+            pointerEvents: "none", 
+            background: "#ffffff" 
+          }}
+        >
+          <div className="a4-container" style={{ padding: 0, background: "transparent" }}>
+            {docType === "report" 
+                ? renderFullReportPages(previewData, reportTheme === "modern" ? "modern-theme" : "classic-theme", 1) 
+                : <ScaledA4Page scale={1}><DailyRequestView data={previewData} company={company} themeClass={reportTheme === "modern" ? "modern-theme" : "classic-theme"} formatThaiDate={formatThaiDate} /></ScaledA4Page>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

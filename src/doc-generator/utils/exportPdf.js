@@ -3,7 +3,11 @@ import { jsPDF } from 'jspdf';
 
 export async function exportToPdf(containerId, filename) {
   try {
-    const container = document.getElementById(containerId);
+    let container = document.getElementById(containerId);
+    if (!container) {
+      // Fallback to active report
+      container = document.getElementById('previewCard');
+    }
     if (!container) {
       alert('ไม่พบองค์ประกอบรายงาน');
       return false;
@@ -26,7 +30,17 @@ export async function exportToPdf(containerId, filename) {
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          windowWidth: 794
+          width: 794,
+          height: 1123,
+          windowWidth: 794,
+          windowHeight: 1123,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc, clonedEl) => {
+            clonedEl.style.transform = 'none';
+            clonedEl.style.margin = '0';
+            clonedEl.style.boxShadow = 'none';
+          }
         });
         const imgData = canvas.toDataURL('image/png');
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
@@ -37,7 +51,10 @@ export async function exportToPdf(containerId, filename) {
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 794
+        width: 794,
+        windowWidth: 794,
+        scrollX: 0,
+        scrollY: 0
       });
       const imgData = canvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width);

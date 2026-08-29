@@ -2,7 +2,10 @@ import html2canvas from 'html2canvas';
 
 export async function exportToImage(containerId, filename) {
   try {
-    const container = document.getElementById(containerId);
+    let container = document.getElementById(containerId);
+    if (!container) {
+      container = document.getElementById('previewCard');
+    }
     if (!container) {
       alert('ไม่พบองค์ประกอบรายงาน');
       return false;
@@ -20,7 +23,17 @@ export async function exportToImage(containerId, filename) {
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          windowWidth: 794
+          width: 794,
+          height: 1123,
+          windowWidth: 794,
+          windowHeight: 1123,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc, clonedEl) => {
+            clonedEl.style.transform = 'none';
+            clonedEl.style.margin = '0';
+            clonedEl.style.boxShadow = 'none';
+          }
         });
         
         const pageFilename = pages.length === 1 ? `${filename}.png` : `${filename}_page${i + 1}.png`;
@@ -39,7 +52,10 @@ export async function exportToImage(containerId, filename) {
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 794
+        width: 794,
+        windowWidth: 794,
+        scrollX: 0,
+        scrollY: 0
       });
       
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
