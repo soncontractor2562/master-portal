@@ -1,11 +1,18 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
+function isMobileDevice() {
+  const ua = navigator.userAgent || '';
+  const isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+  const isMobileUA = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  const isIpadOS = /Macintosh/i.test(ua) && isTouchDevice;
+  return isMobileUA || isIpadOS;
+}
+
 export async function exportToPdf(containerId, filename) {
   try {
     let container = document.getElementById(containerId);
     if (!container) {
-      // Fallback to active report
       container = document.getElementById('previewCard');
     }
     if (!container) {
@@ -60,29 +67,32 @@ export async function exportToPdf(containerId, filename) {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width);
     }
     
-    // Try Web Share API on mobile devices first (allows direct share to LINE, Mail, Files, etc.)
-    const pdfBlob = pdf.output('blob');
-    const pdfFile = new File([pdfBlob], `${filename}.pdf`, { type: 'application/pdf' });
+    // On Mobile: Use Web Share API (share to LINE, Mail, Files, AirDrop)
+    if (isMobileDevice()) {
+      const pdfBlob = pdf.output('blob');
+      const pdfFile = new File([pdfBlob], `${filename}.pdf`, { type: 'application/pdf' });
 
-    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-      try {
-        await navigator.share({
-          files: [pdfFile],
-          title: `${filename}.pdf`,
-          text: `เอกสารรายงาน ${filename}`
-        });
-        return true;
-      } catch (shareErr) {
-        if (shareErr.name === 'AbortError') {
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        try {
+          await navigator.share({
+            files: [pdfFile],
+            title: `${filename}.pdf`,
+            text: `เอกสารรายงาน ${filename}`
+          });
+          return true;
+        } catch (shareErr) {
+          if (shareErr.name === 'AbortError') {
+            return true;
+          }
+          pdf.save(`${filename}.pdf`);
           return true;
         }
-        pdf.save(`${filename}.pdf`);
-        return true;
       }
-    } else {
-      pdf.save(`${filename}.pdf`);
-      return true;
     }
+
+    // On Computer (PC / Mac / Laptop): Directly download to computer
+    pdf.save(`${filename}.pdf`);
+    return true;
   } catch (error) {
     console.error('Error exporting PDF:', error);
     alert('เกิดข้อผิดพลาดในการบันทึกเป็น PDF');

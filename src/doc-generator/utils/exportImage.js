@@ -1,5 +1,13 @@
 import html2canvas from 'html2canvas';
 
+function isMobileDevice() {
+  const ua = navigator.userAgent || '';
+  const isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+  const isMobileUA = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  const isIpadOS = /Macintosh/i.test(ua) && isTouchDevice;
+  return isMobileUA || isIpadOS;
+}
+
 export async function exportToImage(containerId, filename) {
   try {
     let container = document.getElementById(containerId);
@@ -67,7 +75,7 @@ export async function exportToImage(containerId, filename) {
     }
     
     // On Mobile: Trigger native share sheet where user can tap "Save Image" to save directly into Camera Roll / Photo Library
-    if (filesToShare.length > 0 && navigator.canShare && navigator.canShare({ files: filesToShare })) {
+    if (isMobileDevice() && filesToShare.length > 0 && navigator.canShare && navigator.canShare({ files: filesToShare })) {
       try {
         await navigator.share({
           files: filesToShare,
@@ -82,7 +90,7 @@ export async function exportToImage(containerId, filename) {
       }
     }
 
-    // Fallback: standard browser download for Desktop
+    // On Computer (PC / Mac / Laptop): Directly download image file(s) to computer Downloads folder
     for (let i = 0; i < downloadedImages.length; i++) {
       const { canvas, filename: fName } = downloadedImages[i];
       const imgData = canvas.toDataURL('image/png');
