@@ -9,6 +9,9 @@ export async function exportToImage(containerId, filename) {
     }
     
     const pages = container.querySelectorAll('.a4-page');
+    const filesToShare = [];
+    const downloadedImages = [];
+
     if (pages && pages.length > 0) {
       for (let i = 0; i < pages.length; i++) {
         const pageEl = pages[i];
@@ -20,18 +23,15 @@ export async function exportToImage(containerId, filename) {
           windowWidth: 794
         });
         
-        const imgData = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = imgData;
-        a.download = pages.length === 1 ? `${filename}.png` : `${filename}_page${i + 1}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const pageFilename = pages.length === 1 ? `${filename}.png` : `${filename}_page${i + 1}.png`;
         
-        // Small delay between downloads if multiple pages
-        if (i < pages.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+        // Convert canvas to blob & File for mobile share sheet (which allows "Save to Photos" / "บันทึกภาพลงคลัง")
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) {
+          const file = new File([blob], pageFilename, { type: 'image/png' });
+          filesToShare.push(file);
         }
+        downloadedImages.push({ canvas, filename: pageFilename });
       }
     } else {
       const canvas = await html2canvas(container, {
@@ -42,13 +42,44 @@ export async function exportToImage(containerId, filename) {
         windowWidth: 794
       });
       
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (blob) {
+        const file = new File([blob], `${filename}.png`, { type: 'image/png' });
+        filesToShare.push(file);
+      }
+      downloadedImages.push({ canvas, filename: `${filename}.png` });
+    }
+    
+    // On Mobile: Trigger native share sheet where user can tap "Save Image" to save directly into Camera Roll / Photo Library
+    if (filesToShare.length > 0 && navigator.canShare && navigator.canShare({ files: filesToShare })) {
+      try {
+        await navigator.share({
+          files: filesToShare,
+          title: filename,
+          text: `บันทึกรูปภาพ ${filename}`
+        });
+        return true;
+      } catch (shareErr) {
+        if (shareErr.name === 'AbortError') {
+          return true;
+        }
+      }
+    }
+
+    // Fallback: standard browser download for Desktop
+    for (let i = 0; i < downloadedImages.length; i++) {
+      const { canvas, filename: fName } = downloadedImages[i];
       const imgData = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = imgData;
-      a.download = `${filename}.png`;
+      a.download = fName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      
+      if (i < downloadedImages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
     
     return true;

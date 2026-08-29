@@ -43,8 +43,29 @@ export async function exportToPdf(containerId, filename) {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width);
     }
     
-    pdf.save(`${filename}.pdf`);
-    return true;
+    // Try Web Share API on mobile devices first (allows direct share to LINE, Mail, Files, etc.)
+    const pdfBlob = pdf.output('blob');
+    const pdfFile = new File([pdfBlob], `${filename}.pdf`, { type: 'application/pdf' });
+
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      try {
+        await navigator.share({
+          files: [pdfFile],
+          title: `${filename}.pdf`,
+          text: `เอกสารรายงาน ${filename}`
+        });
+        return true;
+      } catch (shareErr) {
+        if (shareErr.name === 'AbortError') {
+          return true;
+        }
+        pdf.save(`${filename}.pdf`);
+        return true;
+      }
+    } else {
+      pdf.save(`${filename}.pdf`);
+      return true;
+    }
   } catch (error) {
     console.error('Error exporting PDF:', error);
     alert('เกิดข้อผิดพลาดในการบันทึกเป็น PDF');
