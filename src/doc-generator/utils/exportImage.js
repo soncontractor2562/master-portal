@@ -10,6 +10,10 @@ function isMobileDevice() {
 
 export async function exportToImage(containerId, filename) {
   try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
     let container = document.getElementById(containerId);
     if (!container) {
       container = document.getElementById('previewCard');
@@ -38,15 +42,22 @@ export async function exportToImage(containerId, filename) {
           scrollX: 0,
           scrollY: 0,
           onclone: (clonedDoc, clonedEl) => {
+            if (!clonedDoc.querySelector('#sarabun-font-link')) {
+              const link = clonedDoc.createElement('link');
+              link.id = 'sarabun-font-link';
+              link.rel = 'stylesheet';
+              link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap';
+              clonedDoc.head.appendChild(link);
+            }
             clonedEl.style.transform = 'none';
             clonedEl.style.margin = '0';
             clonedEl.style.boxShadow = 'none';
+            clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
           }
         });
         
         const pageFilename = pages.length === 1 ? `${filename}.png` : `${filename}_page${i + 1}.png`;
         
-        // Convert canvas to blob & File for mobile share sheet (which allows "Save to Photos" / "บันทึกภาพลงคลัง")
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         if (blob) {
           const file = new File([blob], pageFilename, { type: 'image/png' });
@@ -63,7 +74,20 @@ export async function exportToImage(containerId, filename) {
         width: 794,
         windowWidth: 794,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        onclone: (clonedDoc, clonedEl) => {
+          if (!clonedDoc.querySelector('#sarabun-font-link')) {
+            const link = clonedDoc.createElement('link');
+            link.id = 'sarabun-font-link';
+            link.rel = 'stylesheet';
+            link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap';
+            clonedDoc.head.appendChild(link);
+          }
+          clonedEl.style.transform = 'none';
+          clonedEl.style.margin = '0';
+          clonedEl.style.boxShadow = 'none';
+          clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
+        }
       });
       
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));

@@ -11,6 +11,11 @@ function isMobileDevice() {
 
 export async function exportToPdf(containerId, filename) {
   try {
+    // Wait for fonts to be ready
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
     let container = document.getElementById(containerId);
     if (!container) {
       container = document.getElementById('previewCard');
@@ -22,7 +27,7 @@ export async function exportToPdf(containerId, filename) {
     
     // Check if there are multiple A4 pages
     const pages = container.querySelectorAll('.a4-page');
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF('p', 'mm', 'a4', true); // enable fast compression
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     
@@ -44,13 +49,22 @@ export async function exportToPdf(containerId, filename) {
           scrollX: 0,
           scrollY: 0,
           onclone: (clonedDoc, clonedEl) => {
+            if (!clonedDoc.querySelector('#sarabun-font-link')) {
+              const link = clonedDoc.createElement('link');
+              link.id = 'sarabun-font-link';
+              link.rel = 'stylesheet';
+              link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap';
+              clonedDoc.head.appendChild(link);
+            }
             clonedEl.style.transform = 'none';
             clonedEl.style.margin = '0';
             clonedEl.style.boxShadow = 'none';
+            clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
           }
         });
-        const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        // Use JPEG with 0.88 quality for optimal compression (drops 30MB down to ~1.2MB with high fidelity)
+        const imgData = canvas.toDataURL('image/jpeg', 0.88);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       }
     } else {
       const canvas = await html2canvas(container, {
@@ -61,10 +75,23 @@ export async function exportToPdf(containerId, filename) {
         width: 794,
         windowWidth: 794,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        onclone: (clonedDoc, clonedEl) => {
+          if (!clonedDoc.querySelector('#sarabun-font-link')) {
+            const link = clonedDoc.createElement('link');
+            link.id = 'sarabun-font-link';
+            link.rel = 'stylesheet';
+            link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap';
+            clonedDoc.head.appendChild(link);
+          }
+          clonedEl.style.transform = 'none';
+          clonedEl.style.margin = '0';
+          clonedEl.style.boxShadow = 'none';
+          clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
+        }
       });
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width);
+      const imgData = canvas.toDataURL('image/jpeg', 0.88);
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width, undefined, 'FAST');
     }
     
     // On Mobile: Use Web Share API (share to LINE, Mail, Files, AirDrop)
