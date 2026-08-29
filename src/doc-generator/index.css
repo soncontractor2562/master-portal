@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:wght@300;400;500;600;700&display=swap');
 
 .doc-gen-root {
   --ink: #1f2a24;
@@ -9,7 +9,7 @@
   --gold: #a8792f;
   --danger: #a13a2f;
   --gray: #6b6558;
-  font-family: "Sarabun", "TH Sarabun New", "Segoe UI", sans-serif !important;
+  font-family: "Prompt", "Sarabun", sans-serif !important;
   color: var(--ink);
   line-height: 1.4;
   box-sizing: border-box;
@@ -484,7 +484,7 @@
   padding: 44px 44px 38px;
   margin-bottom: 0;
   box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-  font-family: 'Sarabun', sans-serif;
+  font-family: 'Prompt', 'Sarabun', sans-serif;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
