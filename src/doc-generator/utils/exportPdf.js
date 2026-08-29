@@ -53,13 +53,13 @@ export async function exportToPdf(containerId, filename) {
               const link = clonedDoc.createElement('link');
               link.id = 'sarabun-font-link';
               link.rel = 'stylesheet';
-              link.href = 'https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap';
+              link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap';
               clonedDoc.head.appendChild(link);
             }
             clonedEl.style.transform = 'none';
             clonedEl.style.margin = '0';
             clonedEl.style.boxShadow = 'none';
-            clonedEl.style.fontFamily = "'Prompt', 'Sarabun', sans-serif";
+            clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
           }
         });
         // Use JPEG with 0.88 quality for optimal compression (drops 30MB down to ~1.2MB with high fidelity)
@@ -81,13 +81,13 @@ export async function exportToPdf(containerId, filename) {
             const link = clonedDoc.createElement('link');
             link.id = 'sarabun-font-link';
             link.rel = 'stylesheet';
-            link.href = 'https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap';
+            link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap';
             clonedDoc.head.appendChild(link);
           }
           clonedEl.style.transform = 'none';
           clonedEl.style.margin = '0';
           clonedEl.style.boxShadow = 'none';
-          clonedEl.style.fontFamily = "'Prompt', 'Sarabun', sans-serif";
+          clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
         }
       });
       const imgData = canvas.toDataURL('image/jpeg', 0.88);

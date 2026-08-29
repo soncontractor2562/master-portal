@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sarabun:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Prompt:wght@400;600;700&display=swap');
 
 .doc-gen-root {
   --ink: #1f2a24;
@@ -9,7 +9,7 @@
   --gold: #a8792f;
   --danger: #a13a2f;
   --gray: #6b6558;
-  font-family: "Prompt", "Sarabun", sans-serif !important;
+  font-family: "Sarabun", "TH Sarabun New", "Segoe UI", sans-serif !important;
   color: var(--ink);
   line-height: 1.4;
   box-sizing: border-box;
@@ -484,7 +484,7 @@
   padding: 44px 44px 38px;
   margin-bottom: 0;
   box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-  font-family: 'Prompt', 'Sarabun', sans-serif;
+  font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -625,7 +625,10 @@
 }
 
 .doc-gen-root table.report-tasks-table th, .doc-gen-root table.report-tasks-table td {
-  padding: 2.5px 6px;
+  padding: 3px 6px 3px 6px;
+  vertical-align: middle !important;
+  line-height: 1.35;
+  height: 22px;
 }
 
 .doc-gen-root table.report-tasks-table th {
@@ -724,7 +727,10 @@
 }
 
 .doc-gen-root table.resource-col-table td {
-  padding: 2.2px 5px;
+  padding: 2px 5px 2px 5px;
+  vertical-align: middle !important;
+  line-height: 1.35;
+  height: 20px;
 }
 
 /* --- SIGNER ROW --- */
@@ -974,7 +980,10 @@
   border-bottom: 1px solid #cbd5e1 !important;
   border-top: none !important;
   border-left: none !important;
-  padding: 3px 6px !important;
+  padding: 3px 6px 3px 6px !important;
+  vertical-align: middle !important;
+  line-height: 1.35 !important;
+  height: 22px !important;
 }
 
 .doc-gen-root .modern-theme table.report-tasks-table th:last-child, 
