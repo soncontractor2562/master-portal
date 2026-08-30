@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, ShoppingBag, FileSpreadsheet, X, ChevronRight, Menu, Sun, Moon } from 'lucide-react';
+import { CheckSquare, ShoppingBag, FileSpreadsheet, FileText, X, ChevronRight, Menu, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../ThemeContext.jsx';
 
 export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) {
@@ -36,11 +36,11 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
     {
       id: 'docgen',
       label: 'Request Report',
-      icon: FileSpreadsheet,
-      desc: 'สร้างเอกสารรายงานประจำวัน',
-      color: 'text-blue-400',
-      activeBg: 'from-blue-600/30 to-cyan-600/20 border-blue-500/40',
-      activeIcon: 'bg-blue-500',
+      icon: FileText,
+      desc: 'สร้างรายงานและขอปฏิบัติงาน',
+      color: 'text-sky-400',
+      activeBg: 'from-sky-600/30 to-blue-600/20 border-sky-500/40',
+      activeIcon: 'bg-sky-500',
     },
   ];
 

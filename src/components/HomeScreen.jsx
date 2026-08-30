@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, ShoppingBag, FileSpreadsheet, ChevronRight } from 'lucide-react';
+import { CheckSquare, ShoppingBag, FileSpreadsheet, FileText, ChevronRight } from 'lucide-react';
 
 const modules = [
   {
@@ -41,13 +41,13 @@ const modules = [
   {
     id: 'docgen',
     label: 'Request Report',
-    desc: 'สร้างเอกสารรายงานประจำวัน',
-    icon: FileSpreadsheet,
-    gradient: 'from-blue-600/25 to-cyan-600/15',
-    border: 'border-blue-500/30',
-    iconBg: 'bg-blue-500/20',
-    iconColor: 'text-blue-400',
-    glow: 'shadow-blue-500/10',
+    desc: 'ระบบสร้างเอกสารรายงานประจำวันและขอปฏิบัติงาน',
+    icon: FileText,
+    gradient: 'from-sky-600/25 to-blue-600/15',
+    border: 'border-sky-500/30',
+    iconBg: 'bg-sky-500/20',
+    iconColor: 'text-sky-400',
+    glow: 'shadow-sky-500/10',
     emoji: '📄',
   },
 ];
