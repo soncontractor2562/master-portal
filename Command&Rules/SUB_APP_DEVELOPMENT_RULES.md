@@ -83,18 +83,3 @@ src/<app-id>/
 
 ### 🔴 กฎข้อที่ 5: การติดตั้ง Dependencies เพิ่มเติม
 * หากโปรแกรมจำเป็นต้องใช้ Library เพิ่มเติม (เช่น `jspdf`, `html2canvas`, `xlsx`) ให้ระบุคำสั่ง `npm install <package-name>` ไว้ในรายงานส่งมอบอย่างชัดเจน
-
----
-
-## 📋 3. Checklist สิ่งที่ต้องส่งมอบเมื่อพัฒนาเสร็จ (Delivery Checklist)
-
-เมื่อพัฒนาโปรแกรมย่อยเสร็จ ให้สรุปข้อมูลต่อไปนี้ส่งกลับมายัง Master Chat:
-
-1. **ชื่อและข้อมูลเมนู:**
-   * **App ID:** (เช่น `material-request`)
-   * **ชื่อภาษาอังกฤษ (Label):** (เช่น `Material Request`)
-   * **คำอธิบายภาษาไทย (Description):** (เช่น `ระบบขอเบิกวัสดุหน้างาน`)
-   * **ไอคอนที่ต้องการ:** (ชื่อไอคอนจาก Lucide-React เช่น `FileText`, `Package`)
-2. **โฟลเดอร์โค้ด:** วางไฟล์ทั้งหมดไว้ที่ `src/<app-id>/`
-3. **คำสั่งติดตั้ง Packages:** (ถ้ามี เช่น `npm install xlsx`)
-4. **ไฟล์คำสั่ง SQL:** ไฟล์ `setup_<app-id>.sql` สำหรับรันบน Supabase SQL Editor
