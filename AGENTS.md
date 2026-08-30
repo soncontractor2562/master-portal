@@ -4,6 +4,7 @@ This workspace is the Master Portal for SON CONTRACTOR, orchestrating multiple i
 
 ## Workspace Rules & Guidelines:
 All documentation, standards, and step-by-step guides are organized in the `Command&Rules/` folder:
+- **`Command&Rules/AI_COLLABORATION_RULES.md`**: Core working mindset, root cause analysis on bugs, asking before acting, and proactive advisory.
 - **`Command&Rules/SUB_APP_DEVELOPMENT_RULES.md`**: Strict sub-app isolation rules (CSS scoping, Database prefixing, LocalStorage prefixing, Theme independence).
 - **`Command&Rules/INTEGRATION_GUIDE.md`**: Exact 6-step recipe for integrating any new sub-app into the Master Portal with Lazy Loading & URL Hash Routing.
 - **`Command&Rules/PROMPT_TEMPLATES.md`**: Standard prompt templates for sub-app creation and handover.
