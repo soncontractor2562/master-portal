@@ -1,0 +1,24 @@
+[สำหรับ Antigravity]
+ช่วยนำโปรแกรมย่อยนี้ประกอบร่างเข้า Master Portal ตามคู่มือ AGENTS.md หรือ Command&Rules/INTEGRATION_GUIDE.md ให้หน่อยครับ
+
+------------------------------------------------------
+[สำหรับ AI อื่นๆ เช่น ChatGPT / Claude]
+ช่วยนำโปรแกรมย่อยใหม่ประกอบร่างเข้า Master Portal (Vite + React) ให้หน่อยครับ
+รายละเอียดของโปรแกรมย่อย:
+- App ID: [ใส่ id เช่น petty-cash]
+- ชื่อเมนู (Label): [เช่น Petty Cash]
+- คำอธิบาย (Desc): [เช่น ระบบบันทึกและเบิกเงินสดย่อย]
+- ไอคอน (Lucide Icon): [เช่น Wallet]
+- โฟลเดอร์โค้ด: src/[app-id]/
+
+ขั้นตอนการประกอบร่างเข้า Master Portal:
+1. ติดตั้ง Dependencies เพิ่มเติม (ถ้ามี)
+2. สร้าง View Wrapper ที่: src/components/[AppId]View.jsx (โหลด src/[app-id]/App.jsx และ index.css)
+3. เชื่อมต่อใน src/App.jsx:
+   - เพิ่ม React.lazy โหลด View Wrapper
+   - เพิ่ม ID ใน VALID_MODULES สำหรับ URL Hash Routing (#app-id)
+   - เพิ่ม Component ในจุดแสดงผลของ Suspense
+4. เพิ่มปุ่มเมนูใน: src/components/Sidebar.jsx (Desktop)
+5. เพิ่มการ์ดโปรแกรมใน: src/components/HomeScreen.jsx (Mobile Grid)
+6. เพิ่มใน: src/components/ModuleScreen.jsx (Mobile Fullscreen Container)
+7. รันคำสั่ง npm run build เพื่อทดสอบว่าไม่มี Error

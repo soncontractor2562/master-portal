@@ -1,0 +1,23 @@
+รบกวนสรุปรายงานส่งมอบตามแบบฟอร์มนี้ให้ด้วย
+======================================================
+📦 รายงานส่งมอบโปรแกรมย่อยสำหรับ Master Portal
+======================================================
+1. ข้อมูลเมนู (Menu Metadata):
+   - App ID: [ใส่ id ภาษาอังกฤษพิมพ์เล็ก เช่น petty-cash]
+   - ชื่อเมนู (Label): [ชื่อภาษาอังกฤษ เช่น Petty Cash System]
+   - คำอธิบาย (Description): [คำอธิบายภาษาไทยสั้นๆ เช่น ระบบบันทึกและเบิกเงินสดย่อย]
+   - ไอคอนที่ต้องการ (Lucide Icon): [เช่น Wallet, FileText, ClipboardList]
+   - โทนสีประจำแอพ (Accent Color): [เช่น rose, amber, emerald, sky, purple]
+
+2. ตำแหน่งโฟลเดอร์โค้ด:
+   - โฟลเดอร์: src/[ใส่ app-id]/
+   - ไฟล์เริ่มต้น (Entry Component): src/[ใส่ app-id]/App.jsx
+   - ไฟล์สไตล์ (Scoped CSS): src/[ใส่ app-id]/index.css (ครอบด้วย .[app-id]-root เรียบร้อยแล้ว)
+
+3. การติดตั้ง Dependencies (ถ้ามี):
+   - คำสั่ง: npm install [ชื่อแพ็กเกจ เช่น xlsx jspdf หรือระบุว่า "ไม่มี"]
+
+4. ข้อมูล Database / Supabase (ถ้ามี):
+   - ชื่อตารางที่ใช้: [เช่น petty_cash_entries, petty_cash_categories]
+   - ไฟล์ SQL Script: setup_[app-id].sql (อยู่ที่ Root โฟลเดอร์)
+======================================================
