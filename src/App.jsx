@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import HomeScreen from './components/HomeScreen.jsx';
 import ModuleScreen from './components/ModuleScreen.jsx';
 import Sidebar from './components/Sidebar.jsx';
-import WeeklyTodoView from './components/WeeklyTodoView.jsx';
-import StoreDragDropView from './components/StoreDragDropView.jsx';
-import PrPoView from './components/PrPoView.jsx';
-import DocGeneratorView from './components/DocGeneratorView.jsx';
+import LoadingFallback from './components/LoadingFallback.jsx';
 import { ThemeProvider, useTheme } from './ThemeContext.jsx';
+
+const WeeklyTodoView = lazy(() => import('./components/WeeklyTodoView.jsx'));
+const StoreDragDropView = lazy(() => import('./components/StoreDragDropView.jsx'));
+const PrPoView = lazy(() => import('./components/PrPoView.jsx'));
+const DocGeneratorView = lazy(() => import('./components/DocGeneratorView.jsx'));
+
+const VALID_MODULES = ['todo', 'store', 'prpo', 'docgen'];
+
+function getModuleFromHash() {
+  if (typeof window === 'undefined') return null;
+  const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+  return VALID_MODULES.includes(hash) ? hash : null;
+}
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
@@ -24,19 +34,49 @@ function useMediaQuery(query) {
 }
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState(null); // Mobile active module
-  const [activeTab, setActiveTab] = useState('todo'); // PC active tab
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const isDesktop = useMediaQuery('(min-width: 1024px)'); // Tailwind 'lg' breakpoint
+  const initialModule = getModuleFromHash();
 
-  // Handle Android back-button / browser back gesture for Mobile
+  const [activeModule, setActiveModule] = useState(initialModule); // Mobile active module (null = Home Screen)
+  const [activeTab, setActiveTab] = useState(initialModule || 'todo'); // PC active tab (default: 'todo')
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Sync state with URL Hash changes (back/forward button, direct hash edit)
   useEffect(() => {
-    const handlePopState = () => {
-      if (activeModule) setActiveModule(null);
+    const handleHashChange = () => {
+      const mod = getModuleFromHash();
+      if (isDesktop) {
+        if (mod) setActiveTab(mod);
+      } else {
+        setActiveModule(mod);
+      }
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [activeModule]);
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [isDesktop]);
+
+  // Sync URL hash when Desktop activeTab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (window.location.hash.replace(/^#\/?/, '') !== tabId) {
+      window.history.replaceState(null, '', `#${tabId}`);
+    }
+  };
+
+  // Mobile Open & Close module
+  const openModule = (id) => {
+    window.location.hash = `#${id}`;
+    setActiveModule(id);
+  };
+
+  const closeModule = () => {
+    if (window.location.hash) {
+      window.history.back();
+    } else {
+      setActiveModule(null);
+    }
+  };
 
   // Re-broadcast theme to newly mounted iframes when tab changes
   useEffect(() => {
@@ -48,15 +88,6 @@ export default function App() {
       });
     }, 300);
   }, [activeTab]);
-
-  const openModule = (id) => {
-    window.history.pushState({ module: id }, '');
-    setActiveModule(id);
-  };
-
-  const closeModule = () => {
-    window.history.back(); // triggers popstate → setActiveModule(null)
-  };
 
   // ------------------------------------
   // DESKTOP (PC) LAYOUT: Sidebar + Content
@@ -70,16 +101,18 @@ export default function App() {
           
           <Sidebar
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
           />
           
           <div className="master-content-col relative z-10" style={{ display: 'flex', flexDirection: 'column' }}>
-            {activeTab === 'todo' && <WeeklyTodoView />}
-            {activeTab === 'store' && <StoreDragDropView />}
-            {activeTab === 'prpo' && <PrPoView />}
-            {activeTab === 'docgen' && <DocGeneratorView />}
+            <Suspense fallback={<LoadingFallback />}>
+              {activeTab === 'todo' && <WeeklyTodoView />}
+              {activeTab === 'store' && <StoreDragDropView />}
+              {activeTab === 'prpo' && <PrPoView />}
+              {activeTab === 'docgen' && <DocGeneratorView />}
+            </Suspense>
           </div>
         </div>
       </ThemeProvider>
@@ -159,4 +192,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-

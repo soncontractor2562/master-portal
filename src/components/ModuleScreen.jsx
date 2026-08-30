@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import WeeklyTodoView from './WeeklyTodoView.jsx';
-import StoreDragDropView from './StoreDragDropView.jsx';
-import PrPoView from './PrPoView.jsx';
-import DocGeneratorView from './DocGeneratorView.jsx';
+import LoadingFallback from './LoadingFallback.jsx';
+
+const WeeklyTodoView = lazy(() => import('./WeeklyTodoView.jsx'));
+const StoreDragDropView = lazy(() => import('./StoreDragDropView.jsx'));
+const PrPoView = lazy(() => import('./PrPoView.jsx'));
+const DocGeneratorView = lazy(() => import('./DocGeneratorView.jsx'));
 
 const MODULE_LABELS = {
   todo:  'Weekly Todo List',
@@ -84,10 +86,12 @@ export default function ModuleScreen({ moduleId, onBack }) {
 
       {/* Module Content */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {moduleId === 'todo' && <WeeklyTodoView />}
-        {moduleId === 'store' && <StoreDragDropView />}
-        {moduleId === 'prpo' && <PrPoView />}
-        {moduleId === 'docgen' && <DocGeneratorView />}
+        <Suspense fallback={<LoadingFallback />}>
+          {moduleId === 'todo' && <WeeklyTodoView />}
+          {moduleId === 'store' && <StoreDragDropView />}
+          {moduleId === 'prpo' && <PrPoView />}
+          {moduleId === 'docgen' && <DocGeneratorView />}
+        </Suspense>
       </div>
     </div>
   );
