@@ -1567,7 +1567,6 @@ function App() {
           <div className="btnbar" style={{ justifyContent: 'flex-start', marginBottom: '14px', background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
             <button className="btn primary" onClick={handleExportPdfA4} style={{ background: '#2f5233' }}>ส่งออกเป็น PDF (ขนาด A4)</button>
             <button className="btn primary" onClick={handleExportImageA4} style={{ background: '#0284c7' }}>ส่งออกเป็นรูปภาพ PNG (ขนาด A4)</button>
-            <button className="btn ghost" onClick={() => window.print()}>พิมพ์เอกสาร</button>
           </div>
           <div className="a4-container" ref={a4ContainerRef}>
             <div id={`active-report-${reportTheme}`} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
