@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 
 function isMobileDevice() {
   const ua = navigator.userAgent || '';
@@ -26,76 +26,35 @@ export async function exportToImage(containerId, filename) {
     const pages = container.querySelectorAll('.a4-page');
     const filesToShare = [];
     const downloadedImages = [];
+    const renderOptions = {
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      cacheBust: true
+    };
 
     if (pages && pages.length > 0) {
       for (let i = 0; i < pages.length; i++) {
         const pageEl = pages[i];
-        const canvas = await html2canvas(pageEl, {
-          scale: 2, // High resolution (300 DPI target)
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          width: 794,
-          height: 1123,
-          windowWidth: 794,
-          windowHeight: 1123,
-          scrollX: 0,
-          scrollY: 0,
-          onclone: (clonedDoc, clonedEl) => {
-            if (!clonedDoc.querySelector('#sarabun-font-link')) {
-              const link = clonedDoc.createElement('link');
-              link.id = 'sarabun-font-link';
-              link.rel = 'stylesheet';
-              link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap';
-              clonedDoc.head.appendChild(link);
-            }
-            clonedEl.style.transform = 'none';
-            clonedEl.style.margin = '0';
-            clonedEl.style.boxShadow = 'none';
-            clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
-          }
-        });
-        
+        const imgData = await htmlToImage.toPng(pageEl, renderOptions);
         const pageFilename = pages.length === 1 ? `${filename}.png` : `${filename}_page${i + 1}.png`;
         
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const res = await fetch(imgData);
+        const blob = await res.blob();
         if (blob) {
           const file = new File([blob], pageFilename, { type: 'image/png' });
           filesToShare.push(file);
         }
-        downloadedImages.push({ canvas, filename: pageFilename });
+        downloadedImages.push({ imgData, filename: pageFilename });
       }
     } else {
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: 794,
-        windowWidth: 794,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc, clonedEl) => {
-          if (!clonedDoc.querySelector('#sarabun-font-link')) {
-            const link = clonedDoc.createElement('link');
-            link.id = 'sarabun-font-link';
-            link.rel = 'stylesheet';
-            link.href = 'https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap';
-            clonedDoc.head.appendChild(link);
-          }
-          clonedEl.style.transform = 'none';
-          clonedEl.style.margin = '0';
-          clonedEl.style.boxShadow = 'none';
-          clonedEl.style.fontFamily = "'Sarabun', 'TH Sarabun New', sans-serif";
-        }
-      });
-      
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const imgData = await htmlToImage.toPng(container, renderOptions);
+      const res = await fetch(imgData);
+      const blob = await res.blob();
       if (blob) {
         const file = new File([blob], `${filename}.png`, { type: 'image/png' });
         filesToShare.push(file);
       }
-      downloadedImages.push({ canvas, filename: `${filename}.png` });
+      downloadedImages.push({ imgData, filename: `${filename}.png` });
     }
     
     // On Mobile: Trigger native share sheet where user can tap "Save Image" to save directly into Camera Roll / Photo Library
@@ -116,8 +75,7 @@ export async function exportToImage(containerId, filename) {
 
     // On Computer (PC / Mac / Laptop): Directly download image file(s) to computer Downloads folder
     for (let i = 0; i < downloadedImages.length; i++) {
-      const { canvas, filename: fName } = downloadedImages[i];
-      const imgData = canvas.toDataURL('image/png');
+      const { imgData, filename: fName } = downloadedImages[i];
       const a = document.createElement('a');
       a.href = imgData;
       a.download = fName;
@@ -133,7 +91,7 @@ export async function exportToImage(containerId, filename) {
     return true;
   } catch (error) {
     console.error('Error exporting Image:', error);
-    alert('เกิดข้อผิดพลาดในการบันทึกเป็นรูปภาพ');
+    alert('เกิดข้อผิดพลาดในการบันทึกเป็นรูปภาพ: ' + (error?.message || error));
     return false;
   }
 }
