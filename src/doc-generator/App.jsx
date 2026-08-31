@@ -445,42 +445,30 @@ function App() {
     }
   };
 
+  // Instant Local-First Photo Upload (0ms network delay)
   const handlePhotoUploadFiles = async (files) => {
     if (!files || files.length === 0) return;
     setIsUploadingPhoto(true);
-    const newPhotos = [...(formData.photos || [])];
+    const addedPhotos = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      // 1. Lightweight local compression (700px, 0.7)
-      const compressedBase64 = await compressImage(file, 700, 0.7);
-
-      // 2. Upload to Google Drive if webhook configured
-      if (driveSettings.webhookUrl && driveSettings.webhookUrl.trim()) {
-        try {
-          const uploadRes = await uploadImageToGoogleDrive({
-            webhookUrl: driveSettings.webhookUrl,
-            folderId: driveSettings.folderId,
-            projectName: formData.project || 'ทั่วไป',
-            base64Data: compressedBase64,
-            filename: `${(formData.project || 'photo').replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, '_')}_${Date.now()}_${i + 1}.jpg`
-          });
-          if (uploadRes && uploadRes.directImageUrl) {
-            newPhotos.push(uploadRes.directImageUrl);
-          } else {
-            newPhotos.push(compressedBase64);
-          }
-        } catch(uploadErr) {
-          console.warn('Drive photo upload fallback to local base64:', uploadErr);
-          newPhotos.push(compressedBase64);
-        }
-      } else {
-        newPhotos.push(compressedBase64);
-      }
+      // Fast client-side compression (650px, 0.65) -> <50KB each
+      const compressedBase64 = await compressImage(file, 650, 0.65);
+      addedPhotos.push(compressedBase64);
     }
 
-    setFormData(prev => ({ ...prev, photos: newPhotos }));
+    setFormData(prev => ({ ...prev, photos: [...(prev.photos || []), ...addedPhotos] }));
     setIsUploadingPhoto(false);
+  };
+
+  // Reorder photos
+  const handleMovePhoto = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= (formData.photos || []).length) return;
+    const list = [...(formData.photos || [])];
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+    setFormData(prev => ({ ...prev, photos: list }));
   };
 
   const handleSaveCompany = async () => {
@@ -884,12 +872,40 @@ function App() {
       let driveUrl = currentData.driveUrl || null;
       let driveFileId = currentData.driveFileId || null;
 
-      // Auto upload to Google Drive if completed and enabled
+      // Auto upload Photos & PDF to Google Drive if completed and enabled
       if (!isDraft && driveSettings.webhookUrl && driveSettings.autoUpload !== false) {
         try {
           setIsUploadingDrive(true);
+          
+          // 1. Upload any pending local photos to Google Drive Photos folder
+          if (docType === 'report' && currentData.photos && currentData.photos.length > 0) {
+            const updatedPhotos = [...currentData.photos];
+            for (let i = 0; i < updatedPhotos.length; i++) {
+              const photo = updatedPhotos[i];
+              if (photo && photo.startsWith('data:image/')) {
+                try {
+                  const uploadPhotoRes = await uploadImageToGoogleDrive({
+                    webhookUrl: driveSettings.webhookUrl,
+                    folderId: driveSettings.folderId,
+                    projectName: currentData.project || 'ทั่วไป',
+                    base64Data: photo,
+                    filename: `${(currentData.project || 'photo').replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, '_')}_${currentData.date || todayStr()}_${i + 1}.jpg`
+                  });
+                  if (uploadPhotoRes && uploadPhotoRes.directImageUrl) {
+                    updatedPhotos[i] = uploadPhotoRes.directImageUrl;
+                  }
+                } catch(photoErr) {
+                  console.warn('Failed to upload photo #' + (i + 1) + ' to Drive:', photoErr.message);
+                }
+              }
+            }
+            currentData.photos = updatedPhotos;
+            setFormData(prev => ({ ...prev, photos: updatedPhotos }));
+          }
+
+          // 2. Generate and upload final compiled PDF with photos to Google Drive
           setPreviewData(currentData);
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 250));
           const base64Pdf = await generatePdfBase64('exportStagingContainer');
           if (base64Pdf) {
             const prefix = docType === 'report' ? 'Daily_Report' : (docType === 'request' ? 'Daily_Request' : (currentData.prNo || 'PR_Requisition'));
@@ -1712,42 +1728,149 @@ function App() {
               </div>
 
               <div className="card">
-                <h2>รูปภาพการทำงาน (Work Photos - แสดงแผ่นละ 6 รูปในเอกสารแนบ)</h2>
-                <div className="photo-uploader">
-                  {formData.photos.map((url, i) => (
-                    <div key={i} className="photo-card">
-                      <img src={url} alt={`work-${i}`} />
-                      <button className="del-btn" onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, idx) => idx !== i) })}>X</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                  <h2 style={{ margin: 0 }}>รูปภาพการทำงาน (Work Photos)</h2>
+                  <div style={{ fontSize: '12px', color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '6px', border: '1px solid #a7f3d0' }}>
+                    📸 ทั้งหมด {(formData.photos || []).length} รูป (จัดพิมพ์แผ่นละ 6 รูป)
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '12px' }}>
+                  {(formData.photos || []).map((url, i) => (
+                    <div 
+                      key={i} 
+                      style={{ 
+                        position: 'relative', 
+                        borderRadius: '8px', 
+                        overflow: 'hidden', 
+                        border: '1px solid #cbd5e1', 
+                        background: '#f8fafc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                      }}
+                    >
+                      {/* Image Preview Container */}
+                      <div style={{ position: 'relative', width: '100%', height: '115px', background: '#0f172a' }}>
+                        <img 
+                          src={url} 
+                          alt={`work-${i}`} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+
+                        {/* Photo Number Badge */}
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '6px', 
+                          left: '6px', 
+                          background: 'rgba(15, 23, 42, 0.8)', 
+                          color: '#fff', 
+                          padding: '2px 8px', 
+                          borderRadius: '4px', 
+                          fontSize: '11px', 
+                          fontWeight: 'bold',
+                          backdropFilter: 'blur(2px)'
+                        }}>
+                          #{i + 1}
+                        </div>
+
+                        {/* Delete Button */}
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, idx) => idx !== i) })}
+                          title="ลบรูปนี้"
+                          style={{ 
+                            position: 'absolute', 
+                            top: '6px', 
+                            right: '6px',
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            color: '#fff',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Reorder Toolbar */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '6px 8px', borderTop: '1px solid #e2e8f0' }}>
+                        <button 
+                          type="button"
+                          disabled={i === 0}
+                          onClick={() => handleMovePhoto(i, i - 1)}
+                          style={{ 
+                            padding: '3px 8px', 
+                            fontSize: '11px', 
+                            border: '1px solid #cbd5e1', 
+                            borderRadius: '4px', 
+                            background: i === 0 ? '#f1f5f9' : '#fff', 
+                            cursor: i === 0 ? 'not-allowed' : 'pointer', 
+                            color: i === 0 ? '#94a3b8' : '#1e293b',
+                            fontWeight: '600'
+                          }}
+                          title="ย้ายรูปไปข้างหน้า"
+                        >
+                          ◀ ย้ายหน้า
+                        </button>
+
+                        <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500' }}>
+                          {i < 6 ? 'แผ่นที่ 1' : `แผ่นที่ ${Math.floor(i / 6) + 1}`}
+                        </span>
+
+                        <button 
+                          type="button"
+                          disabled={i === formData.photos.length - 1}
+                          onClick={() => handleMovePhoto(i, i + 1)}
+                          style={{ 
+                            padding: '3px 8px', 
+                            fontSize: '11px', 
+                            border: '1px solid #cbd5e1', 
+                            borderRadius: '4px', 
+                            background: i === formData.photos.length - 1 ? '#f1f5f9' : '#fff', 
+                            cursor: i === formData.photos.length - 1 ? 'not-allowed' : 'pointer', 
+                            color: i === formData.photos.length - 1 ? '#94a3b8' : '#1e293b',
+                            fontWeight: '600'
+                          }}
+                          title="ย้ายรูปไปข้างหลัง"
+                        >
+                          ย้ายหลัง ▶
+                        </button>
+                      </div>
                     </div>
                   ))}
-                  <label className="photo-upload-box" onDrop={async (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                      const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-                      await handlePhotoUploadFiles(files);
-                    }
-                  }} onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }} title="คลิกเพื่อเลือกไฟล์ หรือลากรูปภาพมาวางที่นี่ (Drag & Drop)">
-                    {isUploadingPhoto ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: '#059669' }}>
-                        <span style={{ fontSize: '20px' }}>☁️</span>
-                        <span style={{ fontWeight: 'bold', fontSize: '12px' }}>กำลังอัปโหลดขึ้น Google Drive...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <span style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '2px' }}>+</span>
-                        <span style={{ fontSize: '12px' }}>คลิก หรือ ลากรูปภาพมาวางที่นี่</span>
-                        {driveSettings.webhookUrl ? (
-                          <span style={{ fontSize: '10.5px', color: '#059669', marginTop: '2px', fontWeight: '500' }}>
-                            ☁️ อัปโหลดเก็บเข้า Google Drive อัตโนมัติ (ไม่เปลือง DB)
-                          </span>
-                        ) : null}
-                      </>
-                    )}
+
+                  {/* Add Photo Drop Box */}
+                  <label 
+                    className="photo-upload-box" 
+                    style={{ minHeight: '155px', margin: 0 }}
+                    onDrop={async (e) => {
+                      e.preventDefault(); e.stopPropagation();
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                        await handlePhotoUploadFiles(files);
+                      }
+                    }} 
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }} 
+                    title="คลิกเพื่อเลือกไฟล์ หรือลากรูปภาพมาวางที่นี่ (Drag & Drop)"
+                  >
+                    <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669', marginBottom: '2px' }}>+</span>
+                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}>เพิ่มรูปภาพ</span>
+                    <span style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px', textAlign: 'center' }}>
+                      เร็วทันใจ 0ms · สลับลำดับได้อิสระ
+                    </span>
                     <input 
                       type="file" 
                       multiple 
                       accept="image/*" 
-                      disabled={isUploadingPhoto}
                       style={{ display: 'none' }} 
                       onChange={async (e) => {
                         const files = Array.from(e.target.files);
