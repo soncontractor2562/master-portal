@@ -1313,42 +1313,6 @@ function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {/* New Document Dropdown Button */}
-          <div className="new-doc-menu-wrapper">
-            <button 
-              className="btn primary" 
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontWeight: 'bold', fontSize: '13px' }}
-              onClick={() => setIsNewDocMenuOpen(!isNewDocMenuOpen)}
-            >
-              + สร้างเอกสารใหม่ <span style={{ fontSize: '10px' }}>▼</span>
-            </button>
-            {isNewDocMenuOpen && (
-              <div className="new-doc-dropdown" onClick={() => setIsNewDocMenuOpen(false)}>
-                <button className="new-doc-dropdown-item" onClick={() => handleCreateNewDoc('report')}>
-                  <span style={{ fontSize: '16px' }}>📋</span>
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>Daily Report</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>รายงานการปฏิบัติงานประจำวัน</div>
-                  </div>
-                </button>
-                <button className="new-doc-dropdown-item" onClick={() => handleCreateNewDoc('request')}>
-                  <span style={{ fontSize: '16px' }}>📝</span>
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>Daily Request</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติปฏิบัติงานประจำวัน</div>
-                  </div>
-                </button>
-                <button className="new-doc-dropdown-item" onClick={() => handleCreateNewDoc('pr')}>
-                  <span style={{ fontSize: '16px' }}>🛒</span>
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>PR / ใบสั่งซื้อ</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติสั่งซื้อวัสดุ/ของ</div>
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
-
           <div className="tabs">
             <button className={activeTab === 'hub' ? 'active' : ''} onClick={() => { setActiveTab('hub'); setShowPreview(false); }}>
               📑 ศูนย์รวมเอกสาร ({reports.length})
@@ -2170,13 +2134,47 @@ function App() {
                     จัดการเอกสารทั้งหมด, ฉบับร่าง (Drafts) และดาวน์โหลดส่งออก PDF / PNG
                   </div>
                 </div>
-                <button 
-                  className="btn primary"
-                  onClick={() => setIsNewDocMenuOpen(true)}
-                  style={{ padding: '8px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  + สร้างเอกสารใหม่
-                </button>
+
+                {/* Single Primary "+ สร้างเอกสารใหม่" Dropdown */}
+                <div className="new-doc-menu-wrapper">
+                  <button 
+                    className="btn primary"
+                    type="button"
+                    onClick={() => setIsNewDocMenuOpen(!isNewDocMenuOpen)}
+                    style={{ padding: '9px 18px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.08)' }}
+                  >
+                    + สร้างเอกสารใหม่ <span style={{ fontSize: '10px' }}>▼</span>
+                  </button>
+
+                  {isNewDocMenuOpen && (
+                    <>
+                      <div className="new-doc-backdrop" onClick={() => setIsNewDocMenuOpen(false)} />
+                      <div className="new-doc-dropdown" onClick={() => setIsNewDocMenuOpen(false)}>
+                        <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('report')}>
+                          <span style={{ fontSize: '18px' }}>📋</span>
+                          <div>
+                            <div style={{ fontWeight: 'bold' }}>Daily Report</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>รายงานการปฏิบัติงานประจำวัน</div>
+                          </div>
+                        </button>
+                        <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('request')}>
+                          <span style={{ fontSize: '18px' }}>📝</span>
+                          <div>
+                            <div style={{ fontWeight: 'bold' }}>Daily Request</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติปฏิบัติงานประจำวัน</div>
+                          </div>
+                        </button>
+                        <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('pr')}>
+                          <span style={{ fontSize: '18px' }}>🛒</span>
+                          <div>
+                            <div style={{ fontWeight: 'bold' }}>PR / ใบสั่งซื้อ</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติสั่งซื้อวัสดุ/ของ</div>
+                          </div>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Filter Pills */}
