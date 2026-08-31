@@ -792,53 +792,85 @@ function App() {
     setCurrentEditId(null);
     handleProjectChange(currentProject);
   };
-  // Upload single document to Google Drive on demand
+  // Upload single document and all photos to Google Drive
   const handleUploadDocToDrive = async (docRecord) => {
-    if (!driveSettings.webhookUrl) {
-      alert('กรุณาระบุ Google Drive Webhook URL ในแท็บ "⚙️ ตั้งค่า / ทะเบียน" ก่อน');
+    if (!driveSettings.webhookUrl || !driveSettings.webhookUrl.trim()) {
+      alert('กรุณาระบุ Google Apps Script Webhook URL ในหน้า "⚙️ ตั้งค่า" ก่อน');
       setActiveTab('company');
       return;
     }
 
     try {
       setIsUploadingDrive(true);
-      setPreviewData(docRecord);
-      
-      // Wait briefly for render
-      await new Promise(r => setTimeout(r, 200));
+      const targetDoc = { ...(docRecord || previewData) };
+      const docTypeToUse = targetDoc.docType || 'report';
+      setDocType(docTypeToUse);
+
+      // 1. Upload all local/pending photos to Google Drive Photos folder
+      if (docTypeToUse === 'report' && targetDoc.photos && targetDoc.photos.length > 0) {
+        const updatedPhotos = [...targetDoc.photos];
+        for (let i = 0; i < updatedPhotos.length; i++) {
+          const photo = updatedPhotos[i];
+          if (photo && photo.startsWith('data:image/')) {
+            try {
+              const uploadPhotoRes = await uploadImageToGoogleDrive({
+                webhookUrl: driveSettings.webhookUrl,
+                folderId: driveSettings.folderId,
+                projectName: targetDoc.project || 'ทั่วไป',
+                base64Data: photo,
+                filename: `${(targetDoc.project || 'photo').replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, '_')}_${targetDoc.date || todayStr()}_${i + 1}.jpg`,
+                overwrite: true
+              });
+              if (uploadPhotoRes && uploadPhotoRes.directImageUrl) {
+                updatedPhotos[i] = uploadPhotoRes.directImageUrl;
+              }
+            } catch(photoErr) {
+              console.warn('Failed to upload photo #' + (i + 1) + ' to Drive:', photoErr.message);
+            }
+          }
+        }
+        targetDoc.photos = updatedPhotos;
+      }
+
+      setPreviewData(targetDoc);
+      await new Promise(r => setTimeout(r, 250));
+
+      // 2. Generate and upload compiled PDF
       const base64Pdf = await generatePdfBase64('exportStagingContainer');
-      
       if (!base64Pdf) {
         throw new Error('ไม่สามารถสร้างไฟล์ PDF สำหรับอัปโหลดได้');
       }
 
-      const prefix = docRecord.docType === 'report' ? 'Daily_Report' : (docRecord.docType === 'request' ? 'Daily_Request' : (docRecord.prNo || 'PR_Requisition'));
-      const filename = `${prefix}_${docRecord.date || todayStr()}`;
+      const prefix = docTypeToUse === 'report' ? 'Daily_Report' : (docTypeToUse === 'request' ? 'Daily_Request' : (targetDoc.prNo || 'PR_Requisition'));
+      const filename = `${prefix}_${targetDoc.date || todayStr()}`;
 
       const uploadRes = await uploadToGoogleDrive({
         webhookUrl: driveSettings.webhookUrl,
         folderId: driveSettings.folderId,
         filename,
         base64Data: base64Pdf,
-        projectName: docRecord.project || 'ทั่วไป',
-        docType: docRecord.docType
+        projectName: targetDoc.project || 'ทั่วไป',
+        docType: docTypeToUse,
+        fileId: targetDoc.driveFileId || null,
+        overwrite: true
       });
 
-      if (uploadRes.fileUrl) {
-        // Save driveUrl back to document
+      if (uploadRes && uploadRes.fileUrl) {
+        // Save driveUrl & updated photos back to Supabase and local cache
         const updatedData = {
-          ...(docRecord.document_data || docRecord),
+          ...(targetDoc.document_data || targetDoc),
+          photos: targetDoc.photos || [],
           driveUrl: uploadRes.fileUrl,
           driveFileId: uploadRes.fileId,
           driveUploadedAt: new Date().toISOString()
         };
 
         await docGeneratorService.saveDocument(
-          docRecord.docType || 'report',
-          docRecord.date || todayStr(),
-          docRecord.project || '',
+          docTypeToUse,
+          targetDoc.date || todayStr(),
+          targetDoc.project || '',
           updatedData,
-          docRecord.id
+          targetDoc.id
         );
 
         const docs = await docGeneratorService.getDocuments();
@@ -856,7 +888,7 @@ function App() {
           };
         }));
 
-        alert(`✅ ส่งไฟล์ขึ้น Google Drive เรียบร้อยแล้ว!\n\n🔗 ลิงก์ไฟล์: ${uploadRes.fileUrl}`);
+        alert(`${targetDoc.driveUrl ? '🔄 อัปเดตทับไฟล์เดิมและรูปภาพบน Google Drive เรียบร้อยแล้ว (เวอร์ชันล่าสุด)!' : '✅ ส่งไฟล์รายงานและรูปภาพขึ้น Google Drive เรียบร้อยแล้ว!'}\n\n🔗 ลิงก์ไฟล์: ${uploadRes.fileUrl}`);
       }
     } catch(err) {
       alert(`เกิดข้อผิดพลาดในการส่ง Google Drive: ${err.message}`);
