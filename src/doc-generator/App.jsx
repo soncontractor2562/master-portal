@@ -185,9 +185,26 @@ function App() {
   const [hubProject, setHubProject] = useState('');
   const [isNewDocMenuOpen, setIsNewDocMenuOpen] = useState(false);
   
-  const [company, setCompany] = useState({ name: 'บริษัท ซัน คอนแทรคเตอร์ จำกัด', logo: '/logo.png' });
+  const [company, setCompany] = useState(() => {
+    try {
+      const cached = localStorage.getItem(COMPANY_KEY);
+      return cached ? JSON.parse(cached) : { name: 'บริษัท ซัน คอนแทรคเตอร์ จำกัด', logo: '/logo.png' };
+    } catch(e) {
+      return { name: 'บริษัท ซัน คอนแทรคเตอร์ จำกัด', logo: '/logo.png' };
+    }
+  });
   
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => {
+    try {
+      const cached = localStorage.getItem(PROJECTS_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch(e) {
+      return [];
+    }
+  });
+
+  const [allPresetsCache, setAllPresetsCache] = useState({ report: [], request: [], pr: [] });
+  const [defaultFormsMap, setDefaultFormsMap] = useState({ report: null, request: null, pr: null });
 
   const [preset, setPreset] = useState({
     defaultProject: '',
@@ -216,7 +233,27 @@ function App() {
     reqDefaultHasApprover: true
   });
 
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState(() => {
+    try {
+      const raw = localStorage.getItem('doc_generator_local_documents_v1');
+      if (!raw) return [];
+      const docs = JSON.parse(raw);
+      return docs.map(d => {
+        const docData = d.document_data || {};
+        return {
+          ...docData,
+          id: d.id,
+          docType: d.doc_type || docData.docType || 'report',
+          savedAt: d.created_at || docData.savedAt,
+          date: d.date || docData.date || todayStr(),
+          project: d.project_name || docData.project || '',
+          status: docData.status || d.status || 'completed'
+        };
+      });
+    } catch(e) {
+      return [];
+    }
+  });
 
   const [formData, setFormData] = useState({
     project: '', owner: '', date: todayStr(), workType: 'ปกติ', time: '8.00 - 17.00 น.',
@@ -274,98 +311,79 @@ function App() {
   const [selectedPresetName, setSelectedPresetName] = useState('');
   const [defaultFormCache, setDefaultFormCache] = useState(null);
 
+  // Parallel Initial Mount Fetching (Promise.all - Ultra Fast)
   useEffect(() => {
-    const fetchData = async () => {
+    let isMounted = true;
+
+    const fetchAllDataParallel = async () => {
       try {
-        let comp = await docGeneratorService.getCompanySettings();
-        if (comp) setCompany(comp);
+        const [comp, projs, repPresets, reqPresets, prPresets, defReport, defRequest, defPr, docs] = await Promise.all([
+          docGeneratorService.getCompanySettings().catch(() => null),
+          docGeneratorService.getProjects().catch(() => []),
+          docGeneratorService.getPresets('report_preset').catch(() => []),
+          docGeneratorService.getPresets('request_preset').catch(() => []),
+          docGeneratorService.getPresets('pr_preset').catch(() => []),
+          docGeneratorService.getDefaultForm('report').catch(() => null),
+          docGeneratorService.getDefaultForm('request').catch(() => null),
+          docGeneratorService.getDefaultForm('pr').catch(() => null),
+          docGeneratorService.getDocuments().catch(() => [])
+        ]);
 
-        let projs = await docGeneratorService.getProjects();
-        setProjects(projs);
+        if (!isMounted) return;
 
-        const currentPresetType = docType === 'report' ? 'report_preset' : (docType === 'request' ? 'request_preset' : 'pr_preset');
-        let pList = await docGeneratorService.getPresets(currentPresetType);
-
-        // --- Migrate old LocalStorage data to Supabase (Run Once) ---
-        try {
-          // 1. Migrate Presets
-          const oldPresetStr = localStorage.getItem(PRESET_KEY);
-          if (oldPresetStr) {
-            const oldPreset = JSON.parse(oldPresetStr);
-            const hasMigrated = pList.some(p => p.name === 'ค่าเริ่มต้นเดิม (Local Storage)');
-            if (!hasMigrated) {
-              await docGeneratorService.savePreset('report_preset', 'ค่าเริ่มต้นเดิม (Local Storage)', oldPreset);
-              // Also save as request preset just in case they used both
-              await docGeneratorService.savePreset('request_preset', 'ค่าเริ่มต้นเดิม (Local Storage)', oldPreset);
-              pList = await docGeneratorService.getPresets(currentPresetType);
-            }
-          }
-
-          // 2. Migrate Company (only if Supabase company is default)
-          const oldCompStr = localStorage.getItem(COMPANY_KEY);
-          if (oldCompStr) {
-            const oldComp = JSON.parse(oldCompStr);
-            // If Supabase doesn't have a logo yet or is using default name, override it
-            if (!comp || (comp.name === 'บริษัท ซัน คอนแทรคเตอร์ จำกัด' && !comp.logo)) {
-              await docGeneratorService.saveCompanySettings(oldComp);
-              setCompany(oldComp);
-              comp = oldComp;
-            }
-          }
-
-          // 3. Migrate Projects (if Supabase projects are empty)
-          const oldProjStr = localStorage.getItem(PROJECTS_KEY);
-          if (oldProjStr && projs.length === 0) {
-            const oldProjs = JSON.parse(oldProjStr);
-            if (Array.isArray(oldProjs) && oldProjs.length > 0) {
-              for (const pr of oldProjs) {
-                await docGeneratorService.saveProject({ name: pr.name, owner: pr.owner });
-              }
-              projs = await docGeneratorService.getProjects();
-              setProjects(projs);
-            }
-          }
-        } catch(err) {
-          console.error("Migration error:", err);
+        if (comp) {
+          setCompany(comp);
+          try { localStorage.setItem(COMPANY_KEY, JSON.stringify(comp)); } catch(e) {}
         }
-        // -----------------------------------------------------------
-
-        setPresetsList(pList);
-        // Auto apply global preset or current project preset on initial load
-        const curProj = docType === 'report' ? formData.project : (docType === 'request' ? reqData.project : prData.project);
-        if (curProj) {
-          const pPreset = pList.find(p => p.name === curProj);
-          if (pPreset) applyPresetToForm(pPreset.data, false);
-        } else {
-          const gPreset = pList.find(p => p.name === '__global_default__' || p.name === 'ค่าตั้งต้นกลาง');
-          if (gPreset) applyPresetToForm(gPreset.data, true);
+        if (projs && projs.length > 0) {
+          setProjects(projs);
+          try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projs)); } catch(e) {}
         }
 
-        // Load hidden default tasks
-        try {
-          const defTasks = await docGeneratorService.getDefaultForm(docType);
-          if (defTasks && defTasks.tasks) { setDefaultFormCache(defTasks); }
-        } catch(e) {}
+        const presetsMap = {
+          report: repPresets || [],
+          request: reqPresets || [],
+          pr: prPresets || []
+        };
+        setAllPresetsCache(presetsMap);
+        setPresetsList(presetsMap[docType] || []);
 
-        const docs = await docGeneratorService.getDocuments();
-        setReports(docs.map(d => {
-          const docData = d.document_data || {};
-          return {
-            ...docData,
-            id: d.id,
-            docType: d.doc_type || docData.docType || 'report',
-            savedAt: d.created_at || docData.savedAt,
-            date: d.date || docData.date || todayStr(),
-            project: d.project_name || docData.project || '',
-            status: docData.status || d.status || 'completed'
-          };
-        }));
-      } catch (e) {
-        console.error('Error fetching data:', e);
+        const defMap = {
+          report: defReport,
+          request: defRequest,
+          pr: defPr
+        };
+        setDefaultFormsMap(defMap);
+
+        if (docs && docs.length > 0) {
+          setReports(docs.map(d => {
+            const docData = d.document_data || {};
+            return {
+              ...docData,
+              id: d.id,
+              docType: d.doc_type || docData.docType || 'report',
+              savedAt: d.created_at || docData.savedAt,
+              date: d.date || docData.date || todayStr(),
+              project: d.project_name || docData.project || '',
+              status: docData.status || d.status || 'completed'
+            };
+          }));
+        }
+      } catch (err) {
+        console.error('Fast parallel fetch error:', err);
       }
     };
-    fetchData();
-  }, [docType]);
+
+    fetchAllDataParallel();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Update presets list instantly in 0ms when docType switches
+  useEffect(() => {
+    if (allPresetsCache && allPresetsCache[docType]) {
+      setPresetsList(allPresetsCache[docType]);
+    }
+  }, [docType, allPresetsCache]);
 
   // Apply a preset data object to current form
   const applyPresetToForm = (presetData, isGlobal = false) => {
