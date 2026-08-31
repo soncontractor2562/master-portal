@@ -196,7 +196,8 @@ function App() {
   const [isUploadingDrive, setIsUploadingDrive] = useState(false);
   const [driveTestStatus, setDriveTestStatus] = useState(null);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
-  const [activeSettingsModal, setActiveSettingsModal] = useState(null); // 'company' | 'gdrive' | 'projects' | null
+  const [activeSettingsModal, setActiveSettingsModal] = useState(null);
+  const [activeCardMenuId, setActiveCardMenuId] = useState(null); // 'company' | 'gdrive' | 'projects' | null
   
   const [company, setCompany] = useState(() => {
     try {
@@ -1303,30 +1304,92 @@ function App() {
 
   return (
     <div className="doc-gen-root app">
-      <div className="topbar no-print">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📑 Documents Center</span>
-            </h1>
-            <div className="sub">ระบบสร้างรายงานประจำวัน, ขออนุมัติงาน และใบขอซื้อ (PR)</div>
+      <div className="topbar no-print" style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid #e2e8f0', borderRadius: '10px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+          
+          {/* Left: App Title / Current Section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '22px' }}>📑</span>
+            <div>
+              <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#1e293b', lineHeight: 1.2 }}>
+                {activeTab === 'hub' ? 'ศูนย์รวมเอกสาร' : (activeTab === 'form' ? `ฟอร์มเอกสาร (${docType === 'report' ? 'Report' : (docType === 'request' ? 'Request' : 'PR')})` : 'ศูนย์การตั้งค่า')}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                {company.name || 'บริษัท ซัน คอนแทรคเตอร์ จำกัด'}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div className="tabs">
-            <button className={activeTab === 'hub' ? 'active' : ''} onClick={() => { setActiveTab('hub'); setShowPreview(false); }}>
-              📑 ศูนย์รวมเอกสาร ({reports.length})
-            </button>
-            {activeTab === 'form' && (
-              <button className="active" onClick={() => setShowPreview(false)}>
-                ✏️ ฟอร์มแก้ไข ({docType === 'report' ? 'Report' : (docType === 'request' ? 'Request' : 'PR')})
-              </button>
+          {/* Right: Actions & Navigation Tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {activeTab === 'hub' && (
+              <div className="new-doc-menu-wrapper">
+                <button 
+                  className="btn primary" 
+                  type="button"
+                  onClick={() => setIsNewDocMenuOpen(!isNewDocMenuOpen)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', fontWeight: 'bold', fontSize: '13px', borderRadius: '6px' }}
+                >
+                  + สร้างเอกสาร ▾
+                </button>
+                {isNewDocMenuOpen && (
+                  <>
+                    <div className="new-doc-backdrop" onClick={() => setIsNewDocMenuOpen(false)} />
+                    <div className="new-doc-dropdown" onClick={() => setIsNewDocMenuOpen(false)}>
+                      <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('report')}>
+                        <span style={{ fontSize: '18px' }}>📋</span>
+                        <div>
+                          <div style={{ fontWeight: 'bold' }}>Daily Report</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>รายงานการปฏิบัติงานประจำวัน</div>
+                        </div>
+                      </button>
+                      <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('request')}>
+                        <span style={{ fontSize: '18px' }}>📝</span>
+                        <div>
+                          <div style={{ fontWeight: 'bold' }}>Daily Request</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติปฏิบัติงานประจำวัน</div>
+                        </div>
+                      </button>
+                      <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('pr')}>
+                        <span style={{ fontSize: '18px' }}>🛒</span>
+                        <div>
+                          <div style={{ fontWeight: 'bold' }}>PR / ใบสั่งซื้อ</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติสั่งซื้อวัสดุ/ของ</div>
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
-            <button className={activeTab === 'company' ? 'active' : ''} onClick={() => { setActiveTab('company'); setShowPreview(false); }}>
-              ⚙️ ตั้งค่า / ทะเบียน
-            </button>
+
+            <div className="tabs" style={{ margin: 0 }}>
+              <button 
+                className={activeTab === 'hub' ? 'active' : ''} 
+                onClick={() => { setActiveTab('hub'); setShowPreview(false); }}
+                style={{ padding: '6px 12px', fontSize: '12.5px' }}
+              >
+                📑 รวมเอกสาร ({reports.length})
+              </button>
+              {activeTab === 'form' && (
+                <button 
+                  className="active" 
+                  onClick={() => setShowPreview(false)}
+                  style={{ padding: '6px 12px', fontSize: '12.5px' }}
+                >
+                  ✏️ ฟอร์มแก้ไข
+                </button>
+              )}
+              <button 
+                className={activeTab === 'company' ? 'active' : ''} 
+                onClick={() => { setActiveTab('company'); setShowPreview(false); }}
+                style={{ padding: '6px 12px', fontSize: '12.5px' }}
+              >
+                ⚙️ ตั้งค่า
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -2126,264 +2189,319 @@ function App() {
 
         return (
           <div id="hubTab">
-            {/* 1. Header & Filter Pills */}
-            <div className="card" style={{ marginBottom: '16px', padding: '16px' }}>
-              <div className="hub-header">
-                <div>
-                  <h2 style={{ margin: '0 0 4px 0', fontSize: '18px' }}>ศูนย์รวมเอกสาร (Documents Hub)</h2>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>
-                    จัดการเอกสารทั้งหมด, ฉบับร่าง (Drafts) และดาวน์โหลดส่งออก PDF / PNG
-                  </div>
-                </div>
-
-                {/* Single Primary "+ สร้างเอกสารใหม่" Dropdown */}
-                <div className="new-doc-menu-wrapper">
-                  <button 
-                    className="btn primary"
-                    type="button"
-                    onClick={() => setIsNewDocMenuOpen(!isNewDocMenuOpen)}
-                    style={{ padding: '9px 18px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.08)' }}
-                  >
-                    + สร้างเอกสารใหม่ <span style={{ fontSize: '10px' }}>▼</span>
-                  </button>
-
-                  {isNewDocMenuOpen && (
-                    <>
-                      <div className="new-doc-backdrop" onClick={() => setIsNewDocMenuOpen(false)} />
-                      <div className="new-doc-dropdown" onClick={() => setIsNewDocMenuOpen(false)}>
-                        <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('report')}>
-                          <span style={{ fontSize: '18px' }}>📋</span>
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>Daily Report</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>รายงานการปฏิบัติงานประจำวัน</div>
-                          </div>
-                        </button>
-                        <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('request')}>
-                          <span style={{ fontSize: '18px' }}>📝</span>
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>Daily Request</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติปฏิบัติงานประจำวัน</div>
-                          </div>
-                        </button>
-                        <button className="new-doc-dropdown-item" type="button" onClick={() => handleCreateNewDoc('pr')}>
-                          <span style={{ fontSize: '18px' }}>🛒</span>
-                          <div>
-                            <div style={{ fontWeight: 'bold' }}>PR / ใบสั่งซื้อ</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>ใบขออนุมัติสั่งซื้อวัสดุ/ของ</div>
-                          </div>
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Filter Pills */}
-              <div className="hub-stats-bar">
+            {/* 1. Compact Filter & Search Toolbar */}
+            <div className="card" style={{ marginBottom: '14px', padding: '12px 14px' }}>
+              
+              {/* Category Pills Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '8px' }}>
                 <button 
                   className={`hub-filter-pill ${hubFilter === 'all' ? 'active' : ''}`}
                   onClick={() => setHubFilter('all')}
+                  style={{ padding: '4px 10px', fontSize: '12px' }}
                 >
                   ทั้งหมด <span className="pill-count">{countAll}</span>
                 </button>
                 <button 
                   className={`hub-filter-pill ${hubFilter === 'report' ? 'active' : ''}`}
                   onClick={() => setHubFilter('report')}
+                  style={{ padding: '4px 10px', fontSize: '12px' }}
                 >
-                  📋 Daily Report <span className="pill-count">{countReport}</span>
+                  📋 Report <span className="pill-count">{countReport}</span>
                 </button>
                 <button 
                   className={`hub-filter-pill ${hubFilter === 'request' ? 'active' : ''}`}
                   onClick={() => setHubFilter('request')}
+                  style={{ padding: '4px 10px', fontSize: '12px' }}
                 >
-                  📝 Daily Request <span className="pill-count">{countRequest}</span>
+                  📝 Request <span className="pill-count">{countRequest}</span>
                 </button>
                 <button 
                   className={`hub-filter-pill ${hubFilter === 'pr' ? 'active' : ''}`}
                   onClick={() => setHubFilter('pr')}
+                  style={{ padding: '4px 10px', fontSize: '12px' }}
                 >
-                  🛒 PR / ใบสั่งซื้อ <span className="pill-count">{countPr}</span>
+                  🛒 PR <span className="pill-count">{countPr}</span>
                 </button>
                 <button 
                   className={`hub-filter-pill ${hubFilter === 'draft' ? 'active' : ''}`}
                   onClick={() => setHubFilter('draft')}
-                  style={hubFilter !== 'draft' && countDraft > 0 ? { borderColor: '#f59e0b', color: '#b45309', background: '#fffbeb' } : {}}
+                  style={{ padding: '4px 10px', fontSize: '12px', ...(hubFilter !== 'draft' && countDraft > 0 ? { borderColor: '#f59e0b', color: '#b45309', background: '#fffbeb' } : {}) }}
                 >
-                  📝 ฉบับร่าง (Drafts) <span className="pill-count">{countDraft}</span>
+                  ✏️ ฉบับร่าง <span className="pill-count">{countDraft}</span>
                 </button>
               </div>
 
-              {/* Search & Project Controls */}
-              <div className="hub-controls">
-                <div style={{ position: 'relative' }}>
+              {/* Search & Project Controls in Single Clean Row */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: '1 1 220px' }}>
                   <input 
                     type="text"
                     value={hubSearch}
                     onChange={e => setHubSearch(e.target.value)}
-                    placeholder="🔍 ค้นหาตามชื่อโครงการ, เลขที่ PR, วันที่, หรือผู้จัดทำ..."
-                    style={{ width: '100%', paddingLeft: '12px' }}
+                    placeholder="🔍 ค้นหาโครงการ, เลขที่ PR, วันที่, ผู้จัดทำ..."
+                    style={{ width: '100%', padding: '6px 10px', fontSize: '13px', borderRadius: '6px' }}
                   />
                   {hubSearch && (
                     <button 
                       onClick={() => setHubSearch('')}
-                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8' }}
+                      style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', fontSize: '13px' }}
                     >
                       ✕
                     </button>
                   )}
                 </div>
+
                 <select 
                   value={hubProject} 
                   onChange={e => setHubProject(e.target.value)}
-                  style={{ minWidth: '220px' }}
+                  style={{ flex: '0 1 180px', padding: '6px 10px', fontSize: '13px', borderRadius: '6px' }}
                 >
                   <option value="">🏢 ทุกโครงการ</option>
                   {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                 </select>
-              </div>
-            </div>
 
-            {/* 2. Documents List */}
-            <div className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <h3 style={{ margin: 0, fontSize: '15px' }}>
-                  รายการเอกสาร ({filteredReports.length} รายการ)
-                </h3>
-                {reports.length > 0 && (
-                  <button className="btn ghost" onClick={handleClearAllStorage} style={{ color: '#a13a2f', borderColor: '#e2b6ab', fontSize: '12px', padding: '4px 10px' }}>
-                    ล้างประวัติทั้งหมด
+                {(hubSearch || hubProject || hubFilter !== 'all') && (
+                  <button 
+                    className="btn ghost" 
+                    onClick={() => { setHubSearch(''); setHubProject(''); setHubFilter('all'); }}
+                    style={{ padding: '4px 10px', fontSize: '12px', color: '#64748b' }}
+                  >
+                    ล้างตัวกรอง
                   </button>
                 )}
               </div>
 
+            </div>
+
+            {/* 2. Documents List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {filteredReports.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                <div className="card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b', background: '#fff', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
                   <div style={{ fontSize: '32px', marginBottom: '8px' }}>📂</div>
                   <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#1e293b', marginBottom: '4px' }}>
                     {hubSearch || hubProject || hubFilter !== 'all' ? 'ไม่พบเอกสารตามเงื่อนไขที่ค้นหา' : 'ยังไม่มีเอกสารในระบบ'}
                   </div>
-                  <div style={{ fontSize: '13px', marginBottom: '16px' }}>
-                    {hubSearch || hubProject || hubFilter !== 'all' ? 'ลองปรับตัวกรองหรือล้างคำค้นหา' : 'กดปุ่มด้านล่างเพื่อเริ่มสร้างเอกสารใหม่'}
+                  <div style={{ fontSize: '13px', marginBottom: '14px' }}>
+                    {hubSearch || hubProject || hubFilter !== 'all' ? 'ลองปรับตัวกรองหรือล้างคำค้นหา' : 'เริ่มต้นสร้างรายงานประจำวัน ขออนุมัติงาน หรือใบขอซื้อ'}
                   </div>
                   <button 
                     className="btn primary"
+                    type="button"
                     onClick={() => setIsNewDocMenuOpen(true)}
+                    style={{ padding: '8px 16px', fontSize: '13px' }}
                   >
-                    + สร้างเอกสารใหม่ทันที
+                    + สร้างเอกสารใหม่
                   </button>
                 </div>
               ) : (
                 filteredReports.slice().reverse().map(r => (
-                  <div key={r.id} className="list-card" style={{ borderLeft: r.status === 'draft' ? '4px solid #f59e0b' : '4px solid #10b981', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                    <div className="meta" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '2px 6px',
-                          background: r.docType === 'pr' ? '#fef3c7' : (r.docType === 'request' ? '#dbeafe' : '#f0fdf4'),
-                          color: r.docType === 'pr' ? '#92400e' : (r.docType === 'request' ? '#1e40af' : '#166534'),
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 'bold'
-                        }}>
-                          {r.docType === 'pr' ? 'PR' : (r.docType === 'request' ? 'Request' : 'Report')}
-                        </span>
-                        <span className={`status-badge ${r.status === 'draft' ? 'draft' : 'completed'}`}>
-                          {r.status === 'draft' ? '📝 ฉบับร่าง' : '✅ บันทึกแล้ว'}
-                        </span>
-                        <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#1e293b' }}>
-                          {r.project || '(ไม่ระบุชื่อโครงการ)'}
-                        </span>
-                        {r.docType === 'pr' && r.prNo && (
-                          <span style={{ color: '#92400e', fontWeight: 'bold', fontSize: '12px', background: '#fef3c7', padding: '1px 6px', borderRadius: '4px', border: '1px solid #fde68a' }}>
-                            {r.prNo}
+                  <div 
+                    key={r.id} 
+                    className="card"
+                    style={{ 
+                      padding: '14px 16px', 
+                      margin: 0,
+                      borderLeft: r.status === 'draft' ? '4px solid #f59e0b' : '4px solid #10b981', 
+                      background: '#fff',
+                      borderRadius: '8px',
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '10px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                      position: 'relative'
+                    }}
+                  >
+                    {/* Top Row: Meta Tags & Title */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            padding: '2px 7px',
+                            background: r.docType === 'pr' ? '#fef3c7' : (r.docType === 'request' ? '#dbeafe' : '#f0fdf4'),
+                            color: r.docType === 'pr' ? '#92400e' : (r.docType === 'request' ? '#1e40af' : '#166534'),
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                          }}>
+                            {r.docType === 'pr' ? '🛒 PR' : (r.docType === 'request' ? '📝 Request' : '📋 Report')}
                           </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>
-                        <span>📅 วันที่: {formatThaiDate(r.date)}</span>
-                        {r.docType === 'pr' && r.requiredDate ? ` · วันที่ต้องการใช้: ${formatThaiDate(r.requiredDate)}` : ''}
-                        {r.workType ? ` · ${r.workType}` : ''}
-                        {` · ${r.signerName || r.requesterName ? `โดย ${r.signerName || r.requesterName}` : ''}`}
+                          
+                          <span className={`status-badge ${r.status === 'draft' ? 'draft' : 'completed'}`} style={{ fontSize: '11px', padding: '1px 6px' }}>
+                            {r.status === 'draft' ? 'ฉบับร่าง' : 'บันทึกแล้ว'}
+                          </span>
+
+                          {r.docType === 'pr' && r.prNo && (
+                            <span style={{ color: '#92400e', fontWeight: 'bold', fontSize: '11px', background: '#fef3c7', padding: '1px 6px', borderRadius: '4px', border: '1px solid #fde68a' }}>
+                              {r.prNo}
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#1e293b', marginTop: '2px' }}>
+                          {r.project || '(ไม่ระบุชื่อโครงการ)'}
+                        </div>
+
+                        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span>📅 {formatThaiDate(r.date)}</span>
+                          {r.signerName || r.requesterName ? <span>· โดย {r.signerName || r.requesterName}</span> : null}
+                          {r.workType ? <span>· {r.workType}</span> : null}
+                        </div>
                       </div>
                     </div>
-                    <div className="actions" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      {r.driveUrl ? (
-                        <a 
-                          href={r.driveUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="btn"
-                          style={{ padding: '5px 10px', fontSize: '12px', background: '#059669', color: '#fff', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', borderRadius: '4px' }}
-                          title="คลิกเพื่อเปิดไฟล์ PDF บน Google Drive ทันที"
-                        >
-                          📂 Google Drive ↗
-                        </a>
-                      ) : (
+
+                    {/* Bottom Row: 2 Clean Primary Actions + '···' Menu */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: '2px' }}>
+                      
+                      {/* Left: Quick Actions */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button 
-                          className="btn ghost" 
-                          onClick={() => handleUploadDocToDrive(r)}
-                          style={{ padding: '5px 10px', fontSize: '12px', color: '#059669', borderColor: '#a7f3d0', background: '#f0fdf4' }}
-                          title="แปลงเป็น PDF และส่งขึ้น Google Drive"
+                          className="btn primary" 
+                          onClick={() => handlePreviewHistory(r)} 
+                          style={{ padding: '5px 12px', fontSize: '12.5px', borderRadius: '6px', fontWeight: '600' }}
                         >
-                          📤 ส่งขึ้น Drive
+                          👁️ ดูตัวอย่าง A4
                         </button>
-                      )}
-                      <button className="btn primary" onClick={() => handlePreviewHistory(r)} style={{ padding: '5px 10px', fontSize: '12px' }}>
-                        👁️ ดูตัวอย่าง A4
-                      </button>
-                      <button 
-                        className="btn ghost" 
-                        onClick={() => {
-                          setDocType(r.docType || 'report');
-                          setPreviewData(r);
-                          setTimeout(() => {
-                            const prefix = r.docType === 'report' ? 'Daily_Report' : (r.docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
-                            exportToPdf('exportStagingContainer', `${prefix}_${r.date || ''}`);
-                          }, 100);
-                        }}
-                        style={{ padding: '5px 10px', fontSize: '12px', color: '#2f5233', borderColor: '#c7e8c7', background: '#f0fdf4' }}
-                        title="ส่งออกเป็นไฟล์ PDF ทันที"
-                      >
-                        📄 PDF
-                      </button>
-                      <button 
-                        className="btn ghost" 
-                        onClick={() => {
-                          setDocType(r.docType || 'report');
-                          setPreviewData(r);
-                          setTimeout(() => {
-                            const prefix = r.docType === 'report' ? 'Daily_Report' : (r.docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
-                            exportToImage('exportStagingContainer', `${prefix}_${r.date || ''}`);
-                          }, 100);
-                        }}
-                        style={{ padding: '5px 10px', fontSize: '12px', color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}
-                        title="ส่งออกเป็นรูปภาพ PNG ทันที"
-                      >
-                        🖼️ PNG
-                      </button>
-                      <button 
-                        className="btn ghost" 
-                        onClick={() => handleEditDoc(r)} 
-                        style={{ padding: '5px 10px', fontSize: '12px', color: '#1e293b' }}
-                        title="เปิดแก้ไขเอกสาร"
-                      >
-                        ✏️ {r.status === 'draft' ? 'แก้ไขต่อ' : 'แก้ไข'}
-                      </button>
-                      <button 
-                        className="btn ghost" 
-                        onClick={() => handleDuplicateDoc(r)} 
-                        style={{ padding: '5px 10px', fontSize: '12px', color: '#4338ca', borderColor: '#c7d2fe', background: '#eef2ff' }}
-                        title="ทำซ้ำเอกสารนี้เป็นฉบับร่างใหม่"
-                      >
-                        📋 ทำซ้ำ
-                      </button>
-                      <button className="btn ghost" onClick={() => handleDeleteDoc(r.id)} style={{ color: '#a13a2f', padding: '5px 10px', fontSize: '12px' }}>ลบ</button>
+
+                        {r.driveUrl ? (
+                          <a 
+                            href={r.driveUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="btn ghost"
+                            style={{ padding: '5px 10px', fontSize: '12px', color: '#059669', borderColor: '#a7f3d0', background: '#f0fdf4', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', borderRadius: '6px' }}
+                            title="เปิดไฟล์ PDF บน Google Drive"
+                          >
+                            📂 Drive ↗
+                          </a>
+                        ) : null}
+                      </div>
+
+                      {/* Right: More Actions '···' Dropdown */}
+                      <div style={{ position: 'relative' }}>
+                        <button 
+                          className="btn ghost"
+                          type="button"
+                          onClick={() => setActiveCardMenuId(activeCardMenuId === r.id ? null : r.id)}
+                          style={{ padding: '5px 10px', fontSize: '14px', fontWeight: 'bold', color: '#475569', borderRadius: '6px' }}
+                          title="เมนูตัวเลือกเพิ่มเติม"
+                        >
+                          ···
+                        </button>
+
+                        {activeCardMenuId === r.id && (
+                          <>
+                            <div 
+                              style={{ position: 'fixed', inset: 0, zIndex: 998 }} 
+                              onClick={() => setActiveCardMenuId(null)} 
+                            />
+                            <div 
+                              style={{
+                                position: 'absolute',
+                                right: 0,
+                                bottom: '100%',
+                                marginBottom: '6px',
+                                background: '#fff',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '8px',
+                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05)',
+                                width: '190px',
+                                zIndex: 999,
+                                padding: '4px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px'
+                              }}
+                              onClick={() => setActiveCardMenuId(null)}
+                            >
+                              <button 
+                                className="new-doc-dropdown-item"
+                                onClick={() => handleEditDoc(r)}
+                                style={{ padding: '7px 10px', fontSize: '12.5px' }}
+                              >
+                                ✏️ แก้ไขเอกสาร
+                              </button>
+
+                              <button 
+                                className="new-doc-dropdown-item"
+                                onClick={() => {
+                                  setDocType(r.docType || 'report');
+                                  setPreviewData(r);
+                                  setTimeout(() => {
+                                    const prefix = r.docType === 'report' ? 'Daily_Report' : (r.docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
+                                    exportToPdf('exportStagingContainer', `${prefix}_${r.date || ''}`);
+                                  }, 100);
+                                }}
+                                style={{ padding: '7px 10px', fontSize: '12.5px' }}
+                              >
+                                📄 ดาวน์โหลด PDF
+                              </button>
+
+                              <button 
+                                className="new-doc-dropdown-item"
+                                onClick={() => {
+                                  setDocType(r.docType || 'report');
+                                  setPreviewData(r);
+                                  setTimeout(() => {
+                                    const prefix = r.docType === 'report' ? 'Daily_Report' : (r.docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
+                                    exportToImage('exportStagingContainer', `${prefix}_${r.date || ''}`);
+                                  }, 100);
+                                }}
+                                style={{ padding: '7px 10px', fontSize: '12.5px' }}
+                              >
+                                🖼️ ดาวน์โหลด PNG
+                              </button>
+
+                              {!r.driveUrl && (
+                                <button 
+                                  className="new-doc-dropdown-item"
+                                  onClick={() => handleUploadDocToDrive(r)}
+                                  style={{ padding: '7px 10px', fontSize: '12.5px', color: '#059669' }}
+                                >
+                                  📤 อัปโหลดขึ้น Drive
+                                </button>
+                              )}
+
+                              <button 
+                                className="new-doc-dropdown-item"
+                                onClick={() => handleDuplicateDoc(r)}
+                                style={{ padding: '7px 10px', fontSize: '12.5px', color: '#4338ca' }}
+                              >
+                                📋 ทำซ้ำฉบับร่าง
+                              </button>
+
+                              <div style={{ height: '1px', background: '#f1f5f9', margin: '2px 0' }}></div>
+
+                              <button 
+                                className="new-doc-dropdown-item"
+                                onClick={() => handleDeleteDoc(r.id)}
+                                style={{ padding: '7px 10px', fontSize: '12.5px', color: '#dc2626' }}
+                              >
+                                🗑️ ลบเอกสาร
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
                     </div>
                   </div>
                 ))
               )}
             </div>
+
+            {/* Clear history button at bottom of list if documents exist */}
+            {reports.length > 0 && (
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <button 
+                  className="btn ghost" 
+                  onClick={handleClearAllStorage} 
+                  style={{ color: '#94a3b8', borderColor: 'transparent', fontSize: '11px', padding: '4px 8px' }}
+                >
+                  ล้างประวัติเอกสารทั้งหมด ({reports.length})
+                </button>
+              </div>
+            )}
+
           </div>
         );
       })()}
