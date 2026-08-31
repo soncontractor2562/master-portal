@@ -36,14 +36,14 @@ export const docGeneratorService = {
 
   // Hidden "Default Form" preset — not shown in the dropdown
   async getDefaultForm(docType) {
-    const key = docType === 'report' ? '__default_form_report__' : '__default_form_request__';
+    const key = docType === 'report' ? '__default_form_report__' : (docType === 'request' ? '__default_form_request__' : '__default_form_pr__');
     const { data, error } = await supabase.from('doc_generator_presets')
       .select('data').eq('type', key).is('name', null).maybeSingle();
     if (error) console.error('Error fetching default form:', error);
     return data ? data.data : null;
   },
   async saveDefaultForm(docType, formData) {
-    const key = docType === 'report' ? '__default_form_report__' : '__default_form_request__';
+    const key = docType === 'report' ? '__default_form_report__' : (docType === 'request' ? '__default_form_request__' : '__default_form_pr__');
     const { error } = await supabase.from('doc_generator_presets')
       .upsert({ type: key, name: null, data: formData, updated_at: new Date().toISOString() }, { onConflict: 'type, name' });
     if (error) console.error('Error saving default form:', error);
@@ -58,8 +58,9 @@ export const docGeneratorService = {
     }
     return data;
   },
-  async addProject(name, owner) {
-    const { data, error } = await supabase.from('doc_generator_projects').insert([{ name, owner }]).select();
+  async addProject(nameOrObj, owner = '', pr_prefix = '', pr_start_no = 1) {
+    const payload = typeof nameOrObj === 'object' ? nameOrObj : { name: nameOrObj, owner, pr_prefix, pr_start_no };
+    const { data, error } = await supabase.from('doc_generator_projects').insert([payload]).select();
     if (error) console.error('Error adding project:', error);
     return data ? data[0] : null;
   },
