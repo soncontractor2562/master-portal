@@ -26,7 +26,7 @@
 /* ==========================================================================
    TAILWIND PREFLIGHT REVERSALS FOR DOC-GENERATOR
    ========================================================================== */
-.doc-gen-root input,
+.doc-gen-root input:not([type="checkbox"]):not([type="radio"]),
 .doc-gen-root select,
 .doc-gen-root textarea {
   box-sizing: border-box !important;
@@ -43,6 +43,30 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+}
+
+.doc-gen-root input[type="checkbox"] {
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+  appearance: auto !important;
+  box-sizing: border-box !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  accent-color: #059669 !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+.doc-gen-root input[type="radio"] {
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+  appearance: auto !important;
+  accent-color: #059669 !important;
+  cursor: pointer !important;
 }
 
 .doc-gen-root h1,

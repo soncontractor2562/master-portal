@@ -1796,29 +1796,38 @@ function App() {
                 </div>
 
                 <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid var(--line)" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "600", fontSize: "14px", color: "var(--text)" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "600", fontSize: "14px", color: "var(--primary)" }}>
                     <input 
                       type="checkbox" 
                       checked={reqData.hasApprover !== false} 
                       onChange={e => setReqData({ ...reqData, hasApprover: e.target.checked })} 
-                      style={{ width: "18px", height: "18px", accentColor: "var(--primary)", cursor: "pointer" }}
                     />
                     ต้องการระบุส่วนผู้อนุมัติในเอกสาร (Approver Section)
                   </label>
                 </div>
 
                 {reqData.hasApprover !== false && (
-                  <div style={{ marginTop: "16px", background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "var(--primary)" }}>ข้อมูลผู้อนุมัติ (เว้นว่างไว้ให้เซ็นภายหลังได้)</h3>
+                  <div style={{ marginTop: "16px", background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #cbd5e1" }}>
+                    <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1e293b", display: "flex", alignItems: "center", gap: "6px" }}>
+                      ✍️ ข้อมูลผู้อนุมัติ (สามารถระบุล่วงหน้า หรือเว้นว่างไว้ให้เซ็นมือภายหลังได้)
+                    </h3>
                     <div className="grid">
                       <div className="field">
-                        <label>ชื่อ-สกุล</label>
-                        <input type="text" value={reqData.approverName} onChange={e => setReqData({ ...reqData, approverName: e.target.value })} placeholder="ชื่อ-สกุล ผู้อนุมัติ" />
+                        <label>ชื่อ-สกุล ผู้อนุมัติ</label>
+                        <input type="text" value={reqData.approverName || ''} onChange={e => setReqData({ ...reqData, approverName: e.target.value })} placeholder="เช่น นายวิศวกร ควบคุมงาน (หรือเว้นว่าง)" />
                       </div>
                       <div className="field">
-                        <label>ตำแหน่ง</label>
-                        <input type="text" value={reqData.approverRole} onChange={e => setReqData({ ...reqData, approverRole: e.target.value })} placeholder="ระบุตำแหน่ง เช่น ที่ปรึกษาโครงการฯ" />
+                        <label>ตำแหน่ง ผู้อนุมัติ</label>
+                        <input type="text" value={reqData.approverRole || ''} onChange={e => setReqData({ ...reqData, approverRole: e.target.value })} placeholder="เช่น ที่ปรึกษาโครงการฯ / ผู้จัดการโครงการ" />
                       </div>
+                      <div className="field">
+                        <label>วันที่อนุมัติ (เว้นว่างได้)</label>
+                        <input type="date" value={reqData.approverDate || ''} onChange={e => setReqData({ ...reqData, approverDate: e.target.value })} />
+                      </div>
+                    </div>
+                    <div style={{ marginTop: "12px" }}>
+                      <label style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px", display: "block" }}>แปะรูปลายเซ็นผู้อนุมัติ (ทางเลือก - เว้นว่างไว้เซ็นสดได้):</label>
+                      <SignaturePad currentSignature={reqData.approverSignature} onSave={(imgBase64) => setReqData({ ...reqData, approverSignature: imgBase64 })} />
                     </div>
                   </div>
                 )}

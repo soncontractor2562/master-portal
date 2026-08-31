@@ -102,11 +102,17 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
               </div>
 
               <div className="signer-box" style={{ width: '100%', minWidth: 'auto', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ height: '24px' }}></div>
+                <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', width: '100%', marginBottom: '4px' }}>
+                  {data.approverSignature ? (
+                    <img src={data.approverSignature} alt="approver signature" style={{ maxHeight: '48px', maxWidth: '160px', objectFit: 'contain' }} />
+                  ) : (
+                    <div style={{ height: '24px' }}></div>
+                  )}
+                </div>
                 <div className="signer-line" style={{ width: '160px', margin: '0 auto 8px', borderBottom: '1px solid currentColor' }}></div>
                 <div className="signer-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>({data.approverName || '...................................................'})</div>
-                <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.approverRole || 'ที่ปรึกษาโครงการฯ'}</div>
-                <div className="signer-date">วันที่: ......../......../........</div>
+                <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.approverRole || 'ที่ปรึกษาโครงการฯ / ผู้จัดการโครงการ'}</div>
+                <div className="signer-date">วันที่: {data.approverDate ? formatThaiDate(data.approverDate) : '......../......../........'}</div>
               </div>
             </div>
 
