@@ -1017,13 +1017,11 @@ function App() {
   const handleExportPdfA4 = () => {
     const prefix = docType === 'report' ? 'Daily_Report' : (docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
     exportToPdf('exportStagingContainer', `${prefix}_${previewData?.date || ''}`);
-    exportToPdf(targetId, `${docType === 'report' ? 'Daily_Report' : 'Daily_Request'}_${previewData?.date}`);
   };
 
   const handleExportImageA4 = () => {
     const prefix = docType === 'report' ? 'Daily_Report' : (docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
     exportToImage('exportStagingContainer', `${prefix}_${previewData?.date || ''}`);
-    exportToImage(targetId, `${docType === 'report' ? 'Daily_Report' : 'Daily_Request'}_${previewData?.date}`);
   };
 
   const renderGeneralInfo = (data, setData) => {
@@ -3320,6 +3318,156 @@ function doGet(e) {
 
               <p><strong>ขั้นตอนที่ 4:</strong> กด Deploy แล้วคัดลอก <strong>Web app URL</strong> มาวางในช่องตั้งค่าด้านบน แล้วกด <strong>"⚡ ทดสอบการเชื่อมต่อ"</strong> ได้เลยครับ!</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================
+          A4 DOCUMENT PREVIEW MODAL / VIEWER
+         ============================================================ */}
+      {showPreview && previewData && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            background: 'rgba(15, 23, 42, 0.75)', 
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999, 
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            overflowY: 'auto',
+            padding: '16px 10px 40px' 
+          }}
+          onClick={() => setShowPreview(false)}
+        >
+          {/* Top Control Bar in Modal */}
+          <div 
+            style={{ 
+              maxWidth: '900px', 
+              width: '100%', 
+              background: '#fff', 
+              borderRadius: '10px', 
+              padding: '12px 18px', 
+              marginBottom: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px',
+              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>
+                {docType === 'report' ? '📋' : (docType === 'request' ? '📝' : '🛒')}
+              </span>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#1e293b' }}>
+                  ตัวอย่างเอกสาร A4: {previewData.project || 'ไม่ระบุโครงการ'}
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                  {docType === 'report' ? 'Daily Report' : (docType === 'request' ? 'Daily Request' : 'PR / ใบขออนุมัติสั่งซื้อ')} · วันที่ {formatThaiDate(previewData.date)}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Theme Toggle */}
+              <div style={{ display: 'flex', border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+                <button 
+                  className={`btn ${reportTheme === 'modern' ? 'primary' : 'ghost'}`}
+                  type="button"
+                  onClick={() => setReportTheme('modern')}
+                  style={{ padding: '4px 10px', fontSize: '11px', borderRadius: 0, border: 'none' }}
+                >
+                  โมเดิร์น
+                </button>
+                <button 
+                  className={`btn ${reportTheme === 'classic' ? 'primary' : 'ghost'}`}
+                  type="button"
+                  onClick={() => setReportTheme('classic')}
+                  style={{ padding: '4px 10px', fontSize: '11px', borderRadius: 0, border: 'none' }}
+                >
+                  คลาสสิก
+                </button>
+              </div>
+
+              <button 
+                className="btn primary" 
+                type="button"
+                onClick={handleExportPdfA4}
+                style={{ padding: '6px 12px', fontSize: '12.5px', background: '#059669', borderColor: '#059669' }}
+              >
+                📄 ส่งออก PDF
+              </button>
+
+              <button 
+                className="btn ghost" 
+                type="button"
+                onClick={handleExportImageA4}
+                style={{ padding: '6px 12px', fontSize: '12.5px', color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}
+              >
+                🖼️ บันทึกรูปภาพ
+              </button>
+
+              <button 
+                className="btn ghost" 
+                type="button"
+                onClick={() => setShowPreview(false)}
+                style={{ padding: '6px 10px', fontSize: '16px', fontWeight: 'bold', color: '#64748b' }}
+                title="ปิดตัวอย่าง"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Scaled A4 Preview Container */}
+          <div 
+            id="previewCard" 
+            ref={a4ContainerRef}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div id="exportStagingContainer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+              {docType === 'report' && (
+                renderFullReportPages(previewData, reportTheme === 'classic' ? 'classic-theme' : 'modern-theme', previewScale)
+              )}
+              {docType === 'request' && (
+                <ScaledA4Page scale={previewScale}>
+                  <DailyRequestView 
+                    data={previewData} 
+                    company={company} 
+                    themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} 
+                  />
+                </ScaledA4Page>
+              )}
+              {docType === 'pr' && (
+                <ScaledA4Page scale={previewScale}>
+                  <PurchaseRequisitionView 
+                    data={previewData} 
+                    company={company} 
+                    themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} 
+                    formatThaiDate={formatThaiDate}
+                  />
+                </ScaledA4Page>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Staging Container for background export when preview is not open */}
+      {!showPreview && previewData && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none' }}>
+          <div id="exportStagingContainer" style={{ width: '794px' }}>
+            {docType === 'report' && renderFullReportPages(previewData, reportTheme === 'classic' ? 'classic-theme' : 'modern-theme', 1)}
+            {docType === 'request' && <DailyRequestView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} />}
+            {docType === 'pr' && <PurchaseRequisitionView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} formatThaiDate={formatThaiDate} />}
           </div>
         </div>
       )}
