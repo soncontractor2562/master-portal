@@ -362,7 +362,8 @@ async function apiPost(pathStr, body) {
       // เช็คว่าปลายทางเป็นไซต์งานหรือไม่
       const { data: locs, error: locErr } = await supabaseClient.from('store_locations').select('*').eq('name', body.toLocation);
       if (locErr) throw locErr;
-      const isSite = locs && locs.length > 0 && locs[0].type === 'ไซต์งาน';
+      const targetLoc = locs && locs.length > 0 ? locs[0] : null;
+      const isSite = targetLoc ? (targetLoc.require_receive !== undefined && targetLoc.require_receive !== null ? !!targetLoc.require_receive : targetLoc.type === 'ไซต์งาน') : false;
       
       const pendingItems = [];
       const histories = [];
@@ -538,35 +539,65 @@ async function apiPost(pathStr, body) {
       
       return { success: true, message: 'เปลี่ยนชื่อเป็น ' + newName + ' สำเร็จ (อัปเดตประวัติทั้งหมดแล้ว)' };
     }
-    if (pathStr === '/api/locations/rename') {
-      const { oldName, newName } = body;
-      const { data: exist, error: e1 } = await supabaseClient.from('store_locations').select('*').eq('name', newName);
-      if (e1) throw e1;
-      if (exist && exist.length > 0) throw new Error('มีชื่อสถานที่นี้แล้ว');
-      const { error: e2 } = await supabaseClient.from('store_locations').update({ name: newName }).eq('name', oldName);
-      if (e2) throw e2;
-      const { data: items, error: e3 } = await supabaseClient.from('store_items').select('*');
-      if (e3) throw e3;
-      if (items) {
-        for (const item of items) {
-          if (item.quantities && item.quantities[oldName] !== undefined) {
-            const val = item.quantities[oldName];
-            delete item.quantities[oldName];
-            item.quantities[newName] = val;
-            await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
-          }
-        }
+    if (pathStr === '/api/locations/update' || pathStr === '/api/locations/rename') {
+      const { oldName, newName, type, require_receive } = body;
+      const nameToSet = (newName && newName.trim()) ? newName.trim() : oldName;
+      
+      if (nameToSet !== oldName) {
+        const { data: exist, error: e1 } = await supabaseClient.from('store_locations').select('*').eq('name', nameToSet);
+        if (e1) throw e1;
+        if (exist && exist.length > 0) throw new Error('มีชื่อสถานที่นี้แล้ว');
       }
       
-      // Cascade to history
-      await supabaseClient.from('store_history').update({ fromLocation: newName }).eq('fromLocation', oldName);
-      await supabaseClient.from('store_history').update({ toLocation: newName }).eq('toLocation', oldName);
+      let updatePayload = { name: nameToSet };
+      if (type) updatePayload.type = type;
+      if (require_receive !== undefined) updatePayload.require_receive = !!require_receive;
       
-      // Cascade to pending moves
-      await supabaseClient.from('store_pending_moves').update({ from_location: newName }).eq('from_location', oldName);
-      await supabaseClient.from('store_pending_moves').update({ to_location: newName }).eq('to_location', oldName);
+      let { error: e2 } = await supabaseClient.from('store_locations').update(updatePayload).eq('name', oldName);
+      if (e2 && e2.message && e2.message.includes('require_receive')) {
+        delete updatePayload.require_receive;
+        const resFb = await supabaseClient.from('store_locations').update(updatePayload).eq('name', oldName);
+        e2 = resFb.error;
+      }
+      if (e2) throw e2;
       
-      return { success: true, message: 'เปลี่ยนชื่อสถานที่เป็น ' + newName + ' สำเร็จ (อัปเดตประวัติทั้งหมดแล้ว)' };
+      if (nameToSet !== oldName) {
+        const { data: items, error: e3 } = await supabaseClient.from('store_items').select('*');
+        if (e3) throw e3;
+        if (items) {
+          for (const item of items) {
+            if (item.quantities && item.quantities[oldName] !== undefined) {
+              const val = item.quantities[oldName];
+              delete item.quantities[oldName];
+              item.quantities[nameToSet] = val;
+              await supabaseClient.from('store_items').update({ quantities: item.quantities }).eq('id', item.id);
+            }
+          }
+        }
+        
+        // Cascade to history
+        await supabaseClient.from('store_history').update({ fromLocation: nameToSet }).eq('fromLocation', oldName);
+        await supabaseClient.from('store_history').update({ toLocation: nameToSet }).eq('toLocation', oldName);
+        
+        // Cascade to pending moves
+        await supabaseClient.from('store_pending_moves').update({ from_location: nameToSet }).eq('from_location', oldName);
+        await supabaseClient.from('store_pending_moves').update({ to_location: nameToSet }).eq('to_location', oldName);
+
+        // Cascade to users assigned_location
+        try {
+          const { data: users } = await supabaseClient.from('store_users').select('*');
+          if (users) {
+            for (const u of users) {
+              if (u.assigned_location && u.assigned_location.includes(oldName)) {
+                const updatedAssigned = u.assigned_location.split(',').map(s => s.trim() === oldName ? nameToSet : s.trim()).join(',');
+                await supabaseClient.from('store_users').update({ assigned_location: updatedAssigned }).eq('id', u.id);
+              }
+            }
+          }
+        } catch (_) {}
+      }
+      
+      return { success: true, message: 'บันทึกข้อมูลสถานที่ ' + nameToSet + ' สำเร็จ' };
     }
 
     if (pathStr === '/api/inventory/add-item') {
@@ -618,9 +649,17 @@ async function apiPost(pathStr, body) {
       const { data: maxColLoc, error: err2 } = await supabaseClient.from('store_locations').select('col').order('col', { ascending: false }).limit(1);
       if (err2) throw err2;
       const nextCol = (maxColLoc && maxColLoc.length > 0 ? maxColLoc[0].col : 0) + 1;
-      const { error: err3 } = await supabaseClient.from('store_locations').insert([{
-        name: body.name, type: body.type || 'ไซต์งาน', col: nextCol, archived: false, hideCount: false
-      }]);
+      const reqRec = body.require_receive !== undefined ? !!body.require_receive : (body.type === 'ไซต์งาน');
+      
+      let insertPayload = {
+        name: body.name, type: body.type || 'ไซต์งาน', col: nextCol, archived: false, hideCount: false, require_receive: reqRec
+      };
+      let { error: err3 } = await supabaseClient.from('store_locations').insert([insertPayload]);
+      if (err3 && err3.message && err3.message.includes('require_receive')) {
+        delete insertPayload.require_receive;
+        const resFb = await supabaseClient.from('store_locations').insert([insertPayload]);
+        err3 = resFb.error;
+      }
       if (err3) throw err3;
       return { success: true, message: 'เพิ่มสถานที่ ' + body.name + ' เรียบร้อย' };
     }
@@ -2222,6 +2261,12 @@ function startRenameCat(oldName) {
 }
 
 // ---- Location management ----
+function onNewLocTypeChange() {
+  var t = document.getElementById('newLocType').value;
+  var cb = document.getElementById('newLocRequireReceive');
+  if (cb) cb.checked = (t === 'ไซต์งาน');
+}
+
 function renderLocationManageList() {
   var container = document.getElementById('locationManageList');
   if (!container) return;
@@ -2232,20 +2277,29 @@ function renderLocationManageList() {
   }
   container.innerHTML = allLocs.map(function(loc) {
     var isActive = !loc.archived;
-    return '<div class="loc-manage-row">' +
-      '<span style="font-size:20px;">' + getLocIcon(loc) + '</span>' +
-      '<div style="flex:1;min-width:0;">' +
-      '<div style="font-size:13px;font-weight:600;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;">' + loc.name + '</div>' +
-      '<div style="font-size:11px;color:#64748b;">' + getLocTypeLabel(loc.type) + '</div>' +
+    var reqRec = loc.require_receive !== undefined && loc.require_receive !== null ? loc.require_receive : (loc.type === 'ไซต์งาน');
+    var receiveBadge = reqRec
+      ? '<span style="font-size:10px; background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); padding:1px 6px; border-radius:4px;">📥 ต้องรอรับ</span>'
+      : '<span style="font-size:10px; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); padding:1px 6px; border-radius:4px;">⚡ เข้าสต็อกทันที</span>';
+
+    return '<div class="loc-manage-row" style="display:flex; align-items:center; gap:8px; padding:10px; border-bottom:1px solid var(--border);">' +
+      '<span style="font-size:22px; flex-shrink:0;">' + getLocIcon(loc) + '</span>' +
+      '<div style="flex:1; min-width:0;">' +
+      '<div style="font-size:13px; font-weight:700; color:#e2e8f0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + esc(loc.name) + '</div>' +
+      '<div style="display:flex; align-items:center; gap:6px; margin-top:3px; flex-wrap:wrap;">' +
+      '<span style="font-size:11px; color:#94a3b8; font-weight:600;">' + getLocTypeLabel(loc.type) + '</span>' +
+      receiveBadge +
       '</div>' +
-      '<button onclick="startRenameLocation(\'' + esc(loc.name) + '\')" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px;font-family:\'Sarabun\',sans-serif;margin-right:8px;">✏️</button>' +
-      '<button onclick="startDeleteLocation(\'' + esc(loc.name) + '\')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px;font-family:\'Sarabun\',sans-serif;margin-right:8px;">🗑️</button>' +
-      '<label class="toggle-switch">' +
+      '</div>' +
+      '<button onclick="openEditLocationModal(\'' + esc(loc.name) + '\')" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:\'Sarabun\',sans-serif;font-weight:600;display:flex;align-items:center;gap:4px;" title="แก้ไขสถานที่">✏️ แก้ไข</button>' +
+      '<button onclick="startDeleteLocation(\'' + esc(loc.name) + '\')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-family:\'Sarabun\',sans-serif;" title="ลบ">🗑️</button>' +
+      '<label class="toggle-switch" title="เปิด/ปิดการแสดงผล">' +
       '<input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleArchiveLocation(\'' + esc(loc.name) + '\', this.checked)" />' +
       '<span class="toggle-slider"></span>' +
       '</label></div>';
   }).join('');
 }
+
 async function toggleArchiveLocation(name, active) {
   try {
     await apiPost('/api/locations/archive', { name: name, archived: !active });
@@ -2256,14 +2310,16 @@ async function toggleArchiveLocation(name, active) {
     await loadInventory();
   } catch (err) { showToast(err.message, 'error'); renderLocationManageList(); }
 }
+
 async function confirmAddLocation() {
   var name = document.getElementById('newLocName').value.trim();
   var type = document.getElementById('newLocType').value;
+  var reqRec = document.getElementById('newLocRequireReceive') ? document.getElementById('newLocRequireReceive').checked : (type === 'ไซต์งาน');
   if (!name) { showToast('กรุณาระบุชื่อสถานที่', 'error'); return; }
   var btn = document.getElementById('addLocBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังเพิ่ม...'; }
   try {
-    var res = await apiPost('/api/locations/add', { name: name, type: type });
+    var res = await apiPost('/api/locations/add', { name: name, type: type, require_receive: reqRec });
     showToast(res.message, 'success');
     document.getElementById('newLocName').value = '';
     var data = await apiGet('/api/locations');
@@ -2272,6 +2328,68 @@ async function confirmAddLocation() {
     await loadInventory();
   } catch (err) { showToast(err.message, 'error'); }
   finally { if (btn) { btn.disabled = false; btn.textContent = '✅ เพิ่มสถานที่'; } }
+}
+
+// ====== EDIT LOCATION MODAL ======
+function openEditLocationModal(locName) {
+  var loc = state.allLocations.find(function(l) { return l.name === locName; });
+  if (!loc) return;
+  document.getElementById('editLocOldName').value = loc.name;
+  document.getElementById('editLocName').value = loc.name;
+  document.getElementById('editLocType').value = loc.type || 'ไซต์งาน';
+  
+  var reqRec = loc.require_receive !== undefined && loc.require_receive !== null ? loc.require_receive : (loc.type === 'ไซต์งาน');
+  document.getElementById('editLocRequireReceive').checked = !!reqRec;
+  
+  document.getElementById('editLocationModal').style.display = 'flex';
+}
+
+function closeEditLocationModal(e) {
+  if (e && e.target !== document.getElementById('editLocationModal')) return;
+  document.getElementById('editLocationModal').style.display = 'none';
+}
+
+function onEditLocTypeChange() {
+  var t = document.getElementById('editLocType').value;
+  var cb = document.getElementById('editLocRequireReceive');
+  if (cb) cb.checked = (t === 'ไซต์งาน');
+}
+
+async function saveEditLocation() {
+  var oldName = document.getElementById('editLocOldName').value;
+  var newName = document.getElementById('editLocName').value.trim();
+  var type = document.getElementById('editLocType').value;
+  var reqRec = document.getElementById('editLocRequireReceive').checked;
+  
+  if (!newName) {
+    showToast('กรุณาระบุชื่อสถานที่', 'error');
+    return;
+  }
+  
+  var btn = document.getElementById('saveEditLocBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
+  try {
+    var res = await apiPost('/api/locations/update', {
+      oldName: oldName,
+      newName: newName,
+      type: type,
+      require_receive: reqRec
+    });
+    showToast(res.message, 'success');
+    document.getElementById('editLocationModal').style.display = 'none';
+    var data = await apiGet('/api/locations');
+    state.allLocations = data.locations || [];
+    renderLocationManageList();
+    await loadInventory();
+  } catch (err) {
+    showToast('บันทึกล้มเหลว: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกการเปลี่ยนแปลง'; }
+  }
+}
+
+function startRenameLocation(oldName) {
+  openEditLocationModal(oldName);
 }
 
 // ====== TOAST ======
@@ -2346,23 +2464,7 @@ function startRenameItem() {
 }
 
 
-function startRenameLocation(oldName) {
-  var newName = prompt('เปลี่ยนชื่อสถานที่ "' + oldName + '" เป็น:', oldName);
-  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
-  apiPost('/api/locations/rename', { oldName: oldName, newName: newName.trim() })
-    .then(function(res) {
-      showToast(res.message, 'success');
-      return apiGet('/api/locations');
-    })
-    .then(function(data) {
-      state.allLocations = data.locations || [];
-      renderLocationManageList();
-      return loadInventory();
-    })
-    .catch(function(err) {
-      alert('Error: ' + err.message);
-    });
-}
+// startRenameLocation is now aliased to openEditLocationModal
 
 
 // ====== PENDING PAGE ======
