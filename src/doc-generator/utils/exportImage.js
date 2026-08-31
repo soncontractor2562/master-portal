@@ -8,6 +8,22 @@ function isMobileDevice() {
   return isMobileUA || isIpadOS;
 }
 
+async function waitForImagesToLoad(container) {
+  if (!container) return;
+  const images = Array.from(container.querySelectorAll('img'));
+  if (images.length === 0) return;
+  await Promise.all(
+    images.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        setTimeout(resolve, 2500);
+      });
+    })
+  );
+}
+
 export async function exportToImage(containerId, filename) {
   try {
     if (document.fonts && document.fonts.ready) {
@@ -22,6 +38,10 @@ export async function exportToImage(containerId, filename) {
       alert('ไม่พบองค์ประกอบรายงาน');
       return false;
     }
+
+    // Ensure all images are fully loaded and rendered before capturing
+    await waitForImagesToLoad(container);
+    await new Promise(r => setTimeout(r, 100));
     
     const pages = container.querySelectorAll('.a4-page');
     const filesToShare = [];

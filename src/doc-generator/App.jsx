@@ -20,6 +20,37 @@ const THAI_MONTHS_FULL = [
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ];
 
+function preloadDocumentImages(data, company) {
+  const urls = [];
+  if (company && company.logo) urls.push(company.logo);
+  if (data) {
+    if (data.signatureImage) urls.push(data.signatureImage);
+    if (data.requesterSignature) urls.push(data.requesterSignature);
+    if (data.approverSignature) urls.push(data.approverSignature);
+    if (data.managerSignature) urls.push(data.managerSignature);
+    if (Array.isArray(data.photos)) {
+      data.photos.forEach(p => {
+        if (p && typeof p === 'string' && p.trim()) urls.push(p.trim());
+      });
+    }
+  }
+
+  if (urls.length === 0) return Promise.resolve();
+
+  return Promise.all(
+    urls.map(url => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+      if (url.includes('googleusercontent.com') || url.includes('drive.google.com')) {
+        img.crossOrigin = 'anonymous';
+      }
+      img.src = url;
+      setTimeout(resolve, 2000); // safety fallback timeout
+    }))
+  );
+}
+
 function formatThaiDate(dateStr) {
   if (!dateStr) return '-';
   const parts = dateStr.split('-');
@@ -198,6 +229,7 @@ function App() {
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [activeSettingsModal, setActiveSettingsModal] = useState(null);
   const [activeCardMenuId, setActiveCardMenuId] = useState(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); // 'company' | 'gdrive' | 'projects' | null
   
   const [company, setCompany] = useState(() => {
@@ -1051,15 +1083,28 @@ function App() {
     setReports(updated);
   };
 
-  const handlePreview = () => {
-    setPreviewData(docType === 'report' ? formData : (docType === 'request' ? reqData : prData));
+  const handlePreview = async () => {
+    const data = docType === 'report' ? formData : (docType === 'request' ? reqData : prData);
+    setIsLoadingPreview(true);
+    setPreviewData(data);
+    try {
+      await preloadDocumentImages(data, company);
+      await new Promise(r => setTimeout(r, 120));
+    } catch(e) {}
+    setIsLoadingPreview(false);
     setShowPreview(true);
     setTimeout(() => document.getElementById('previewCard')?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
 
-  const handlePreviewHistory = (r) => {
+  const handlePreviewHistory = async (r) => {
+    setIsLoadingPreview(true);
     setDocType(r.docType || 'report');
     setPreviewData(r);
+    try {
+      await preloadDocumentImages(r, company);
+      await new Promise(r => setTimeout(r, 120));
+    } catch(e) {}
+    setIsLoadingPreview(false);
     setShowPreview(true);
     setTimeout(() => document.getElementById('previewCard')?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
@@ -2633,36 +2678,6 @@ function App() {
 
                               <button 
                                 className="new-doc-dropdown-item"
-                                onClick={() => {
-                                  setDocType(r.docType || 'report');
-                                  setPreviewData(r);
-                                  setTimeout(() => {
-                                    const prefix = r.docType === 'report' ? 'Daily_Report' : (r.docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
-                                    exportToPdf('exportStagingContainer', `${prefix}_${r.date || ''}`);
-                                  }, 100);
-                                }}
-                                style={{ padding: '7px 10px', fontSize: '12.5px' }}
-                              >
-                                📄 ดาวน์โหลด PDF
-                              </button>
-
-                              <button 
-                                className="new-doc-dropdown-item"
-                                onClick={() => {
-                                  setDocType(r.docType || 'report');
-                                  setPreviewData(r);
-                                  setTimeout(() => {
-                                    const prefix = r.docType === 'report' ? 'Daily_Report' : (r.docType === 'request' ? 'Daily_Request' : 'PR_Requisition');
-                                    exportToImage('exportStagingContainer', `${prefix}_${r.date || ''}`);
-                                  }, 100);
-                                }}
-                                style={{ padding: '7px 10px', fontSize: '12.5px' }}
-                              >
-                                🖼️ ดาวน์โหลด PNG
-                              </button>
-
-                              <button 
-                                className="new-doc-dropdown-item"
                                 type="button"
                                 onClick={() => handleUploadDocToDrive(r)}
                                 style={{ padding: '7px 10px', fontSize: '12.5px', color: '#059669', fontWeight: '600' }}
@@ -3676,6 +3691,15 @@ function doGet(e) {
             {docType === 'request' && <DailyRequestView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} />}
             {docType === 'pr' && <PurchaseRequisitionView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} formatThaiDate={formatThaiDate} />}
           </div>
+        </div>
+      )}
+
+      {/* Loading Overlay when preloading preview */}
+      {isLoadingPreview && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(3px)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏳</div>
+          <div style={{ fontWeight: 'bold', fontSize: '15px' }}>กำลังโหลดเอกสารและรูปภาพ...</div>
+          <div style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '2px' }}>กรุณารอสักครู่เพื่อความคมชัด 100%</div>
         </div>
       )}
 

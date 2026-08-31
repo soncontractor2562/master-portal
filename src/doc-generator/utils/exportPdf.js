@@ -9,6 +9,22 @@ function isMobileDevice() {
   return isMobileUA || isIpadOS;
 }
 
+async function waitForImagesToLoad(container) {
+  if (!container) return;
+  const images = Array.from(container.querySelectorAll('img'));
+  if (images.length === 0) return;
+  await Promise.all(
+    images.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        setTimeout(resolve, 2500);
+      });
+    })
+  );
+}
+
 export async function exportToPdf(containerId, filename) {
   try {
     if (document.fonts && document.fonts.ready) {
@@ -24,6 +40,10 @@ export async function exportToPdf(containerId, filename) {
       return false;
     }
     
+    // Ensure all images are fully loaded and rendered before capturing
+    await waitForImagesToLoad(container);
+    await new Promise(r => setTimeout(r, 100));
+
     // Check if there are multiple A4 pages
     const pages = container.querySelectorAll('.a4-page');
     const pdf = new jsPDF('p', 'mm', 'a4', true);
@@ -98,6 +118,10 @@ export async function generatePdfBase64(containerId) {
       return null;
     }
 
+    // Ensure all images are fully loaded and rendered before capturing
+    await waitForImagesToLoad(container);
+    await new Promise(r => setTimeout(r, 100));
+
     const pages = container.querySelectorAll('.a4-page');
     const pdf = new jsPDF('p', 'mm', 'a4', true);
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -130,4 +154,3 @@ export async function generatePdfBase64(containerId) {
     return null;
   }
 }
-
