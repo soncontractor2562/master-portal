@@ -916,7 +916,9 @@ function App() {
               filename,
               base64Data: base64Pdf,
               projectName: currentData.project || 'ทั่วไป',
-              docType
+              docType,
+              fileId: currentData.driveFileId || null,
+              overwrite: true
             });
             if (uploadRes.fileUrl) {
               driveUrl = uploadRes.fileUrl;
@@ -3277,7 +3279,7 @@ function App() {
               
               <div style={{ position: 'relative' }}>
                 <pre style={{ background: '#1e293b', color: '#f8fafc', padding: '14px', borderRadius: '8px', fontSize: '11px', overflowX: 'auto', maxHeight: '250px' }}>
-{`const DEFAULT_ROOT_FOLDER_ID = ""; // ใส่ Folder ID หรือปล่อยว่างไว้ให้ลง Root
+{`const DEFAULT_ROOT_FOLDER_ID = ""; // ใส่ Folder ID หรือปล่อยว่างไว้ให้ลง Root Folder
 
 function doPost(e) {
   try {
@@ -3297,7 +3299,7 @@ function doPost(e) {
       targetFolder = DriveApp.getRootFolder();
     }
 
-    // สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
+    // 1. สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
     if (body.projectName && body.projectName !== 'ทั่วไป') {
       const subfolders = targetFolder.getFoldersByName(body.projectName);
       if (subfolders.hasNext()) {
@@ -3307,7 +3309,7 @@ function doPost(e) {
       }
     }
 
-    // ถ้าเป็นรูปภาพหน้างาน จัดเก็บลงโฟลเดอร์ย่อย Photos ภายในโครงการ
+    // 2. ถ้าเป็นรูปภาพหน้างาน จัดเก็บลงโฟลเดอร์ย่อย Photos ภายในโครงการ
     if (body.docType === 'photos') {
       const photoFolders = targetFolder.getFoldersByName('Photos');
       if (photoFolders.hasNext()) {
@@ -3317,12 +3319,28 @@ function doPost(e) {
       }
     }
 
-    // แปลง Base64 เป็นไฟล์
-    const decodedBytes = Utilities.base64Decode(body.base64Data);
     const mimeType = body.mimeType || "application/pdf";
     const filename = body.filename || (mimeType.includes('image') ? "photo.jpg" : "document.pdf");
+    const decodedBytes = Utilities.base64Decode(body.base64Data);
     const blob = Utilities.newBlob(decodedBytes, mimeType, filename);
 
+    // 3. จัดการอัปเดตทับไฟล์เดิม (Overwrite / Replace Old File)
+    if (body.overwrite !== false) {
+      if (body.fileId) {
+        try {
+          const oldFile = DriveApp.getFileById(body.fileId);
+          if (oldFile) oldFile.setTrashed(true);
+        } catch(e) {}
+      }
+      
+      const existingFiles = targetFolder.getFilesByName(filename);
+      while (existingFiles.hasNext()) {
+        const existing = existingFiles.next();
+        existing.setTrashed(true);
+      }
+    }
+
+    // 4. สร้างไฟล์เวอร์ชันล่าสุด
     const file = targetFolder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
@@ -3335,7 +3353,8 @@ function doPost(e) {
       fileUrl: file.getUrl(),
       directImageUrl: directImageUrl,
       filename: file.getName(),
-      folderName: targetFolder.getName()
+      folderName: targetFolder.getName(),
+      isOverwritten: true
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch(error) {
@@ -3353,7 +3372,7 @@ function doGet(e) {
                   className="btn primary"
                   style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '11px', padding: '4px 8px', background: '#059669', border: 'none' }}
                   onClick={() => {
-                    const code = `const DEFAULT_ROOT_FOLDER_ID = ""; // ใส่ Folder ID หรือปล่อยว่างไว้ให้ลง Root
+                    const code = `const DEFAULT_ROOT_FOLDER_ID = ""; // ใส่ Folder ID หรือปล่อยว่างไว้ให้ลง Root Folder
 
 function doPost(e) {
   try {
@@ -3373,7 +3392,7 @@ function doPost(e) {
       targetFolder = DriveApp.getRootFolder();
     }
 
-    // สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
+    // 1. สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
     if (body.projectName && body.projectName !== 'ทั่วไป') {
       const subfolders = targetFolder.getFoldersByName(body.projectName);
       if (subfolders.hasNext()) {
@@ -3383,7 +3402,7 @@ function doPost(e) {
       }
     }
 
-    // ถ้าเป็นรูปภาพหน้างาน จัดเก็บลงโฟลเดอร์ย่อย Photos ภายในโครงการ
+    // 2. ถ้าเป็นรูปภาพหน้างาน จัดเก็บลงโฟลเดอร์ย่อย Photos ภายในโครงการ
     if (body.docType === 'photos') {
       const photoFolders = targetFolder.getFoldersByName('Photos');
       if (photoFolders.hasNext()) {
@@ -3393,12 +3412,28 @@ function doPost(e) {
       }
     }
 
-    // แปลง Base64 เป็นไฟล์
-    const decodedBytes = Utilities.base64Decode(body.base64Data);
     const mimeType = body.mimeType || "application/pdf";
     const filename = body.filename || (mimeType.includes('image') ? "photo.jpg" : "document.pdf");
+    const decodedBytes = Utilities.base64Decode(body.base64Data);
     const blob = Utilities.newBlob(decodedBytes, mimeType, filename);
 
+    // 3. จัดการอัปเดตทับไฟล์เดิม (Overwrite / Replace Old File)
+    if (body.overwrite !== false) {
+      if (body.fileId) {
+        try {
+          const oldFile = DriveApp.getFileById(body.fileId);
+          if (oldFile) oldFile.setTrashed(true);
+        } catch(e) {}
+      }
+      
+      const existingFiles = targetFolder.getFilesByName(filename);
+      while (existingFiles.hasNext()) {
+        const existing = existingFiles.next();
+        existing.setTrashed(true);
+      }
+    }
+
+    // 4. สร้างไฟล์เวอร์ชันล่าสุด
     const file = targetFolder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
@@ -3411,7 +3446,8 @@ function doPost(e) {
       fileUrl: file.getUrl(),
       directImageUrl: directImageUrl,
       filename: file.getName(),
-      folderName: targetFolder.getName()
+      folderName: targetFolder.getName(),
+      isOverwritten: true
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch(error) {

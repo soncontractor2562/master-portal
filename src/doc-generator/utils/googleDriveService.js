@@ -3,7 +3,7 @@
  * Communicates with Google Apps Script Webhook
  */
 
-export async function uploadToGoogleDrive({ webhookUrl, folderId, filename, base64Data, projectName, docType }) {
+export async function uploadToGoogleDrive({ webhookUrl, folderId, filename, base64Data, projectName, docType, fileId, overwrite = true }) {
   if (!webhookUrl || !webhookUrl.trim()) {
     throw new Error('กรุณาระบุ Google Apps Script Webhook URL ในหน้า "⚙️ ตั้งค่า" ก่อน');
   }
@@ -21,7 +21,9 @@ export async function uploadToGoogleDrive({ webhookUrl, folderId, filename, base
     base64Data: cleanBase64,
     folderId: folderId ? folderId.trim() : '',
     projectName: projectName ? projectName.trim() : 'ทั่วไป',
-    docType: docType || 'report'
+    docType: docType || 'report',
+    fileId: fileId || '',
+    overwrite: overwrite !== false
   };
 
   try {
@@ -39,7 +41,8 @@ export async function uploadToGoogleDrive({ webhookUrl, folderId, filename, base
         success: true,
         fileUrl: data.fileUrl || data.url || (data.fileId ? `https://drive.google.com/file/d/${data.fileId}/view` : ''),
         fileId: data.fileId,
-        folderName: data.folderName
+        folderName: data.folderName,
+        isOverwritten: data.isOverwritten || false
       };
     } else {
       throw new Error(data.message || data.error || 'เกิดข้อผิดพลาดในการอัปโหลดไฟล์');
@@ -53,7 +56,7 @@ export async function uploadToGoogleDrive({ webhookUrl, folderId, filename, base
   }
 }
 
-export async function uploadImageToGoogleDrive({ webhookUrl, folderId, projectName, base64Data, filename }) {
+export async function uploadImageToGoogleDrive({ webhookUrl, folderId, projectName, base64Data, filename, fileId, overwrite = true }) {
   if (!webhookUrl || !webhookUrl.trim()) {
     throw new Error('กรุณาระบุ Google Apps Script Webhook URL ก่อน');
   }
@@ -75,7 +78,9 @@ export async function uploadImageToGoogleDrive({ webhookUrl, folderId, projectNa
     base64Data: cleanBase64,
     folderId: folderId ? folderId.trim() : '',
     projectName: projectName ? projectName.trim() : 'ทั่วไป',
-    docType: 'photos'
+    docType: 'photos',
+    fileId: fileId || '',
+    overwrite: overwrite !== false
   };
 
   try {
@@ -95,7 +100,8 @@ export async function uploadImageToGoogleDrive({ webhookUrl, folderId, projectNa
         fileId: data.fileId,
         fileUrl: data.fileUrl || data.url,
         directImageUrl: directImageUrl,
-        folderName: data.folderName
+        folderName: data.folderName,
+        isOverwritten: data.isOverwritten || false
       };
     } else {
       throw new Error(data.message || data.error || 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
