@@ -196,6 +196,7 @@ function App() {
   const [isUploadingDrive, setIsUploadingDrive] = useState(false);
   const [driveTestStatus, setDriveTestStatus] = useState(null);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
+  const [activeSettingsModal, setActiveSettingsModal] = useState(null); // 'company' | 'gdrive' | 'projects' | null
   
   const [company, setCompany] = useState(() => {
     try {
@@ -2388,172 +2389,509 @@ function App() {
       })()}
       {activeTab === 'company' && (
         <div id="companyTab">
-          {/* Google Drive Integration Card */}
-          <div className="card" style={{ border: '2px solid #059669', background: '#f0fdf4', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '26px' }}>📂</span>
+          {/* Lean Settings Hub Header */}
+          <div className="card" style={{ marginBottom: '16px', padding: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+              <span style={{ fontSize: '28px' }}>⚙️</span>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '18px', color: '#1e293b' }}>ศูนย์การตั้งค่าและทะเบียน (Settings Center)</h2>
+                <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '2px' }}>
+                  จัดการข้อมูลบริษัท, การเชื่อมต่อ Cloud Google Drive, และทะเบียนโครงการ
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Lean Settings Tile Cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            
+            {/* Tile 1: Company Profile */}
+            <div 
+              className="card" 
+              onClick={() => setActiveSettingsModal('company')}
+              style={{ 
+                padding: '18px 20px', 
+                cursor: 'pointer', 
+                border: '1px solid #cbd5e1', 
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '14px',
+                background: '#fff'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {company.logo ? (
+                    <img src={company.logo} alt="logo" style={{ maxHeight: '36px', maxWidth: '36px', objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontSize: '24px' }}>🏢</span>
+                  )}
+                </div>
                 <div>
-                  <h2 style={{ margin: 0, color: '#065f46', fontSize: '16px', fontWeight: 'bold' }}>การเชื่อมต่อ Google Drive (Auto-Sync PDF)</h2>
-                  <div style={{ fontSize: '12px', color: '#047857', marginTop: '2px' }}>
-                    ส่งไฟล์ PDF ไปยังโฟลเดอร์ Google Drive อัตโนมัติ พร้อมสร้างลิงก์สำหรับกดเปิดดูได้ทันที
+                  <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#1e293b' }}>ตั้งค่าหัวเอกสารและโลโก้บริษัท</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                    {company.name || 'ยังไม่ระบุชื่อบริษัท'} · ใช้แสดงบนหัวกระดาษรายงานทุกฉบับ
                   </div>
                 </div>
               </div>
               <button 
-                className="btn ghost"
+                className="btn ghost" 
                 type="button"
-                onClick={() => setShowDriveGuideModal(true)}
-                style={{ fontSize: '12px', padding: '6px 12px', borderColor: '#059669', color: '#065f46', background: '#fff', fontWeight: '500' }}
+                onClick={(e) => { e.stopPropagation(); setActiveSettingsModal('company'); }}
+                style={{ fontSize: '13px', padding: '6px 14px', color: '#1e293b' }}
               >
-                📖 ดูวิธีติดตั้ง Google Apps Script (คู่มือ)
+                ✏️ จัดการข้อมูลบริษัท
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="field">
-                <label style={{ fontWeight: 'bold', color: '#065f46', marginBottom: '4px' }}>Google Apps Script Webhook URL</label>
-                <input 
-                  type="text" 
-                  value={driveSettings.webhookUrl || ''} 
-                  onChange={e => setDriveSettings({ ...driveSettings, webhookUrl: e.target.value })} 
-                  placeholder="เช่น https://script.google.com/macros/s/AKfycbx.../exec"
-                  style={{ background: '#fff', width: '100%' }}
-                />
-              </div>
-
-              <div className="field">
-                <label style={{ fontWeight: 'bold', color: '#065f46', marginBottom: '4px' }}>Google Drive Folder ID (รหัสโฟลเดอร์หลักบน Google Drive)</label>
-                <input 
-                  type="text" 
-                  value={driveSettings.folderId || ''} 
-                  onChange={e => setDriveSettings({ ...driveSettings, folderId: e.target.value })} 
-                  placeholder="เช่น 1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvW (หรือเว้นว่างไว้ให้บันทึกลง Root Folder)"
-                  style={{ background: '#fff', width: '100%' }}
-                />
-                <div style={{ fontSize: '11px', color: '#047857', marginTop: '4px' }}>
-                  💡 นำมาจาก URL โฟลเดอร์ใน Drive เช่น drive.google.com/drive/folders/<strong>[รหัส ID ตรงนี้]</strong>
+            {/* Tile 2: Google Drive Auto-Sync */}
+            <div 
+              className="card" 
+              onClick={() => setActiveSettingsModal('gdrive')}
+              style={{ 
+                padding: '18px 20px', 
+                cursor: 'pointer', 
+                border: driveSettings.webhookUrl ? '1px solid #a7f3d0' : '1px solid #cbd5e1', 
+                background: driveSettings.webhookUrl ? '#f0fdf4' : '#fff',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '14px'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: driveSettings.webhookUrl ? '#dcfce7' : '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '24px' }}>📂</span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '15px', color: '#065f46' }}>การเชื่อมต่อ Google Drive (Auto-Sync)</span>
+                    <span style={{ 
+                      fontSize: '11px', 
+                      padding: '2px 8px', 
+                      borderRadius: '10px', 
+                      background: driveSettings.webhookUrl ? '#bbf7d0' : '#fee2e2', 
+                      color: driveSettings.webhookUrl ? '#166534' : '#991b1b',
+                      fontWeight: '600'
+                    }}>
+                      {driveSettings.webhookUrl ? '✅ เชื่อมต่อแล้ว' : '⚠️ ยังไม่ได้เชื่อมต่อ'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#047857', marginTop: '3px' }}>
+                    {driveSettings.autoUpload !== false ? '☑️ ส่งไฟล์ PDF ขึ้น Drive อัตโนมัติเมื่อกดบันทึกเสร็จสมบูรณ์' : '⏸️ ปิดการส่งไฟล์อัตโนมัติ'}
+                  </div>
                 </div>
               </div>
-
-              <div style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '12px 14px', borderRadius: '8px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 'bold', color: '#065f46', fontSize: '13px', margin: 0 }}>
-                  <input 
-                    type="checkbox" 
-                    checked={driveSettings.autoUpload !== false} 
-                    onChange={e => setDriveSettings({ ...driveSettings, autoUpload: e.target.checked })} 
-                  />
-                  ส่งไฟล์ PDF ขึ้น Google Drive อัตโนมัติเมื่อกด "บันทึกเสร็จสมบูรณ์"
-                </label>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button 
-                className="btn primary" 
-                type="button"
-                onClick={async () => {
-                  await docGeneratorService.saveGoogleDriveSettings(driveSettings);
-                  alert('💾 บันทึกการตั้งค่า Google Drive เรียบร้อยแล้ว');
-                }}
-                style={{ background: '#059669', borderColor: '#059669', padding: '8px 16px', fontSize: '13px' }}
-              >
-                💾 บันทึกการตั้งค่า Google Drive
-              </button>
               <button 
                 className="btn ghost" 
                 type="button"
-                onClick={async () => {
-                  try {
-                    setDriveTestStatus('testing');
-                    const res = await testGoogleDriveWebhook(driveSettings.webhookUrl);
-                    alert('✅ ' + res.message);
-                    setDriveTestStatus('success');
-                  } catch(err) {
-                    alert('❌ ' + err.message);
-                    setDriveTestStatus('error');
-                  }
-                }}
-                style={{ background: '#fff', borderColor: '#059669', color: '#065f46', padding: '8px 16px', fontSize: '13px' }}
+                onClick={(e) => { e.stopPropagation(); setActiveSettingsModal('gdrive'); }}
+                style={{ fontSize: '13px', padding: '6px 14px', borderColor: '#059669', color: '#065f46', background: '#fff' }}
               >
-                ⚡ ทดสอบการเชื่อมต่อ
+                ⚙️ ตั้งค่า Google Drive
               </button>
             </div>
+
+            {/* Tile 3: Projects Registry */}
+            <div 
+              className="card" 
+              onClick={() => setActiveSettingsModal('projects')}
+              style={{ 
+                padding: '18px 20px', 
+                cursor: 'pointer', 
+                border: '1px solid #cbd5e1', 
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '14px',
+                background: '#fff'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '24px' }}>🏗️</span>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '15px', color: '#1e293b' }}>ทะเบียนโครงการ (Projects Registry)</span>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: '#e0e7ff', color: '#3730a3', fontWeight: '600' }}>
+                      {projects.length} โครงการในระบบ
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                    กำหนดชื่อโครงการ, เจ้าของโครงการ, รหัสรันเลขที่ PR และเลขเริ่มต้น
+                  </div>
+                </div>
+              </div>
+              <button 
+                className="btn ghost" 
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setActiveSettingsModal('projects'); }}
+                style={{ fontSize: '13px', padding: '6px 14px', color: '#1e293b' }}
+              >
+                📋 จัดการทะเบียนโครงการ
+              </button>
+            </div>
+
           </div>
 
-          <div className="card">
-            <h2>ตั้งค่าบริษัท (ใช้แสดงบนหัวรายงาน)</h2>
-            <div className="grid">
-              <div className="field"><label>ชื่อบริษัท</label><input type="text" value={company.name} onChange={e => setCompany({ ...company, name: e.target.value })} placeholder="เช่น บริษัท ซัน คอนแทรคเตอร์ จำกัด" /></div>
-              <div className="field"><label>โลโก้บริษัท (รูปภาพ PNG / JPG)</label><input type="file" accept="image/*" onChange={handleLogoUpload} /></div>
-            </div>
-            {company.logo && (
-              <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div><label>ตัวอย่างโลโก้:</label><img src={company.logo} alt="logo" style={{ height: '50px', objectFit: 'contain', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '2px' }} /></div>
-                <button className="btn ghost" type="button" onClick={() => { const updated = { ...company, logo: '/logo.png' }; setCompany(updated); localStorage.setItem(COMPANY_KEY, JSON.stringify(updated)); alert('รีเซ็ตเป็นโลโก้เริ่มต้น (logo.png) เรียบร้อยแล้ว'); }} style={{ fontSize: '12px', padding: '6px 12px', marginTop: '14px' }}>ใช้โลโก้เริ่มต้น (logo.png)</button>
-              </div>
-            )}
-            <div className="btnbar no-print" style={{ marginTop: '14px', justifyContent: 'flex-end' }}><button className="btn primary" onClick={handleSaveCompany}>บันทึกการตั้งค่าบริษัท</button></div>
-            
-            <div className="header-divider" style={{ margin: '24px 0' }}></div>
-            
-            <h2>ทะเบียนโครงการ (Projects Registry)</h2>
-            <div className="proj-reg-grid" style={{ gap: "10px", alignItems: "flex-end", background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
-              <div className="field" style={{ margin: 0 }}>
-                <label>ชื่อโครงการใหม่</label>
-                <input type="text" id="newProjName" placeholder="เช่น งานก่อสร้างอาคาร ICN" />
-              </div>
-              <div className="field" style={{ margin: 0 }}>
-                <label>เจ้าของโครงการ</label>
-                <input type="text" id="newProjOwner" placeholder="เช่น บริษัท ไคลเอนท์ จำกัด" />
-              </div>
-              <div className="field" style={{ margin: 0 }}>
-                <label>Prefix PR (รหัสใบสั่งซื้อ)</label>
-                <input type="text" id="newProjPrPrefix" placeholder="เช่น PR-ICN-" />
-              </div>
-              <div className="field" style={{ margin: 0 }}>
-                <label>เลขเริ่มต้น</label>
-                <input type="number" id="newProjPrStartNo" defaultValue="1" min="1" placeholder="1" style={{ textAlign: "center" }} />
-              </div>
-              <div>
-                <button className="btn primary" style={{ height: "38px", whiteSpace: "nowrap", width: "100%" }} onClick={async () => {
-                  const n = document.getElementById("newProjName").value.trim();
-                  const o = document.getElementById("newProjOwner").value.trim();
-                  const prPre = document.getElementById("newProjPrPrefix").value.trim() || "PR-";
-                  const prStart = parseInt(document.getElementById("newProjPrStartNo").value.trim(), 10) || 1;
-                  if(n){
-                    const newProj = await docGeneratorService.addProject({ name: n, owner: o, pr_prefix: prPre, pr_start_no: prStart });
-                    if (newProj) setProjects([...projects, newProj]);
-                    document.getElementById("newProjName").value = "";
-                    document.getElementById("newProjOwner").value = "";
-                    document.getElementById("newProjPrPrefix").value = "";
-                    document.getElementById("newProjPrStartNo").value = "1";
-                  } else {
-                    alert("กรุณากรอกชื่อโครงการ");
-                  }
-                }}>+ เพิ่มโครงการ</button>
-              </div>
-            </div>
+          {/* ============================================================
+              MODAL 1: COMPANY PROFILE POPUP
+             ============================================================ */}
+          {activeSettingsModal === 'company' && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setActiveSettingsModal(null)}>
+              <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🏢</span> ตั้งค่าหัวเอกสารและโลโก้บริษัท
+                  </h3>
+                  <button className="btn ghost" type="button" onClick={() => setActiveSettingsModal(null)} style={{ border: 'none', fontSize: '18px', padding: '4px 8px' }}>✕</button>
+                </div>
 
-            {/* Desktop Table View */}
-            <div className="table-scroll-wrap task-table-desktop">
-              <table className="entry-table" style={{ width: "100%" }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: "40px", textAlign: "center" }}>ลำดับ</th>
-                    <th style={{ width: "35%" }}>ชื่อโครงการ (แก้ไขได้)</th>
-                    <th style={{ width: "25%" }}>เจ้าของโครงการ (แก้ไขได้)</th>
-                    <th style={{ width: "140px" }}>Prefix PR</th>
-                    <th style={{ width: "90px", textAlign: "center" }}>เลขเริ่มต้น</th>
-                    <th style={{ width: "50px", textAlign: "center" }}>จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center", color: "#64748b", padding: "16px" }}>ยังไม่มีข้อมูลโครงการในทะเบียน</td></tr>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div className="field">
+                    <label style={{ fontWeight: 'bold' }}>ชื่อบริษัท (ใช้แสดงบนหัวรายงานทุกฉบับ)</label>
+                    <input 
+                      type="text" 
+                      value={company.name} 
+                      onChange={e => setCompany({ ...company, name: e.target.value })} 
+                      placeholder="เช่น บริษัท ซัน คอนแทรคเตอร์ จำกัด" 
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label style={{ fontWeight: 'bold' }}>โลโก้บริษัท (รูปภาพ PNG / JPG)</label>
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} />
+                  </div>
+
+                  {company.logo && (
+                    <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>ตัวอย่างโลโก้ปัจจุบัน:</div>
+                        <img src={company.logo} alt="logo" style={{ height: '45px', objectFit: 'contain', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '4px' }} />
+                      </div>
+                      <button 
+                        className="btn ghost" 
+                        type="button" 
+                        onClick={() => { const updated = { ...company, logo: '/logo.png' }; setCompany(updated); localStorage.setItem(COMPANY_KEY, JSON.stringify(updated)); alert('รีเซ็ตเป็นโลโก้เริ่มต้นเรียบร้อยแล้ว'); }} 
+                        style={{ fontSize: '12px', padding: '5px 10px' }}
+                      >
+                        ใช้โลโก้เริ่มต้น (logo.png)
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+                  <button className="btn ghost" type="button" onClick={() => setActiveSettingsModal(null)}>ปิด</button>
+                  <button className="btn primary" type="button" onClick={async () => { await handleSaveCompany(); setActiveSettingsModal(null); }}>💾 บันทึกข้อมูลบริษัท</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              MODAL 2: GOOGLE DRIVE POPUP
+             ============================================================ */}
+          {activeSettingsModal === 'gdrive' && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setActiveSettingsModal(null)}>
+              <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '650px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px', color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📂</span> ตั้งค่าการเชื่อมต่อ Google Drive (Auto-Sync)
+                  </h3>
+                  <button className="btn ghost" type="button" onClick={() => setActiveSettingsModal(null)} style={{ border: 'none', fontSize: '18px', padding: '4px 8px' }}>✕</button>
+                </div>
+
+                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button 
+                    className="btn ghost"
+                    type="button"
+                    onClick={() => setShowDriveGuideModal(true)}
+                    style={{ fontSize: '12px', padding: '5px 12px', borderColor: '#059669', color: '#065f46', background: '#f0fdf4', fontWeight: '500' }}
+                  >
+                    📖 ดูวิธีติดตั้ง Google Apps Script (คู่มือ)
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div className="field">
+                    <label style={{ fontWeight: 'bold', color: '#065f46' }}>Google Apps Script Webhook URL</label>
+                    <input 
+                      type="text" 
+                      value={driveSettings.webhookUrl || ''} 
+                      onChange={e => setDriveSettings({ ...driveSettings, webhookUrl: e.target.value })} 
+                      placeholder="เช่น https://script.google.com/macros/s/AKfycbx.../exec"
+                      style={{ background: '#fff', width: '100%' }}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label style={{ fontWeight: 'bold', color: '#065f46' }}>Google Drive Folder ID (รหัสโฟลเดอร์หลักบน Google Drive)</label>
+                    <input 
+                      type="text" 
+                      value={driveSettings.folderId || ''} 
+                      onChange={e => setDriveSettings({ ...driveSettings, folderId: e.target.value })} 
+                      placeholder="เช่น 1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvW (เว้นว่างไว้ให้ลง Root Folder ได้)"
+                      style={{ background: '#fff', width: '100%' }}
+                    />
+                    <div style={{ fontSize: '11px', color: '#047857', marginTop: '4px' }}>
+                      💡 นำมาจาก URL โฟลเดอร์ใน Drive เช่น drive.google.com/drive/folders/<strong>[รหัส ID ตรงนี้]</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', padding: '12px 14px', borderRadius: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 'bold', color: '#065f46', fontSize: '13px', margin: 0 }}>
+                      <input 
+                        type="checkbox" 
+                        checked={driveSettings.autoUpload !== false} 
+                        onChange={e => setDriveSettings({ ...driveSettings, autoUpload: e.target.checked })} 
+                      />
+                      ส่งไฟล์ PDF ขึ้น Google Drive อัตโนมัติเมื่อกด "บันทึกเสร็จสมบูรณ์"
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+                  <button 
+                    className="btn ghost" 
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setDriveTestStatus('testing');
+                        const res = await testGoogleDriveWebhook(driveSettings.webhookUrl);
+                        alert('✅ ' + res.message);
+                        setDriveTestStatus('success');
+                      } catch(err) {
+                        alert('❌ ' + err.message);
+                        setDriveTestStatus('error');
+                      }
+                    }}
+                    style={{ borderColor: '#059669', color: '#065f46' }}
+                  >
+                    ⚡ ทดสอบการเชื่อมต่อ
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn ghost" type="button" onClick={() => setActiveSettingsModal(null)}>ปิด</button>
+                    <button 
+                      className="btn primary" 
+                      type="button" 
+                      onClick={async () => {
+                        await docGeneratorService.saveGoogleDriveSettings(driveSettings);
+                        alert('💾 บันทึกการตั้งค่า Google Drive เรียบร้อยแล้ว');
+                        setActiveSettingsModal(null);
+                      }}
+                      style={{ background: '#059669', borderColor: '#059669' }}
+                    >
+                      💾 บันทึกการตั้งค่า
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================
+              MODAL 3: PROJECTS REGISTRY POPUP
+             ============================================================ */}
+          {activeSettingsModal === 'projects' && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setActiveSettingsModal(null)}>
+              <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '850px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🏗️</span> ทะเบียนโครงการ (Projects Registry)
+                  </h3>
+                  <button className="btn ghost" type="button" onClick={() => setActiveSettingsModal(null)} style={{ border: 'none', fontSize: '18px', padding: '4px 8px' }}>✕</button>
+                </div>
+
+                {/* Add New Project Form */}
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#1e293b', marginBottom: '10px' }}>+ เพิ่มโครงการใหม่</div>
+                  <div className="proj-reg-grid" style={{ gap: "10px", alignItems: "flex-end" }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label>ชื่อโครงการใหม่</label>
+                      <input type="text" id="newProjName" placeholder="เช่น งานก่อสร้างอาคาร ICN" />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label>เจ้าของโครงการ</label>
+                      <input type="text" id="newProjOwner" placeholder="เช่น บริษัท ไคลเอนท์ จำกัด" />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label>Prefix PR (รหัสใบสั่งซื้อ)</label>
+                      <input type="text" id="newProjPrPrefix" placeholder="เช่น PR-ICN-" />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label>เลขเริ่มต้น</label>
+                      <input type="number" id="newProjPrStartNo" defaultValue="1" min="1" placeholder="1" style={{ textAlign: "center" }} />
+                    </div>
+                    <div>
+                      <button className="btn primary" style={{ height: "38px", whiteSpace: "nowrap", width: "100%" }} onClick={async () => {
+                        const n = document.getElementById("newProjName").value.trim();
+                        const o = document.getElementById("newProjOwner").value.trim();
+                        const prPre = document.getElementById("newProjPrPrefix").value.trim() || "PR-";
+                        const prStart = parseInt(document.getElementById("newProjPrStartNo").value.trim(), 10) || 1;
+                        if(n){
+                          const newProj = await docGeneratorService.addProject({ name: n, owner: o, pr_prefix: prPre, pr_start_no: prStart });
+                          if (newProj) setProjects([...projects, newProj]);
+                          document.getElementById("newProjName").value = "";
+                          document.getElementById("newProjOwner").value = "";
+                          document.getElementById("newProjPrPrefix").value = "";
+                          document.getElementById("newProjPrStartNo").value = "1";
+                        } else {
+                          alert("กรุณากรอกชื่อโครงการ");
+                        }
+                      }}>+ เพิ่มโครงการ</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Projects Table */}
+                <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#1e293b', marginBottom: '8px' }}>
+                  รายการโครงการทั้งหมด ({projects.length} โครงการ)
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="table-scroll-wrap task-table-desktop">
+                  <table className="entry-table" style={{ width: "100%" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: "40px", textAlign: "center" }}>ลำดับ</th>
+                        <th style={{ width: "35%" }}>ชื่อโครงการ (แก้ไขได้)</th>
+                        <th style={{ width: "25%" }}>เจ้าของโครงการ (แก้ไขได้)</th>
+                        <th style={{ width: "140px" }}>Prefix PR</th>
+                        <th style={{ width: "90px", textAlign: "center" }}>เลขเริ่มต้น</th>
+                        <th style={{ width: "50px", textAlign: "center" }}>จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projects.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center", color: "#64748b", padding: "16px" }}>ยังไม่มีข้อมูลโครงการในทะเบียน</td></tr>}
+                      {projects.map((p, idx) => (
+                        <tr key={p.id}>
+                          <td style={{ textAlign: "center", color: "#64748b", fontWeight: "bold" }}>{idx + 1}</td>
+                          <td>
+                            <input
+                              type="text"
+                              value={p.name}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setProjects(projects.map(x => x.id === p.id ? { ...x, name: val } : x));
+                              }}
+                              onBlur={async e => {
+                                const val = e.target.value;
+                                await docGeneratorService.updateProject(p.id, { name: val });
+                              }}
+                              placeholder="ชื่อโครงการ"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={p.owner}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setProjects(projects.map(x => x.id === p.id ? { ...x, owner: val } : x));
+                              }}
+                              onBlur={async e => {
+                                const val = e.target.value;
+                                await docGeneratorService.updateProject(p.id, { owner: val });
+                              }}
+                              placeholder="เจ้าของโครงการ"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={p.pr_prefix || "PR-"}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setProjects(projects.map(x => x.id === p.id ? { ...x, pr_prefix: val } : x));
+                              }}
+                              onBlur={async e => {
+                                const val = e.target.value;
+                                await docGeneratorService.updateProject(p.id, { pr_prefix: val });
+                              }}
+                              placeholder="PR-XXX-"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="1"
+                              value={p.pr_start_no !== undefined ? p.pr_start_no : 1}
+                              onChange={e => {
+                                const val = parseInt(e.target.value, 10) || 1;
+                                setProjects(projects.map(x => x.id === p.id ? { ...x, pr_start_no: val } : x));
+                              }}
+                              onBlur={async e => {
+                                const val = parseInt(e.target.value, 10) || 1;
+                                await docGeneratorService.updateProject(p.id, { pr_start_no: val });
+                              }}
+                              placeholder="1"
+                              style={{ textAlign: "center" }}
+                            />
+                          </td>
+                          <td style={{ textAlign: "center" }}>
+                            <button
+                              type="button"
+                              className="btn ghost"
+                              style={{ color: "#a13a2f", borderColor: "#e2b6ab", padding: "4px 8px", fontSize: "11px" }}
+                              onClick={async () => {
+                                if (window.confirm(`ลบโครงการ "${p.name}" ออกจากทะเบียนใช่หรือไม่?`)) {
+                                  await docGeneratorService.deleteProject(p.id);
+                                  setProjects(projects.filter(x => x.id !== p.id));
+                                }
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards View */}
+                <div className="task-cards-mobile">
+                  {projects.length === 0 && (
+                    <div style={{ textAlign: "center", color: "#64748b", padding: "16px", background: "#f8fafc", borderRadius: "6px" }}>
+                      ยังไม่มีข้อมูลโครงการในทะเบียน
+                    </div>
+                  )}
                   {projects.map((p, idx) => (
-                    <tr key={p.id}>
-                      <td style={{ textAlign: "center", color: "#64748b", fontWeight: "bold" }}>{idx + 1}</td>
-                      <td>
+                    <div key={p.id} className="task-mobile-card" style={{ borderLeft: "4px solid var(--accent)" }}>
+                      <div className="task-mobile-card-header">
+                        <span>ลำดับที่ {idx + 1}</span>
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          style={{ color: "#a13a2f", borderColor: "#e2b6ab", padding: "2px 6px", fontSize: "11px" }}
+                          onClick={async () => {
+                            if (window.confirm(`ลบโครงการ "${p.name}" ออกจากทะเบียนใช่หรือไม่?`)) {
+                              await docGeneratorService.deleteProject(p.id);
+                              setProjects(projects.filter(x => x.id !== p.id));
+                            }
+                          }}
+                        >
+                          ลบโครงการ
+                        </button>
+                      </div>
+                      <div className="field">
+                        <label>ชื่อโครงการ</label>
                         <input
                           type="text"
                           value={p.name}
@@ -2565,10 +2903,10 @@ function App() {
                             const val = e.target.value;
                             await docGeneratorService.updateProject(p.id, { name: val });
                           }}
-                          placeholder="ชื่อโครงการ"
                         />
-                      </td>
-                      <td>
+                      </div>
+                      <div className="field">
+                        <label>เจ้าของโครงการ</label>
                         <input
                           type="text"
                           value={p.owner}
@@ -2580,200 +2918,53 @@ function App() {
                             const val = e.target.value;
                             await docGeneratorService.updateProject(p.id, { owner: val });
                           }}
-                          placeholder="เจ้าของโครงการ"
                         />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          value={p.pr_prefix !== undefined ? p.pr_prefix : "PR-"}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setProjects(projects.map(x => x.id === p.id ? { ...x, pr_prefix: val } : x));
-                          }}
-                          onBlur={async e => {
-                            const val = e.target.value;
-                            await docGeneratorService.updateProject(p.id, { pr_prefix: val });
-                          }}
-                          placeholder="เช่น PR-ICN-"
-                        />
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <input
-                          type="number"
-                          value={p.pr_start_no !== undefined ? p.pr_start_no : 1}
-                          onChange={e => {
-                            const val = parseInt(e.target.value, 10) || 1;
-                            setProjects(projects.map(x => x.id === p.id ? { ...x, pr_start_no: val } : x));
-                          }}
-                          onBlur={async e => {
-                            const val = parseInt(e.target.value, 10) || 1;
-                            await docGeneratorService.updateProject(p.id, { pr_start_no: val });
-                          }}
-                          style={{ textAlign: "center" }}
-                          min="1"
-                        />
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <button
-                          className="icon-btn danger"
-                          title="ลบโครงการ"
-                          onClick={async () => {
-                            if(window.confirm(`ลบโครงการ "${p.name}" ออกจากทะเบียน?`)) {
-                              await docGeneratorService.deleteProject(p.id);
-                              setProjects(projects.filter(x => x.id !== p.id));
-                            }
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                        <div className="field">
+                          <label>Prefix PR</label>
+                          <input
+                            type="text"
+                            value={p.pr_prefix || "PR-"}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setProjects(projects.map(x => x.id === p.id ? { ...x, pr_prefix: val } : x));
+                            }}
+                            onBlur={async e => {
+                              const val = e.target.value;
+                              await docGeneratorService.updateProject(p.id, { pr_prefix: val });
+                            }}
+                          />
+                        </div>
+                        <div className="field">
+                          <label>เลขเริ่มต้น</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={p.pr_start_no !== undefined ? p.pr_start_no : 1}
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10) || 1;
+                              setProjects(projects.map(x => x.id === p.id ? { ...x, pr_start_no: val } : x));
+                            }}
+                            onBlur={async e => {
+                              const val = parseInt(e.target.value, 10) || 1;
+                              await docGeneratorService.updateProject(p.id, { pr_start_no: val });
+                            }}
+                            style={{ textAlign: "center" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Cards View */}
-            <div className="task-cards-mobile">
-              {projects.length === 0 && <p style={{ color: "#64748b", textAlign: "center", padding: "16px" }}>ยังไม่มีข้อมูลโครงการในทะเบียน</p>}
-              {projects.map((p, idx) => (
-                <div key={p.id} className="task-mobile-card">
-                  <div className="task-mobile-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: "bold", color: "var(--primary)" }}>โครงการที่ {idx + 1}</span>
-                    <button
-                      className="btn ghost"
-                      style={{ color: "var(--danger)", borderColor: "#e2b6ab", fontSize: "12px", padding: "3px 8px", height: "28px", display: "inline-flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}
-                      title="ลบโครงการ"
-                      onClick={async () => {
-                        if(window.confirm(`ลบโครงการ "${p.name}" ออกจากทะเบียน?`)) {
-                          await docGeneratorService.deleteProject(p.id);
-                          setProjects(projects.filter(x => x.id !== p.id));
-                        }
-                      }}
-                    >
-                      ✕ ลบ
-                    </button>
-                  </div>
-                  <div className="field">
-                    <label>ชื่อโครงการ</label>
-                    <textarea
-                      rows={2}
-                      value={p.name}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setProjects(projects.map(x => x.id === p.id ? { ...x, name: val } : x));
-                      }}
-                      onBlur={async e => {
-                        const val = e.target.value;
-                        await docGeneratorService.updateProject(p.id, { name: val });
-                      }}
-                      placeholder="เช่น งานก่อสร้างอาคาร A"
-                      style={{ minHeight: "50px", resize: "vertical", lineHeight: "1.4", padding: "6px 10px", width: "100%", fontFamily: "inherit", boxSizing: "border-box" }}
-                    />
-                  </div>
-                  <div className="field">
-                    <label>เจ้าของโครงการ</label>
-                    <textarea
-                      rows={2}
-                      value={p.owner}
-                      onChange={e => {
-                        const val = e.target.value;
-                        setProjects(projects.map(x => x.id === p.id ? { ...x, owner: val } : x));
-                      }}
-                      onBlur={async e => {
-                        const val = e.target.value;
-                        await docGeneratorService.updateProject(p.id, { owner: val });
-                      }}
-                      placeholder="เช่น บริษัท B จำกัด"
-                      style={{ minHeight: "50px", resize: "vertical", lineHeight: "1.4", padding: "6px 10px", width: "100%", fontFamily: "inherit", boxSizing: "border-box" }}
-                    />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "8px" }}>
-                    <div className="field">
-                      <label style={{ fontSize: "11px" }}>Prefix PR</label>
-                      <input
-                        type="text"
-                        value={p.pr_prefix !== undefined ? p.pr_prefix : "PR-"}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setProjects(projects.map(x => x.id === p.id ? { ...x, pr_prefix: val } : x));
-                        }}
-                        onBlur={async e => {
-                          const val = e.target.value;
-                          await docGeneratorService.updateProject(p.id, { pr_prefix: val });
-                        }}
-                        placeholder="เช่น PR-ICN-"
-                      />
-                    </div>
-                    <div className="field">
-                      <label style={{ fontSize: "11px" }}>เลขเริ่มต้น</label>
-                      <input
-                        type="number"
-                        value={p.pr_start_no !== undefined ? p.pr_start_no : 1}
-                        onChange={e => {
-                          const val = parseInt(e.target.value, 10) || 1;
-                          setProjects(projects.map(x => x.id === p.id ? { ...x, pr_start_no: val } : x));
-                        }}
-                        onBlur={async e => {
-                          const val = parseInt(e.target.value, 10) || 1;
-                          await docGeneratorService.updateProject(p.id, { pr_start_no: val });
-                        }}
-                        min="1"
-                        style={{ textAlign: "center" }}
-                      />
-                    </div>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {showPreview && previewData && (
-        <div className="card no-print" id="previewCard">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h2 style={{ margin: 0, border: 'none' }}>ตัวอย่างและส่งออกรายงาน</h2>
-            <div className="tabs" style={{ gap: '4px' }}>
-              <button className={reportTheme === 'modern' ? 'active' : ''} onClick={() => setReportTheme('modern')}>สไตล์โมเดิร์น (Executive)</button>
-              <button className={reportTheme === 'classic' ? 'active' : ''} onClick={() => setReportTheme('classic')}>สไตล์คลาสสิก (Standard Form)</button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+                  <button className="btn primary" type="button" onClick={() => setActiveSettingsModal(null)}>เสร็จสิ้น</button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="btnbar" style={{ justifyContent: 'flex-start', marginBottom: '14px', background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-            <button className="btn primary" onClick={handleExportPdfA4} style={{ background: '#2f5233' }}>ส่งออกเป็น PDF (ขนาด A4)</button>
-            <button className="btn primary" onClick={handleExportImageA4} style={{ background: '#0284c7' }}>ส่งออกเป็นรูปภาพ PNG (ขนาด A4)</button>
-          </div>
-          <div className="a4-container" ref={a4ContainerRef}>
-            <div id={`active-report-${reportTheme}`} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              {docType === 'report' 
-                ? renderFullReportPages(previewData, reportTheme === 'modern' ? 'modern-theme' : 'classic-theme', previewScale) 
-                : (docType === 'request' ? <ScaledA4Page scale={previewScale}><DailyRequestView data={previewData} company={company} themeClass={reportTheme === 'modern' ? 'modern-theme' : 'classic-theme'} formatThaiDate={formatThaiDate} /></ScaledA4Page> : <ScaledA4Page scale={previewScale}><PurchaseRequisitionView data={previewData} company={company} themeClass={reportTheme === 'modern' ? 'modern-theme' : 'classic-theme'} formatThaiDate={formatThaiDate} /></ScaledA4Page>)}
-            </div>
-          </div>
-          <div className="btnbar" style={{ marginTop: '12px' }}><button className="btn ghost" onClick={() => setShowPreview(false)}>ปิด</button></div>
-        </div>
-      )}
+          )}
 
-      {previewData && (
-        <div 
-          id="exportStagingContainer" 
-          style={{ 
-            position: "fixed", 
-            left: "-9999px", 
-            top: 0, 
-            width: "794px", 
-            zIndex: -9999, 
-            opacity: 1, 
-            pointerEvents: "none", 
-            background: "#ffffff" 
-          }}
-        >
-          <div className="a4-container" style={{ padding: 0, background: "transparent" }}>
-            {docType === "report" 
-                ? renderFullReportPages(previewData, reportTheme === "modern" ? "modern-theme" : "classic-theme", 1) 
-                : (docType === "request" ? <ScaledA4Page scale={1}><DailyRequestView data={previewData} company={company} themeClass={reportTheme === "modern" ? "modern-theme" : "classic-theme"} formatThaiDate={formatThaiDate} /></ScaledA4Page> : <ScaledA4Page scale={1}><PurchaseRequisitionView data={previewData} company={company} themeClass={reportTheme === "modern" ? "modern-theme" : "classic-theme"} formatThaiDate={formatThaiDate} /></ScaledA4Page>)}
-          </div>
         </div>
       )}
       {/* Google Apps Script Guide Modal */}
