@@ -2390,12 +2390,12 @@ function App() {
         <div id="companyTab">
           {/* Google Drive Integration Card */}
           <div className="card" style={{ border: '2px solid #059669', background: '#f0fdf4', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '24px' }}>📂</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '26px' }}>📂</span>
                 <div>
-                  <h2 style={{ margin: 0, color: '#065f46', fontSize: '16px' }}>การเชื่อมต่อ Google Drive (Auto-Sync PDF)</h2>
-                  <div style={{ fontSize: '12px', color: '#047857' }}>
+                  <h2 style={{ margin: 0, color: '#065f46', fontSize: '16px', fontWeight: 'bold' }}>การเชื่อมต่อ Google Drive (Auto-Sync PDF)</h2>
+                  <div style={{ fontSize: '12px', color: '#047857', marginTop: '2px' }}>
                     ส่งไฟล์ PDF ไปยังโฟลเดอร์ Google Drive อัตโนมัติ พร้อมสร้างลิงก์สำหรับกดเปิดดูได้ทันที
                   </div>
                 </div>
@@ -2404,52 +2404,51 @@ function App() {
                 className="btn ghost"
                 type="button"
                 onClick={() => setShowDriveGuideModal(true)}
-                style={{ fontSize: '12px', padding: '4px 10px', borderColor: '#059669', color: '#065f46', background: '#fff' }}
+                style={{ fontSize: '12px', padding: '6px 12px', borderColor: '#059669', color: '#065f46', background: '#fff', fontWeight: '500' }}
               >
                 📖 ดูวิธีติดตั้ง Google Apps Script (คู่มือ)
               </button>
             </div>
 
-            <div className="grid">
-              <div className="field" style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontWeight: 'bold', color: '#065f46' }}>Google Apps Script Webhook URL</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="field">
+                <label style={{ fontWeight: 'bold', color: '#065f46', marginBottom: '4px' }}>Google Apps Script Webhook URL</label>
                 <input 
                   type="text" 
                   value={driveSettings.webhookUrl || ''} 
                   onChange={e => setDriveSettings({ ...driveSettings, webhookUrl: e.target.value })} 
                   placeholder="เช่น https://script.google.com/macros/s/AKfycbx.../exec"
-                  style={{ background: '#fff' }}
+                  style={{ background: '#fff', width: '100%' }}
                 />
               </div>
 
               <div className="field">
-                <label style={{ fontWeight: 'bold', color: '#065f46' }}>Google Drive Folder ID (รหัสโฟลเดอร์หลัก)</label>
+                <label style={{ fontWeight: 'bold', color: '#065f46', marginBottom: '4px' }}>Google Drive Folder ID (รหัสโฟลเดอร์หลักบน Google Drive)</label>
                 <input 
                   type="text" 
                   value={driveSettings.folderId || ''} 
                   onChange={e => setDriveSettings({ ...driveSettings, folderId: e.target.value })} 
-                  placeholder="เช่น 1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvW"
-                  style={{ background: '#fff' }}
+                  placeholder="เช่น 1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvW (หรือเว้นว่างไว้ให้บันทึกลง Root Folder)"
+                  style={{ background: '#fff', width: '100%' }}
                 />
-                <div style={{ fontSize: '11px', color: '#047857', marginTop: '2px' }}>
-                  (นำมาจาก URL โฟลเดอร์ใน Drive เช่น drive.google.com/drive/folders/<strong>[ID ตรงนี้]</strong>)
+                <div style={{ fontSize: '11px', color: '#047857', marginTop: '4px' }}>
+                  💡 นำมาจาก URL โฟลเดอร์ใน Drive เช่น drive.google.com/drive/folders/<strong>[รหัส ID ตรงนี้]</strong>
                 </div>
               </div>
 
-              <div className="field" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#065f46', fontSize: '13px' }}>
+              <div style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '12px 14px', borderRadius: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 'bold', color: '#065f46', fontSize: '13px', margin: 0 }}>
                   <input 
                     type="checkbox" 
                     checked={driveSettings.autoUpload !== false} 
                     onChange={e => setDriveSettings({ ...driveSettings, autoUpload: e.target.checked })} 
-                    style={{ width: '18px', height: '18px' }}
                   />
                   ส่งไฟล์ PDF ขึ้น Google Drive อัตโนมัติเมื่อกด "บันทึกเสร็จสมบูรณ์"
                 </label>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button 
                 className="btn primary" 
                 type="button"
@@ -2457,7 +2456,7 @@ function App() {
                   await docGeneratorService.saveGoogleDriveSettings(driveSettings);
                   alert('💾 บันทึกการตั้งค่า Google Drive เรียบร้อยแล้ว');
                 }}
-                style={{ background: '#059669', borderColor: '#059669' }}
+                style={{ background: '#059669', borderColor: '#059669', padding: '8px 16px', fontSize: '13px' }}
               >
                 💾 บันทึกการตั้งค่า Google Drive
               </button>
@@ -2475,7 +2474,7 @@ function App() {
                     setDriveTestStatus('error');
                   }
                 }}
-                style={{ background: '#fff', borderColor: '#059669', color: '#065f46' }}
+                style={{ background: '#fff', borderColor: '#059669', color: '#065f46', padding: '8px 16px', fontSize: '13px' }}
               >
                 ⚡ ทดสอบการเชื่อมต่อ
               </button>
@@ -2499,7 +2498,7 @@ function App() {
             <div className="header-divider" style={{ margin: '24px 0' }}></div>
             
             <h2>ทะเบียนโครงการ (Projects Registry)</h2>
-            <div className="grid" style={{ gridTemplateColumns: "1.5fr 1.2fr 1fr 0.8fr auto", gap: "10px", alignItems: "flex-end", background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
+            <div className="proj-reg-grid" style={{ gap: "10px", alignItems: "flex-end", background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
               <div className="field" style={{ margin: 0 }}>
                 <label>ชื่อโครงการใหม่</label>
                 <input type="text" id="newProjName" placeholder="เช่น งานก่อสร้างอาคาร ICN" />
@@ -2517,7 +2516,7 @@ function App() {
                 <input type="number" id="newProjPrStartNo" defaultValue="1" min="1" placeholder="1" style={{ textAlign: "center" }} />
               </div>
               <div>
-                <button className="btn primary" style={{ height: "38px", whiteSpace: "nowrap" }} onClick={async () => {
+                <button className="btn primary" style={{ height: "38px", whiteSpace: "nowrap", width: "100%" }} onClick={async () => {
                   const n = document.getElementById("newProjName").value.trim();
                   const o = document.getElementById("newProjOwner").value.trim();
                   const prPre = document.getElementById("newProjPrPrefix").value.trim() || "PR-";

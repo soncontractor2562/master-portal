@@ -1591,3 +1591,15 @@
   flex-wrap: wrap;
   gap: 12px;
 }
+
+.doc-gen-root .proj-reg-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1.2fr 1fr 0.8fr auto;
+}
+
+@media (max-width: 768px) {
+  .doc-gen-root .proj-reg-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
