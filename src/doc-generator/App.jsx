@@ -1,7 +1,7 @@
 import './index.css';
 import React, { useState, useEffect, useRef } from 'react';
 import { exportToPdf, generatePdfBase64 } from './utils/exportPdf';
-import { uploadToGoogleDrive, testGoogleDriveWebhook } from './utils/googleDriveService';
+import { uploadToGoogleDrive, uploadImageToGoogleDrive, testGoogleDriveWebhook } from './utils/googleDriveService';
 import { exportToImage } from './utils/exportImage';
 import SignaturePad from './components/SignaturePad';
 import { DailyRequestView, createDefaultRequestTasks } from './components/DailyRequest';
@@ -75,7 +75,7 @@ function tomorrowStr() {
   return `${year}-${month}-${day}`;
 }
 
-function compressImage(file, maxWidth = 1000, quality = 0.75, outputFormat = null) {
+function compressImage(file, maxWidth = 700, quality = 0.7, outputFormat = null) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -197,7 +197,8 @@ function App() {
   const [driveTestStatus, setDriveTestStatus] = useState(null);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [activeSettingsModal, setActiveSettingsModal] = useState(null);
-  const [activeCardMenuId, setActiveCardMenuId] = useState(null); // 'company' | 'gdrive' | 'projects' | null
+  const [activeCardMenuId, setActiveCardMenuId] = useState(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); // 'company' | 'gdrive' | 'projects' | null
   
   const [company, setCompany] = useState(() => {
     try {
@@ -442,6 +443,44 @@ function App() {
         requesterDate: todayStr()
       }));
     }
+  };
+
+  const handlePhotoUploadFiles = async (files) => {
+    if (!files || files.length === 0) return;
+    setIsUploadingPhoto(true);
+    const newPhotos = [...(formData.photos || [])];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // 1. Lightweight local compression (700px, 0.7)
+      const compressedBase64 = await compressImage(file, 700, 0.7);
+
+      // 2. Upload to Google Drive if webhook configured
+      if (driveSettings.webhookUrl && driveSettings.webhookUrl.trim()) {
+        try {
+          const uploadRes = await uploadImageToGoogleDrive({
+            webhookUrl: driveSettings.webhookUrl,
+            folderId: driveSettings.folderId,
+            projectName: formData.project || 'ทั่วไป',
+            base64Data: compressedBase64,
+            filename: `${(formData.project || 'photo').replace(/[^a-zA-Z0-9_\u0E00-\u0E7F]/g, '_')}_${Date.now()}_${i + 1}.jpg`
+          });
+          if (uploadRes && uploadRes.directImageUrl) {
+            newPhotos.push(uploadRes.directImageUrl);
+          } else {
+            newPhotos.push(compressedBase64);
+          }
+        } catch(uploadErr) {
+          console.warn('Drive photo upload fallback to local base64:', uploadErr);
+          newPhotos.push(compressedBase64);
+        }
+      } else {
+        newPhotos.push(compressedBase64);
+      }
+    }
+
+    setFormData(prev => ({ ...prev, photos: newPhotos }));
+    setIsUploadingPhoto(false);
   };
 
   const handleSaveCompany = async () => {
@@ -1687,21 +1726,37 @@ function App() {
                     e.preventDefault(); e.stopPropagation();
                     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                       const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-                      for (const file of files) {
-                        const compressedUrl = await compressImage(file, 1000, 0.75);
-                        setFormData(prev => ({ ...prev, photos: [...prev.photos, compressedUrl] }));
-                      }
+                      await handlePhotoUploadFiles(files);
                     }
                   }} onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }} title="คลิกเพื่อเลือกไฟล์ หรือลากรูปภาพมาวางที่นี่ (Drag & Drop)">
-                    <span style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>+</span>
-                    <span>คลิก หรือ ลากรูปภาพมาวางที่นี่</span>
-                    <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
-                      const files = Array.from(e.target.files);
-                      for (const file of files) {
-                        const compressedUrl = await compressImage(file, 1000, 0.75);
-                        setFormData(prev => ({ ...prev, photos: [...prev.photos, compressedUrl] }));
-                      }
-                    }} />
+                    {isUploadingPhoto ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: '#059669' }}>
+                        <span style={{ fontSize: '20px' }}>☁️</span>
+                        <span style={{ fontWeight: 'bold', fontSize: '12px' }}>กำลังอัปโหลดขึ้น Google Drive...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '2px' }}>+</span>
+                        <span style={{ fontSize: '12px' }}>คลิก หรือ ลากรูปภาพมาวางที่นี่</span>
+                        {driveSettings.webhookUrl ? (
+                          <span style={{ fontSize: '10.5px', color: '#059669', marginTop: '2px', fontWeight: '500' }}>
+                            ☁️ อัปโหลดเก็บเข้า Google Drive อัตโนมัติ (ไม่เปลือง DB)
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      multiple 
+                      accept="image/*" 
+                      disabled={isUploadingPhoto}
+                      style={{ display: 'none' }} 
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files);
+                        await handlePhotoUploadFiles(files);
+                        e.target.value = '';
+                      }} 
+                    />
                   </label>
                 </div>
               </div>
@@ -3121,7 +3176,7 @@ function doPost(e) {
       targetFolder = DriveApp.getRootFolder();
     }
 
-    // สร้างโฟลเดอร์ย่อยตามชื่อโครงการอัตโนมัติ
+    // สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
     if (body.projectName && body.projectName !== 'ทั่วไป') {
       const subfolders = targetFolder.getFoldersByName(body.projectName);
       if (subfolders.hasNext()) {
@@ -3131,17 +3186,33 @@ function doPost(e) {
       }
     }
 
-    // แปลง Base64 เป็นไฟล์ PDF
+    // ถ้าเป็นรูปภาพหน้างาน จัดเก็บลงโฟลเดอร์ย่อย Photos ภายในโครงการ
+    if (body.docType === 'photos') {
+      const photoFolders = targetFolder.getFoldersByName('Photos');
+      if (photoFolders.hasNext()) {
+        targetFolder = photoFolders.next();
+      } else {
+        targetFolder = targetFolder.createFolder('Photos');
+      }
+    }
+
+    // แปลง Base64 เป็นไฟล์
     const decodedBytes = Utilities.base64Decode(body.base64Data);
-    const blob = Utilities.newBlob(decodedBytes, body.mimeType || "application/pdf", body.filename || "document.pdf");
+    const mimeType = body.mimeType || "application/pdf";
+    const filename = body.filename || (mimeType.includes('image') ? "photo.jpg" : "document.pdf");
+    const blob = Utilities.newBlob(decodedBytes, mimeType, filename);
 
     const file = targetFolder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
+    const fileId = file.getId();
+    const directImageUrl = "https://lh3.googleusercontent.com/d/" + fileId;
+
     return ContentService.createTextOutput(JSON.stringify({
       status: 'success',
-      fileId: file.getId(),
+      fileId: fileId,
       fileUrl: file.getUrl(),
+      directImageUrl: directImageUrl,
       filename: file.getName(),
       folderName: targetFolder.getName()
     })).setMimeType(ContentService.MimeType.JSON);
@@ -3161,7 +3232,7 @@ function doGet(e) {
                   className="btn primary"
                   style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '11px', padding: '4px 8px', background: '#059669', border: 'none' }}
                   onClick={() => {
-                    const code = `const DEFAULT_ROOT_FOLDER_ID = "";
+                    const code = `const DEFAULT_ROOT_FOLDER_ID = ""; // ใส่ Folder ID หรือปล่อยว่างไว้ให้ลง Root
 
 function doPost(e) {
   try {
@@ -3181,6 +3252,7 @@ function doPost(e) {
       targetFolder = DriveApp.getRootFolder();
     }
 
+    // สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
     if (body.projectName && body.projectName !== 'ทั่วไป') {
       const subfolders = targetFolder.getFoldersByName(body.projectName);
       if (subfolders.hasNext()) {
@@ -3190,16 +3262,33 @@ function doPost(e) {
       }
     }
 
+    // ถ้าเป็นรูปภาพหน้างาน จัดเก็บลงโฟลเดอร์ย่อย Photos ภายในโครงการ
+    if (body.docType === 'photos') {
+      const photoFolders = targetFolder.getFoldersByName('Photos');
+      if (photoFolders.hasNext()) {
+        targetFolder = photoFolders.next();
+      } else {
+        targetFolder = targetFolder.createFolder('Photos');
+      }
+    }
+
+    // แปลง Base64 เป็นไฟล์
     const decodedBytes = Utilities.base64Decode(body.base64Data);
-    const blob = Utilities.newBlob(decodedBytes, body.mimeType || "application/pdf", body.filename || "document.pdf");
+    const mimeType = body.mimeType || "application/pdf";
+    const filename = body.filename || (mimeType.includes('image') ? "photo.jpg" : "document.pdf");
+    const blob = Utilities.newBlob(decodedBytes, mimeType, filename);
 
     const file = targetFolder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
+    const fileId = file.getId();
+    const directImageUrl = "https://lh3.googleusercontent.com/d/" + fileId;
+
     return ContentService.createTextOutput(JSON.stringify({
       status: 'success',
-      fileId: file.getId(),
+      fileId: fileId,
       fileUrl: file.getUrl(),
+      directImageUrl: directImageUrl,
       filename: file.getName(),
       folderName: targetFolder.getName()
     })).setMimeType(ContentService.MimeType.JSON);
