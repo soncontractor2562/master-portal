@@ -28,5 +28,9 @@ CREATE TABLE IF NOT EXISTS store_pending_moves (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 3. Add require_receive column to store_locations (if not exists)
+-- ALTER TABLE store_locations ADD COLUMN IF NOT EXISTS require_receive boolean;
+-- UPDATE store_locations SET require_receive = (type = 'ไซต์งาน') WHERE require_receive IS NULL;
+
 -- Note: The frontend uses public access (anon key without row level security restrictions).
 -- If you have RLS enabled, ensure there are policies allowing select, insert, update, delete for these tables.

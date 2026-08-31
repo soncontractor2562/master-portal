@@ -37,9 +37,19 @@ const defaultLaborList = [
 ].map(name => ({ name, qty: '' }));
 
 const defaultEquipList = [
-  'รถเทเลอร์', 'รถแบคโฮ', 'รถเครน', 'เครื่องระดับ', 'กล้อง Total Station', 
-  'เครื่องเชื่อม', 'เครื่องตัดเหล็ก', 'เครื่องดัดเหล็ก', 'เครื่องผสมปูน', 'เครื่องสูบน้ำ', 'รถกระบะ', 'อื่นๆ'
-].map(name => ({ name, qty: '' }));
+  { name: 'รถเทเลอร์', qty: '', unit: 'คัน' },
+  { name: 'รถแบคโฮ', qty: '', unit: 'คัน' },
+  { name: 'รถเครน', qty: '', unit: 'คัน' },
+  { name: 'เครื่องระดับ', qty: '', unit: 'ชุด' },
+  { name: 'กล้อง Total Station', qty: '', unit: 'ชุด' },
+  { name: 'เครื่องเชื่อม', qty: '', unit: 'เครื่อง' },
+  { name: 'เครื่องตัดเหล็ก', qty: '', unit: 'เครื่อง' },
+  { name: 'เครื่องดัดเหล็ก', qty: '', unit: 'เครื่อง' },
+  { name: 'เครื่องผสมปูน', qty: '', unit: 'เครื่อง' },
+  { name: 'เครื่องสูบน้ำ', qty: '', unit: 'เครื่อง' },
+  { name: 'รถกระบะ', qty: '', unit: 'คัน' },
+  { name: 'อื่นๆ', qty: '', unit: '' }
+];
 
 const createDefaultTasks = () => [{ item: '', qty: '', unit: '', note: '' }];
 
@@ -658,7 +668,7 @@ function App() {
         ...r,
         tasks: r.tasks || createDefaultTasks(),
         labor: r.labor && r.labor.length ? r.labor : defaultLaborList,
-        equip: r.equip && r.equip.length ? r.equip : defaultEquipList,
+        equip: (r.equip && r.equip.length ? r.equip : defaultEquipList).map(e => ({ name: e.name || '', qty: e.qty || '', unit: e.unit !== undefined ? e.unit : '' })),
         mat: r.mat && r.mat.length ? r.mat : [{ name: '', qty: '', unit: '' }],
         photos: r.photos || [],
         clock: r.clock ? [...r.clock] : new Array(12).fill(0)
@@ -826,12 +836,18 @@ function App() {
     return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>{slices}<circle cx={cx} cy={cy} r={rInner - 1} fill="#fff" stroke="#ccc" /></svg>;
   };
 
-  const render12ResourceRows = (list, isQtyWithUnit = false, unitStr = '') => {
+  const render12ResourceRows = (list, defaultUnit = '') => {
     const rows = [];
     for (let i = 0; i < 12; i++) {
-      const item = (list || [])[i] || { name: '', qty: '' };
-      const displayQty = item.qty ? (isQtyWithUnit ? `${item.qty} ${unitStr}` : (item.unit ? `${item.qty} ${item.unit}` : item.qty)) : '';
-      rows.push(<tr key={i}><td style={{ height: '19px' }}>{item.name || '\u00A0'}</td><td style={{ textAlign: 'right', fontWeight: 'bold', width: '70px' }}>{displayQty}</td></tr>);
+      const item = (list || [])[i] || { name: '', qty: '', unit: '' };
+      const unitText = item.unit !== undefined && item.unit !== '' ? item.unit.trim() : defaultUnit;
+      const displayQty = item.qty ? (unitText ? `${item.qty} ${unitText}` : item.qty) : '';
+      rows.push(
+        <tr key={i}>
+          <td style={{ height: '19px' }}>{item.name || '\u00A0'}</td>
+          <td style={{ textAlign: 'right', fontWeight: 'bold', width: '75px', whiteSpace: 'nowrap' }}>{displayQty}</td>
+        </tr>
+      );
     }
     return rows;
   };
@@ -932,29 +948,33 @@ function App() {
             <div className="resource-col">
               <div className="resource-col-header">แรงงาน (Manpower)</div>
               <table className="resource-col-table">
-                <tbody>{render12ResourceRows(data.labor, true, 'คน')}</tbody>
+                <tbody>{render12ResourceRows(data.labor, 'คน')}</tbody>
               </table>
             </div>
             <div className="resource-col">
               <div className="resource-col-header">เครื่องจักร - อุปกรณ์ (Machinery)</div>
               <table className="resource-col-table">
-                <tbody>{render12ResourceRows(data.equip, true, 'คัน/ชุด')}</tbody>
+                <tbody>{render12ResourceRows(data.equip, '')}</tbody>
               </table>
             </div>
             <div className="resource-col">
               <div className="resource-col-header">วัสดุเข้าหน่วยงาน (Materials)</div>
               <table className="resource-col-table">
-                <tbody>{render12ResourceRows(data.mat, false)}</tbody>
+                <tbody>{render12ResourceRows(data.mat, '')}</tbody>
               </table>
             </div>
           </div>
 
           <div className="page-signer-row">
-            <div className="signer-box" style={{ position: 'relative' }}>
-              {data.signatureImage && (
-                <img src={data.signatureImage} alt="signature" style={{ position: 'absolute', bottom: '35px', left: '50%', transform: 'translateX(-50%)', maxHeight: '55px', maxWidth: '100%', objectFit: 'contain' }} />
-              )}
-              <div className="signer-line" style={{ marginTop: '24px' }}></div>
+            <div className="signer-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '220px' }}>
+              <div style={{ height: '52px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', width: '100%', marginBottom: '4px' }}>
+                {data.signatureImage ? (
+                  <img src={data.signatureImage} alt="signature" style={{ maxHeight: '48px', maxWidth: '170px', objectFit: 'contain' }} />
+                ) : (
+                  <div style={{ height: '24px' }}></div>
+                )}
+              </div>
+              <div className="signer-line" style={{ width: '180px', margin: '0 auto 4px' }}></div>
               <div className="signer-name">({data.signerName || '....................................................'})</div>
               <div className="signer-role">ตำแหน่ง: {data.signerRole || 'วิศวกรโครงการ'}</div>
               <div className="signer-date">วันที่: {formatThaiDate(data.signerDate || data.date)}</div>
@@ -1166,22 +1186,32 @@ function App() {
                 <div className="card">
                   <h3 style={{ marginTop: 0, marginBottom: '10px', fontSize: '15px' }}>เครื่องจักร - อุปกรณ์</h3>
                   <div className="table-scroll-wrap"><table className="entry-table">
-                    <thead><tr><th>รายการ</th><th style={{ width: '100px' }}>จำนวน</th><th style={{ width: '40px' }}></th></tr></thead>
+                    <thead>
+                      <tr>
+                        <th>รายการ</th>
+                        <th style={{ width: '80px', textAlign: 'center' }}>จำนวน</th>
+                        <th style={{ width: '80px', textAlign: 'center' }}>หน่วย</th>
+                        <th style={{ width: '40px' }}></th>
+                      </tr>
+                    </thead>
                     <tbody>
                       {formData.equip.map((x, i) => (
                         <tr key={i}>
-                          <td><input type="text" value={x.name} onChange={e => {
+                          <td><input type="text" value={x.name} placeholder="ชื่อเครื่องจักร / อุปกรณ์" onChange={e => {
                             const n = [...formData.equip]; n[i].name = e.target.value; setFormData({ ...formData, equip: n });
                           }} /></td>
-                          <td><input type="text" value={x.qty} onChange={e => {
+                          <td><input type="text" value={x.qty} placeholder="จำนวน" style={{ textAlign: 'center' }} onChange={e => {
                             const n = [...formData.equip]; n[i].qty = e.target.value; setFormData({ ...formData, equip: n });
+                          }} /></td>
+                          <td><input type="text" value={x.unit !== undefined ? x.unit : ''} placeholder="เช่น คัน, เครื่อง" style={{ textAlign: 'center' }} onChange={e => {
+                            const n = [...formData.equip]; n[i].unit = e.target.value; setFormData({ ...formData, equip: n });
                           }} /></td>
                           <td className="row-actions"><button className="icon-btn danger" onClick={() => setFormData({ ...formData, equip: formData.equip.filter((_, idx) => idx !== i) })}>X</button></td>
                         </tr>
                       ))}
                     </tbody>
                   </table></div>
-                  <button className="add-row-btn" style={{ marginTop: '10px' }} onClick={() => setFormData({ ...formData, equip: [...formData.equip, { name: '', qty: '' }] })}>+ เพิ่มรายการ</button>
+                  <button className="add-row-btn" style={{ marginTop: '10px' }} onClick={() => setFormData({ ...formData, equip: [...formData.equip, { name: '', qty: '', unit: '' }] })}>+ เพิ่มรายการ</button>
                 </div>
               </div>
 
