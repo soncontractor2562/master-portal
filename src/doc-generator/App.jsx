@@ -2661,15 +2661,15 @@ function App() {
                                 🖼️ ดาวน์โหลด PNG
                               </button>
 
-                              {!r.driveUrl && (
-                                <button 
-                                  className="new-doc-dropdown-item"
-                                  onClick={() => handleUploadDocToDrive(r)}
-                                  style={{ padding: '7px 10px', fontSize: '12.5px', color: '#059669' }}
-                                >
-                                  📤 อัปโหลดขึ้น Drive
-                                </button>
-                              )}
+                              <button 
+                                className="new-doc-dropdown-item"
+                                type="button"
+                                onClick={() => handleUploadDocToDrive(r)}
+                                style={{ padding: '7px 10px', fontSize: '12.5px', color: '#059669', fontWeight: '600' }}
+                                title={r.driveUrl ? "อัปเดตไฟล์ PDF และรูปภาพล่าสุดทับไฟล์เดิมบน Google Drive" : "อัปโหลดรายงานและรูปภาพขึ้น Google Drive"}
+                              >
+                                <span>{r.driveUrl ? '🔄 อัปเดตทับไฟล์เดิมบน Drive' : '📤 ส่งขึ้น Google Drive'}</span>
+                              </button>
 
                               <button 
                                 className="new-doc-dropdown-item"
@@ -3331,7 +3331,7 @@ function doPost(e) {
       targetFolder = DriveApp.getRootFolder();
     }
 
-    // 1. สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
+    // 1. หาหรือสร้างโฟลเดอร์โครงการ
     if (body.projectName && body.projectName !== 'ทั่วไป') {
       const subfolders = targetFolder.getFoldersByName(body.projectName);
       if (subfolders.hasNext()) {
@@ -3356,8 +3356,9 @@ function doPost(e) {
     const decodedBytes = Utilities.base64Decode(body.base64Data);
     const blob = Utilities.newBlob(decodedBytes, mimeType, filename);
 
-    // 3. จัดการอัปเดตทับไฟล์เดิม (Overwrite / Replace Old File)
+    // 3. ลบไฟล์เดิมทิ้ง (Overwrite: ลบไฟล์ ID เดิม และไฟล์ชื่อเดียวกันในโฟลเดอร์)
     if (body.overwrite !== false) {
+      // 3.1 ลบตาม fileId
       if (body.fileId) {
         try {
           const oldFile = DriveApp.getFileById(body.fileId);
@@ -3365,14 +3366,21 @@ function doPost(e) {
         } catch(e) {}
       }
       
-      const existingFiles = targetFolder.getFilesByName(filename);
-      while (existingFiles.hasNext()) {
-        const existing = existingFiles.next();
-        existing.setTrashed(true);
-      }
+      // 3.2 ลบไฟล์ชื่อเดียวกันทั้งหมดในโฟลเดอร์เป้าหมาย
+      try {
+        const baseName = filename.replace(/\.[^/.]+$/, "");
+        const allFiles = targetFolder.getFiles();
+        while (allFiles.hasNext()) {
+          const f = allFiles.next();
+          const fn = f.getName();
+          if (fn === filename || fn === baseName || fn === (baseName + ".pdf") || fn === (filename + ".pdf")) {
+            f.setTrashed(true);
+          }
+        }
+      } catch(e) {}
     }
 
-    // 4. สร้างไฟล์เวอร์ชันล่าสุด
+    // 4. สร้างไฟล์ใหม่เวอร์ชันล่าสุด
     const file = targetFolder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
@@ -3424,7 +3432,7 @@ function doPost(e) {
       targetFolder = DriveApp.getRootFolder();
     }
 
-    // 1. สร้างหรือหาโฟลเดอร์ย่อยตามชื่อโครงการ
+    // 1. หาหรือสร้างโฟลเดอร์โครงการ
     if (body.projectName && body.projectName !== 'ทั่วไป') {
       const subfolders = targetFolder.getFoldersByName(body.projectName);
       if (subfolders.hasNext()) {
@@ -3449,8 +3457,9 @@ function doPost(e) {
     const decodedBytes = Utilities.base64Decode(body.base64Data);
     const blob = Utilities.newBlob(decodedBytes, mimeType, filename);
 
-    // 3. จัดการอัปเดตทับไฟล์เดิม (Overwrite / Replace Old File)
+    // 3. ลบไฟล์เดิมทิ้ง (Overwrite: ลบไฟล์ ID เดิม และไฟล์ชื่อเดียวกันในโฟลเดอร์)
     if (body.overwrite !== false) {
+      // 3.1 ลบตาม fileId
       if (body.fileId) {
         try {
           const oldFile = DriveApp.getFileById(body.fileId);
@@ -3458,14 +3467,21 @@ function doPost(e) {
         } catch(e) {}
       }
       
-      const existingFiles = targetFolder.getFilesByName(filename);
-      while (existingFiles.hasNext()) {
-        const existing = existingFiles.next();
-        existing.setTrashed(true);
-      }
+      // 3.2 ลบไฟล์ชื่อเดียวกันทั้งหมดในโฟลเดอร์เป้าหมาย
+      try {
+        const baseName = filename.replace(/\.[^/.]+$/, "");
+        const allFiles = targetFolder.getFiles();
+        while (allFiles.hasNext()) {
+          const f = allFiles.next();
+          const fn = f.getName();
+          if (fn === filename || fn === baseName || fn === (baseName + ".pdf") || fn === (filename + ".pdf")) {
+            f.setTrashed(true);
+          }
+        }
+      } catch(e) {}
     }
 
-    // 4. สร้างไฟล์เวอร์ชันล่าสุด
+    // 4. สร้างไฟล์ใหม่เวอร์ชันล่าสุด
     const file = targetFolder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
