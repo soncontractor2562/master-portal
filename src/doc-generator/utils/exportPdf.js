@@ -83,3 +83,51 @@ export async function exportToPdf(containerId, filename) {
     return false;
   }
 }
+
+export async function generatePdfBase64(containerId) {
+  try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
+    let container = document.getElementById(containerId);
+    if (!container) {
+      container = document.getElementById('previewCard');
+    }
+    if (!container) {
+      return null;
+    }
+
+    const pages = container.querySelectorAll('.a4-page');
+    const pdf = new jsPDF('p', 'mm', 'a4', true);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    const renderOptions = {
+      quality: 0.90,
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      cacheBust: true
+    };
+
+    if (pages && pages.length > 0) {
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) {
+          pdf.addPage('a4', 'p');
+        }
+        const pageEl = pages[i];
+        const imgData = await htmlToImage.toJpeg(pageEl, renderOptions);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      }
+    } else {
+      const imgData = await htmlToImage.toJpeg(container, renderOptions);
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+    }
+
+    return pdf.output('datauristring');
+  } catch (err) {
+    console.error('generatePdfBase64 error:', err);
+    return null;
+  }
+}
+

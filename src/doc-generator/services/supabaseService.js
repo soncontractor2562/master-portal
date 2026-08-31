@@ -36,6 +36,31 @@ export const docGeneratorService = {
     } catch(e) {}
   },
 
+  // 1.1 Google Drive Settings
+  async getGoogleDriveSettings() {
+    try {
+      const { data, error } = await supabase.from('doc_generator_presets').select('data').eq('type', 'google_drive_config').is('name', null).maybeSingle();
+      if (error) console.error('Error fetching google drive settings:', error);
+      if (data && data.data) {
+        localStorage.setItem('doc_generator_google_drive_v1', JSON.stringify(data.data));
+        return data.data;
+      }
+      const localRaw = localStorage.getItem('doc_generator_google_drive_v1');
+      return localRaw ? JSON.parse(localRaw) : { webhookUrl: '', folderId: '', autoUpload: true };
+    } catch(e) {
+      const localRaw = localStorage.getItem('doc_generator_google_drive_v1');
+      return localRaw ? JSON.parse(localRaw) : { webhookUrl: '', folderId: '', autoUpload: true };
+    }
+  },
+  async saveGoogleDriveSettings(driveSettings) {
+    try {
+      localStorage.setItem('doc_generator_google_drive_v1', JSON.stringify(driveSettings));
+      const { error } = await supabase.from('doc_generator_presets')
+        .upsert({ type: 'google_drive_config', name: null, data: driveSettings, updated_at: new Date().toISOString() }, { onConflict: 'type, name' });
+      if (error) console.error('Error saving google drive settings:', error);
+    } catch(e) {}
+  },
+
   // 2. Named Presets
   async getPresets(type) {
     try {

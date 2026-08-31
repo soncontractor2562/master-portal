@@ -1,6 +1,7 @@
 import './index.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { exportToPdf } from './utils/exportPdf';
+import { exportToPdf, generatePdfBase64 } from './utils/exportPdf';
+import { uploadToGoogleDrive, testGoogleDriveWebhook } from './utils/googleDriveService';
 import { exportToImage } from './utils/exportImage';
 import SignaturePad from './components/SignaturePad';
 import { DailyRequestView, createDefaultRequestTasks } from './components/DailyRequest';
@@ -184,6 +185,17 @@ function App() {
   const [hubSearch, setHubSearch] = useState('');
   const [hubProject, setHubProject] = useState('');
   const [isNewDocMenuOpen, setIsNewDocMenuOpen] = useState(false);
+  const [driveSettings, setDriveSettings] = useState(() => {
+    try {
+      const raw = localStorage.getItem('doc_generator_google_drive_v1');
+      return raw ? JSON.parse(raw) : { webhookUrl: '', folderId: '', autoUpload: true };
+    } catch(e) {
+      return { webhookUrl: '', folderId: '', autoUpload: true };
+    }
+  });
+  const [isUploadingDrive, setIsUploadingDrive] = useState(false);
+  const [driveTestStatus, setDriveTestStatus] = useState(null);
+  const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   
   const [company, setCompany] = useState(() => {
     try {
@@ -317,7 +329,7 @@ function App() {
 
     const fetchAllDataParallel = async () => {
       try {
-        const [comp, projs, repPresets, reqPresets, prPresets, defReport, defRequest, defPr, docs] = await Promise.all([
+        const [comp, projs, repPresets, reqPresets, prPresets, defReport, defRequest, defPr, docs, driveCfg] = await Promise.all([
           docGeneratorService.getCompanySettings().catch(() => null),
           docGeneratorService.getProjects().catch(() => []),
           docGeneratorService.getPresets('report_preset').catch(() => []),
@@ -326,7 +338,8 @@ function App() {
           docGeneratorService.getDefaultForm('report').catch(() => null),
           docGeneratorService.getDefaultForm('request').catch(() => null),
           docGeneratorService.getDefaultForm('pr').catch(() => null),
-          docGeneratorService.getDocuments().catch(() => [])
+          docGeneratorService.getDocuments().catch(() => []),
+          docGeneratorService.getGoogleDriveSettings().catch(() => null)
         ]);
 
         if (!isMounted) return;
@@ -334,6 +347,9 @@ function App() {
         if (comp) {
           setCompany(comp);
           try { localStorage.setItem(COMPANY_KEY, JSON.stringify(comp)); } catch(e) {}
+        }
+        if (driveCfg) {
+          setDriveSettings(driveCfg);
         }
         if (projs && projs.length > 0) {
           setProjects(projs);
@@ -747,11 +763,124 @@ function App() {
     setCurrentEditId(null);
     handleProjectChange(currentProject);
   };
+  // Upload single document to Google Drive on demand
+  const handleUploadDocToDrive = async (docRecord) => {
+    if (!driveSettings.webhookUrl) {
+      alert('กรุณาระบุ Google Drive Webhook URL ในแท็บ "⚙️ ตั้งค่า / ทะเบียน" ก่อน');
+      setActiveTab('company');
+      return;
+    }
+
+    try {
+      setIsUploadingDrive(true);
+      setPreviewData(docRecord);
+      
+      // Wait briefly for render
+      await new Promise(r => setTimeout(r, 200));
+      const base64Pdf = await generatePdfBase64('exportStagingContainer');
+      
+      if (!base64Pdf) {
+        throw new Error('ไม่สามารถสร้างไฟล์ PDF สำหรับอัปโหลดได้');
+      }
+
+      const prefix = docRecord.docType === 'report' ? 'Daily_Report' : (docRecord.docType === 'request' ? 'Daily_Request' : (docRecord.prNo || 'PR_Requisition'));
+      const filename = `${prefix}_${docRecord.date || todayStr()}`;
+
+      const uploadRes = await uploadToGoogleDrive({
+        webhookUrl: driveSettings.webhookUrl,
+        folderId: driveSettings.folderId,
+        filename,
+        base64Data: base64Pdf,
+        projectName: docRecord.project || 'ทั่วไป',
+        docType: docRecord.docType
+      });
+
+      if (uploadRes.fileUrl) {
+        // Save driveUrl back to document
+        const updatedData = {
+          ...(docRecord.document_data || docRecord),
+          driveUrl: uploadRes.fileUrl,
+          driveFileId: uploadRes.fileId,
+          driveUploadedAt: new Date().toISOString()
+        };
+
+        await docGeneratorService.saveDocument(
+          docRecord.docType || 'report',
+          docRecord.date || todayStr(),
+          docRecord.project || '',
+          updatedData,
+          docRecord.id
+        );
+
+        const docs = await docGeneratorService.getDocuments();
+        setReports(docs.map(d => {
+          const docData = d.document_data || {};
+          return {
+            ...docData,
+            id: d.id,
+            docType: d.doc_type || docData.docType || 'report',
+            savedAt: d.created_at || docData.savedAt,
+            date: d.date || docData.date || todayStr(),
+            project: d.project_name || docData.project || '',
+            status: docData.status || d.status || 'completed',
+            driveUrl: docData.driveUrl || d.drive_url || null
+          };
+        }));
+
+        alert(`✅ ส่งไฟล์ขึ้น Google Drive เรียบร้อยแล้ว!\n\n🔗 ลิงก์ไฟล์: ${uploadRes.fileUrl}`);
+      }
+    } catch(err) {
+      alert(`เกิดข้อผิดพลาดในการส่ง Google Drive: ${err.message}`);
+    } finally {
+      setIsUploadingDrive(false);
+    }
+  };
+
   const handleSaveDoc = async (isDraft = false) => {
     try {
       const currentData = docType === 'report' ? formData : (docType === 'request' ? reqData : prData);
       const saveStatus = isDraft ? 'draft' : 'completed';
-      const dataToSave = { ...currentData, docType, status: saveStatus, savedAt: new Date().toISOString() };
+      let driveUrl = currentData.driveUrl || null;
+      let driveFileId = currentData.driveFileId || null;
+
+      // Auto upload to Google Drive if completed and enabled
+      if (!isDraft && driveSettings.webhookUrl && driveSettings.autoUpload !== false) {
+        try {
+          setIsUploadingDrive(true);
+          setPreviewData(currentData);
+          await new Promise(r => setTimeout(r, 200));
+          const base64Pdf = await generatePdfBase64('exportStagingContainer');
+          if (base64Pdf) {
+            const prefix = docType === 'report' ? 'Daily_Report' : (docType === 'request' ? 'Daily_Request' : (currentData.prNo || 'PR_Requisition'));
+            const filename = `${prefix}_${currentData.date || todayStr()}`;
+            const uploadRes = await uploadToGoogleDrive({
+              webhookUrl: driveSettings.webhookUrl,
+              folderId: driveSettings.folderId,
+              filename,
+              base64Data: base64Pdf,
+              projectName: currentData.project || 'ทั่วไป',
+              docType
+            });
+            if (uploadRes.fileUrl) {
+              driveUrl = uploadRes.fileUrl;
+              driveFileId = uploadRes.fileId;
+            }
+          }
+        } catch(uploadErr) {
+          console.warn('Google Drive auto upload skipped:', uploadErr.message);
+        } finally {
+          setIsUploadingDrive(false);
+        }
+      }
+
+      const dataToSave = { 
+        ...currentData, 
+        docType, 
+        status: saveStatus, 
+        driveUrl, 
+        driveFileId,
+        savedAt: new Date().toISOString() 
+      };
       
       const savedObj = await docGeneratorService.saveDocument(
         docType, 
@@ -774,14 +903,19 @@ function App() {
             savedAt: d.created_at || docData.savedAt,
             date: d.date || docData.date || todayStr(),
             project: d.project_name || docData.project || '',
-            status: docData.status || d.status || 'completed'
+            status: docData.status || d.status || 'completed',
+            driveUrl: docData.driveUrl || d.drive_url || null
           };
         }));
         const typeLabel = docType === 'report' ? 'Daily Report' : (docType === 'request' ? 'Daily Request' : 'PR / ใบขออนุมัติสั่งซื้อ');
         if (isDraft) {
           alert(`💾 บันทึก ${typeLabel} เป็น "ฉบับร่าง (Draft)" เรียบร้อยแล้ว`);
         } else {
-          alert(`✅ บันทึก ${typeLabel} เสร็จสมบูรณ์ (Cloud) เรียบร้อยแล้ว`);
+          if (driveUrl) {
+            alert(`✅ บันทึก ${typeLabel} เสร็จสมบูรณ์ และส่งขึ้น Google Drive เรียบร้อยแล้ว!\n\n🔗 เปิดบน Drive: ${driveUrl}`);
+          } else {
+            alert(`✅ บันทึก ${typeLabel} เสร็จสมบูรณ์ (Cloud) เรียบร้อยแล้ว`);
+          }
         }
       }
     } catch (e) {
@@ -2166,6 +2300,27 @@ function App() {
                       </div>
                     </div>
                     <div className="actions" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {r.driveUrl ? (
+                        <a 
+                          href={r.driveUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="btn"
+                          style={{ padding: '5px 10px', fontSize: '12px', background: '#059669', color: '#fff', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', borderRadius: '4px' }}
+                          title="คลิกเพื่อเปิดไฟล์ PDF บน Google Drive ทันที"
+                        >
+                          📂 Google Drive ↗
+                        </a>
+                      ) : (
+                        <button 
+                          className="btn ghost" 
+                          onClick={() => handleUploadDocToDrive(r)}
+                          style={{ padding: '5px 10px', fontSize: '12px', color: '#059669', borderColor: '#a7f3d0', background: '#f0fdf4' }}
+                          title="แปลงเป็น PDF และส่งขึ้น Google Drive"
+                        >
+                          📤 ส่งขึ้น Drive
+                        </button>
+                      )}
                       <button className="btn primary" onClick={() => handlePreviewHistory(r)} style={{ padding: '5px 10px', fontSize: '12px' }}>
                         👁️ ดูตัวอย่าง A4
                       </button>
@@ -2226,6 +2381,100 @@ function App() {
       })()}
       {activeTab === 'company' && (
         <div id="companyTab">
+          {/* Google Drive Integration Card */}
+          <div className="card" style={{ border: '2px solid #059669', background: '#f0fdf4', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '24px' }}>📂</span>
+                <div>
+                  <h2 style={{ margin: 0, color: '#065f46', fontSize: '16px' }}>การเชื่อมต่อ Google Drive (Auto-Sync PDF)</h2>
+                  <div style={{ fontSize: '12px', color: '#047857' }}>
+                    ส่งไฟล์ PDF ไปยังโฟลเดอร์ Google Drive อัตโนมัติ พร้อมสร้างลิงก์สำหรับกดเปิดดูได้ทันที
+                  </div>
+                </div>
+              </div>
+              <button 
+                className="btn ghost"
+                type="button"
+                onClick={() => setShowDriveGuideModal(true)}
+                style={{ fontSize: '12px', padding: '4px 10px', borderColor: '#059669', color: '#065f46', background: '#fff' }}
+              >
+                📖 ดูวิธีติดตั้ง Google Apps Script (คู่มือ)
+              </button>
+            </div>
+
+            <div className="grid">
+              <div className="field" style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontWeight: 'bold', color: '#065f46' }}>Google Apps Script Webhook URL</label>
+                <input 
+                  type="text" 
+                  value={driveSettings.webhookUrl || ''} 
+                  onChange={e => setDriveSettings({ ...driveSettings, webhookUrl: e.target.value })} 
+                  placeholder="เช่น https://script.google.com/macros/s/AKfycbx.../exec"
+                  style={{ background: '#fff' }}
+                />
+              </div>
+
+              <div className="field">
+                <label style={{ fontWeight: 'bold', color: '#065f46' }}>Google Drive Folder ID (รหัสโฟลเดอร์หลัก)</label>
+                <input 
+                  type="text" 
+                  value={driveSettings.folderId || ''} 
+                  onChange={e => setDriveSettings({ ...driveSettings, folderId: e.target.value })} 
+                  placeholder="เช่น 1A2b3C4d5E6f7G8h9I0jKlMnOpQrStUvW"
+                  style={{ background: '#fff' }}
+                />
+                <div style={{ fontSize: '11px', color: '#047857', marginTop: '2px' }}>
+                  (นำมาจาก URL โฟลเดอร์ใน Drive เช่น drive.google.com/drive/folders/<strong>[ID ตรงนี้]</strong>)
+                </div>
+              </div>
+
+              <div className="field" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#065f46', fontSize: '13px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={driveSettings.autoUpload !== false} 
+                    onChange={e => setDriveSettings({ ...driveSettings, autoUpload: e.target.checked })} 
+                    style={{ width: '18px', height: '18px' }}
+                  />
+                  ส่งไฟล์ PDF ขึ้น Google Drive อัตโนมัติเมื่อกด "บันทึกเสร็จสมบูรณ์"
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button 
+                className="btn primary" 
+                type="button"
+                onClick={async () => {
+                  await docGeneratorService.saveGoogleDriveSettings(driveSettings);
+                  alert('💾 บันทึกการตั้งค่า Google Drive เรียบร้อยแล้ว');
+                }}
+                style={{ background: '#059669', borderColor: '#059669' }}
+              >
+                💾 บันทึกการตั้งค่า Google Drive
+              </button>
+              <button 
+                className="btn ghost" 
+                type="button"
+                onClick={async () => {
+                  try {
+                    setDriveTestStatus('testing');
+                    const res = await testGoogleDriveWebhook(driveSettings.webhookUrl);
+                    alert('✅ ' + res.message);
+                    setDriveTestStatus('success');
+                  } catch(err) {
+                    alert('❌ ' + err.message);
+                    setDriveTestStatus('error');
+                  }
+                }}
+                style={{ background: '#fff', borderColor: '#059669', color: '#065f46' }}
+              >
+                ⚡ ทดสอบการเชื่อมต่อ
+              </button>
+            </div>
+          </div>
+
           <div className="card">
             <h2>ตั้งค่าบริษัท (ใช้แสดงบนหัวรายงาน)</h2>
             <div className="grid">
@@ -2521,6 +2770,165 @@ function App() {
           </div>
         </div>
       )}
+      {/* Google Apps Script Guide Modal */}
+      {showDriveGuideModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setShowDriveGuideModal(false)}>
+          <div style={{ background: '#fff', borderRadius: '12px', maxWidth: '750px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '24px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', color: '#065f46' }}>📖 คู่มือติดตั้ง Google Apps Script สำหรับเชื่อมต่อ Google Drive</h3>
+              <button className="btn ghost" onClick={() => setShowDriveGuideModal(false)} style={{ border: 'none', fontSize: '18px' }}>✕</button>
+            </div>
+
+            <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#334155' }}>
+              <p><strong>ขั้นตอนที่ 1:</strong> เปิดเว็บ <a href="https://script.google.com" target="_blank" rel="noreferrer" style={{ color: '#059669', fontWeight: 'bold' }}>script.google.com</a> ด้วยบัญชี Google ของบริษัท แล้วกด <strong>"+ New project"</strong></p>
+              
+              <p><strong>ขั้นตอนที่ 2:</strong> ลบโค้ดเดิมทั้งหมดออก แล้ววางโค้ดด้านล่างนี้ลงในไฟล์ <code>Code.gs</code>:</p>
+              
+              <div style={{ position: 'relative' }}>
+                <pre style={{ background: '#1e293b', color: '#f8fafc', padding: '14px', borderRadius: '8px', fontSize: '11px', overflowX: 'auto', maxHeight: '250px' }}>
+{`const DEFAULT_ROOT_FOLDER_ID = ""; // ใส่ Folder ID หรือปล่อยว่างไว้ให้ลง Root
+
+function doPost(e) {
+  try {
+    const rawData = e.postData.contents;
+    const body = JSON.parse(rawData);
+
+    if (body.action === 'ping') {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'เชื่อมต่อ Google Drive สำเร็จ 100%!' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const folderId = body.folderId || DEFAULT_ROOT_FOLDER_ID;
+    let targetFolder;
+    try {
+      targetFolder = folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
+    } catch(err) {
+      targetFolder = DriveApp.getRootFolder();
+    }
+
+    // สร้างโฟลเดอร์ย่อยตามชื่อโครงการอัตโนมัติ
+    if (body.projectName && body.projectName !== 'ทั่วไป') {
+      const subfolders = targetFolder.getFoldersByName(body.projectName);
+      if (subfolders.hasNext()) {
+        targetFolder = subfolders.next();
+      } else {
+        targetFolder = targetFolder.createFolder(body.projectName);
+      }
+    }
+
+    // แปลง Base64 เป็นไฟล์ PDF
+    const decodedBytes = Utilities.base64Decode(body.base64Data);
+    const blob = Utilities.newBlob(decodedBytes, body.mimeType || "application/pdf", body.filename || "document.pdf");
+
+    const file = targetFolder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      fileId: file.getId(),
+      fileUrl: file.getUrl(),
+      filename: file.getName(),
+      folderName: targetFolder.getName()
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Google Drive Webhook Active' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`}
+                </pre>
+                <button 
+                  className="btn primary"
+                  style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '11px', padding: '4px 8px', background: '#059669', border: 'none' }}
+                  onClick={() => {
+                    const code = `const DEFAULT_ROOT_FOLDER_ID = "";
+
+function doPost(e) {
+  try {
+    const rawData = e.postData.contents;
+    const body = JSON.parse(rawData);
+
+    if (body.action === 'ping') {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'เชื่อมต่อ Google Drive สำเร็จ 100%!' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const folderId = body.folderId || DEFAULT_ROOT_FOLDER_ID;
+    let targetFolder;
+    try {
+      targetFolder = folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
+    } catch(err) {
+      targetFolder = DriveApp.getRootFolder();
+    }
+
+    if (body.projectName && body.projectName !== 'ทั่วไป') {
+      const subfolders = targetFolder.getFoldersByName(body.projectName);
+      if (subfolders.hasNext()) {
+        targetFolder = subfolders.next();
+      } else {
+        targetFolder = targetFolder.createFolder(body.projectName);
+      }
+    }
+
+    const decodedBytes = Utilities.base64Decode(body.base64Data);
+    const blob = Utilities.newBlob(decodedBytes, body.mimeType || "application/pdf", body.filename || "document.pdf");
+
+    const file = targetFolder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      fileId: file.getId(),
+      fileUrl: file.getUrl(),
+      filename: file.getName(),
+      folderName: targetFolder.getName()
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Google Drive Webhook Active' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+                    navigator.clipboard.writeText(code);
+                    alert('คัดลอกโค้ด Google Apps Script เรียบร้อยแล้ว!');
+                  }}
+                >
+                  📋 คัดลอกโค้ด
+                </button>
+              </div>
+
+              <p style={{ marginTop: '12px' }}><strong>ขั้นตอนที่ 3:</strong> กดปุ่มสีน้ำเงิน <strong>"Deploy" ➡️ "New deployment"</strong> ทางมุมขวาบน:</p>
+              <ul>
+                <li>เลือกประเภท: <strong>Web app</strong> (กดรูปเฟือง)</li>
+                <li>Execute as: <strong>Me (บัญชีของคุณ)</strong></li>
+                <li>Who has access: <strong>Anyone (ทุกคนที่มีลิงก์)</strong> <span style={{ color: '#dc2626', fontWeight: 'bold' }}>*สำคัญมาก</span></li>
+              </ul>
+
+              <p><strong>ขั้นตอนที่ 4:</strong> กด Deploy แล้วคัดลอก <strong>Web app URL</strong> มาวางในช่องตั้งค่าด้านบน แล้วกด <strong>"⚡ ทดสอบการเชื่อมต่อ"</strong> ได้เลยครับ!</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay when uploading to drive */}
+      {isUploadingDrive && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ fontSize: '36px', marginBottom: '12px' }}>⏳</div>
+          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>กำลังสร้างไฟล์ PDF และส่งขึ้น Google Drive...</div>
+          <div style={{ fontSize: '13px', color: '#e2e8f0', marginTop: '4px' }}>กรุณารอสักครู่</div>
+        </div>
+      )}
+
     </div>
   );
 }
