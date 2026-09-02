@@ -4,7 +4,26 @@ export function createDefaultRequestTasks() {
   return [{ item: '', supervisor: '', note: '' }];
 }
 
+const THAI_MONTHS_FULL = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+function defaultFormatThaiDate(dateStr) {
+  if (!dateStr) return '-';
+  const parts = String(dateStr).split('-');
+  if (parts.length !== 3) return dateStr;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return dateStr;
+  const thaiYear = y > 2400 ? y : y + 543;
+  return `${d} ${THAI_MONTHS_FULL[m] || ''} ${thaiYear}`;
+}
+
 export function DailyRequestView({ data, company, themeClass, formatThaiDate }) {
+  const safeFormatDate = typeof formatThaiDate === 'function' ? formatThaiDate : defaultFormatThaiDate;
+
   return (
     <div className={`a4-page ${themeClass}`}>
         
@@ -27,7 +46,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
             </div>
             <div className="meta-right">
               <div className="meta-right-inline">
-                <div className="meta-item"><b>วันที่:</b> {formatThaiDate(data.date)}</div>
+                <div className="meta-item"><b>วันที่:</b> {safeFormatDate(data.date)}</div>
                 <div className="meta-item"><b>ประเภทวัน:</b> {data.workType || 'ปกติ'}</div>
               </div>
               <div className="meta-item" style={{ marginTop: '2px' }}><b>เวลาทำงาน:</b> {data.time || '8.00 - 17.00 น.'}</div>
@@ -78,7 +97,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
                 <div className="signer-line" style={{ width: '160px', margin: '0 auto 8px', borderBottom: '1px solid currentColor' }}></div>
                 <div className="signer-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>({data.requesterName || '...................................................'})</div>
                 <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.requesterRole || 'ผู้จัดการโครงการ'}</div>
-                <div className="signer-date">วันที่: {formatThaiDate(data.requesterDate || data.date)}</div>
+                <div className="signer-date">วันที่: {safeFormatDate(data.requesterDate || data.date)}</div>
               </div>
             </div>
 
@@ -112,7 +131,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
                 <div className="signer-line" style={{ width: '160px', margin: '0 auto 8px', borderBottom: '1px solid currentColor' }}></div>
                 <div className="signer-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>({data.approverName || '...................................................'})</div>
                 <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.approverRole || 'ที่ปรึกษาโครงการฯ / ผู้จัดการโครงการ'}</div>
-                <div className="signer-date">วันที่: {data.approverDate ? formatThaiDate(data.approverDate) : '......../......../........'}</div>
+                <div className="signer-date">วันที่: {data.approverDate ? safeFormatDate(data.approverDate) : '......../......../........'}</div>
               </div>
             </div>
 
@@ -134,7 +153,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
                 <div className="signer-line" style={{ width: '160px', margin: '0 auto 8px', borderBottom: '1px solid currentColor' }}></div>
                 <div className="signer-name" style={{ fontWeight: 'bold', marginBottom: '4px' }}>({data.requesterName || '...................................................'})</div>
                 <div className="signer-role" style={{ marginBottom: '4px' }}>ตำแหน่ง: {data.requesterRole || 'ผู้จัดการโครงการ'}</div>
-                <div className="signer-date">วันที่: {formatThaiDate(data.requesterDate || data.date)}</div>
+                <div className="signer-date">วันที่: {safeFormatDate(data.requesterDate || data.date)}</div>
               </div>
             </div>
           </div>

@@ -3665,6 +3665,7 @@ function doGet(e) {
                     data={previewData} 
                     company={company} 
                     themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} 
+                    formatThaiDate={formatThaiDate}
                   />
                 </ScaledA4Page>
               )}
@@ -3688,7 +3689,7 @@ function doGet(e) {
         <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none' }}>
           <div id="exportStagingContainer" style={{ width: '794px' }}>
             {docType === 'report' && renderFullReportPages(previewData, reportTheme === 'classic' ? 'classic-theme' : 'modern-theme', 1)}
-            {docType === 'request' && <DailyRequestView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} />}
+            {docType === 'request' && <DailyRequestView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} formatThaiDate={formatThaiDate} />}
             {docType === 'pr' && <PurchaseRequisitionView data={previewData} company={company} themeClass={reportTheme === 'classic' ? 'classic-theme' : 'modern-theme'} formatThaiDate={formatThaiDate} />}
           </div>
         </div>
