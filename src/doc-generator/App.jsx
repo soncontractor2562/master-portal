@@ -2442,6 +2442,16 @@ function App() {
           return true;
         });
 
+        // Sort: Latest date and most recent timestamp first (descending)
+        const sortedReports = filteredReports.slice().sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          if (dateA !== dateB) return dateB.localeCompare(dateA);
+          const timeA = a.savedAt || a.created_at || '';
+          const timeB = b.savedAt || b.created_at || '';
+          return timeB.localeCompare(timeA);
+        });
+
         return (
           <div id="hubTab">
             {/* 1. Compact Filter & Search Toolbar */}
@@ -2549,7 +2559,7 @@ function App() {
                   </button>
                 </div>
               ) : (
-                filteredReports.slice().reverse().map(r => (
+                sortedReports.map(r => (
                   <div 
                     key={r.id} 
                     className="card"
