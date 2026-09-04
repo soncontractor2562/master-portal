@@ -40,13 +40,11 @@ function preloadDocumentImages(data, company) {
   return Promise.all(
     urls.map(url => new Promise((resolve) => {
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => resolve();
       img.onerror = () => resolve();
-      if (url.includes('googleusercontent.com') || url.includes('drive.google.com')) {
-        img.crossOrigin = 'anonymous';
-      }
       img.src = url;
-      setTimeout(resolve, 2000); // safety fallback timeout
+      setTimeout(resolve, 2500); // safety fallback timeout
     }))
   );
 }
@@ -969,7 +967,8 @@ function App() {
 
           // 2. Generate and upload final compiled PDF with photos to Google Drive
           setPreviewData(currentData);
-          await new Promise(r => setTimeout(r, 250));
+          await preloadDocumentImages(currentData, company);
+          await new Promise(r => setTimeout(r, 200));
           const base64Pdf = await generatePdfBase64('exportStagingContainer');
           if (base64Pdf) {
             const prefix = docType === 'report' ? 'Daily_Report' : (docType === 'request' ? 'Daily_Request' : (currentData.prNo || 'PR_Requisition'));
@@ -1276,7 +1275,7 @@ function App() {
           <div className="report-header">
             <div className="header-top">
               <div className="logo-company">
-                {company.logo && <img src={company.logo} alt="Company Logo" />}
+                {company.logo && <img src={company.logo} alt="Company Logo" crossOrigin="anonymous" />}
                 <div className="company-name">{company.name || 'บริษัท ซัน คอนแทรคเตอร์ จำกัด'}</div>
               </div>
               <div className="doc-header-title">
@@ -1398,7 +1397,7 @@ function App() {
             <div className="report-header">
               <div className="header-top">
                 <div className="logo-company">
-                  {company.logo && <img src={company.logo} alt="Company Logo" />}
+                  {company.logo && <img src={company.logo} alt="Company Logo" crossOrigin="anonymous" />}
                   <div className="company-name">{company.name || 'บริษัท ซัน คอนแทรคเตอร์ จำกัด'}</div>
                 </div>
                 <div className="doc-header-title">
@@ -1423,7 +1422,7 @@ function App() {
             <div className="photo-grid-6">
               {chunk.map((url, i) => (
                 <div key={i} className="photo-frame">
-                  <img src={url} alt={`attachment-${pageIndex}-${i}`} />
+                  <img src={url} alt={`attachment-${pageIndex}-${i}`} crossOrigin="anonymous" />
                 </div>
               ))}
             </div>

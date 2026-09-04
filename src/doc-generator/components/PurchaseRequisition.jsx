@@ -19,7 +19,7 @@ export function PurchaseRequisitionView({ data, company, themeClass, formatThaiD
       {/* 1. Header (Matching PDF Layout) */}
       <div style={{ textAlign: 'center', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '2px' }}>
-          {company?.logo && <img src={company.logo} alt="Company Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />}
+          {company?.logo && <img src={company.logo} alt="Company Logo" crossOrigin="anonymous" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />}
           <span style={{ fontSize: '18px', fontWeight: 'bold', letterSpacing: '0.5px' }}>{companyName}</span>
         </div>
         <div style={{ fontSize: '11px', color: themeClass.includes('classic') ? '#222' : '#475569' }}>

@@ -9,10 +9,37 @@ function isMobileDevice() {
   return isMobileUA || isIpadOS;
 }
 
-async function waitForImagesToLoad(container) {
+// Convert all external images (Google Drive, Logo, etc.) inside container to local Base64 dataURIs
+export async function inlineAllImagesToBase64(container) {
   if (!container) return;
   const images = Array.from(container.querySelectorAll('img'));
   if (images.length === 0) return;
+
+  await Promise.all(
+    images.map(async (img) => {
+      const src = img.getAttribute('src');
+      if (!src || src.startsWith('data:')) return;
+
+      try {
+        const res = await fetch(src, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        const dataUrl = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+        if (dataUrl && typeof dataUrl === 'string' && dataUrl.startsWith('data:')) {
+          img.src = dataUrl;
+        }
+      } catch (err) {
+        console.warn('inlineAllImagesToBase64 error for:', src, err);
+      }
+    })
+  );
+
+  // Wait until all images have complete === true and naturalWidth > 0
   await Promise.all(
     images.map(img => {
       if (img.complete && img.naturalWidth > 0) return Promise.resolve();
@@ -40,9 +67,9 @@ export async function exportToPdf(containerId, filename) {
       return false;
     }
     
-    // Ensure all images are fully loaded and rendered before capturing
-    await waitForImagesToLoad(container);
-    await new Promise(r => setTimeout(r, 100));
+    // Ensure 100% of images are converted to local Base64 dataURIs before capturing
+    await inlineAllImagesToBase64(container);
+    await new Promise(r => setTimeout(r, 120));
 
     // Check if there are multiple A4 pages
     const pages = container.querySelectorAll('.a4-page');
@@ -54,7 +81,7 @@ export async function exportToPdf(containerId, filename) {
       quality: 0.92,
       pixelRatio: 2, // 300 DPI high-definition output
       backgroundColor: '#ffffff',
-      cacheBust: true
+      cacheBust: false
     };
     
     if (pages && pages.length > 0) {
@@ -118,9 +145,9 @@ export async function generatePdfBase64(containerId) {
       return null;
     }
 
-    // Ensure all images are fully loaded and rendered before capturing
-    await waitForImagesToLoad(container);
-    await new Promise(r => setTimeout(r, 100));
+    // Ensure 100% of images are converted to local Base64 dataURIs before capturing
+    await inlineAllImagesToBase64(container);
+    await new Promise(r => setTimeout(r, 120));
 
     const pages = container.querySelectorAll('.a4-page');
     const pdf = new jsPDF('p', 'mm', 'a4', true);
@@ -131,7 +158,7 @@ export async function generatePdfBase64(containerId) {
       quality: 0.90,
       pixelRatio: 2,
       backgroundColor: '#ffffff',
-      cacheBust: true
+      cacheBust: false
     };
 
     if (pages && pages.length > 0) {

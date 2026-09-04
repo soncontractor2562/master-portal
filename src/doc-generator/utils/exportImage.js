@@ -1,4 +1,5 @@
 import * as htmlToImage from 'html-to-image';
+import { inlineAllImagesToBase64 } from './exportPdf';
 
 function isMobileDevice() {
   const ua = navigator.userAgent || '';
@@ -6,22 +7,6 @@ function isMobileDevice() {
   const isMobileUA = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
   const isIpadOS = /Macintosh/i.test(ua) && isTouchDevice;
   return isMobileUA || isIpadOS;
-}
-
-async function waitForImagesToLoad(container) {
-  if (!container) return;
-  const images = Array.from(container.querySelectorAll('img'));
-  if (images.length === 0) return;
-  await Promise.all(
-    images.map(img => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        setTimeout(resolve, 2500);
-      });
-    })
-  );
 }
 
 export async function exportToImage(containerId, filename) {
@@ -39,9 +24,9 @@ export async function exportToImage(containerId, filename) {
       return false;
     }
 
-    // Ensure all images are fully loaded and rendered before capturing
-    await waitForImagesToLoad(container);
-    await new Promise(r => setTimeout(r, 100));
+    // Ensure 100% of images are converted to local Base64 dataURIs before capturing
+    await inlineAllImagesToBase64(container);
+    await new Promise(r => setTimeout(r, 120));
     
     const pages = container.querySelectorAll('.a4-page');
     const filesToShare = [];
@@ -49,7 +34,7 @@ export async function exportToImage(containerId, filename) {
     const renderOptions = {
       pixelRatio: 2,
       backgroundColor: '#ffffff',
-      cacheBust: true
+      cacheBust: false
     };
 
     if (pages && pages.length > 0) {

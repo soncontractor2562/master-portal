@@ -30,7 +30,7 @@ export function DailyRequestView({ data, company, themeClass, formatThaiDate }) 
         <div className="report-header" style={{ marginBottom: '16px' }}>
           <div className="header-top">
             <div className="logo-company">
-              {company.logo && <img src={company.logo} alt="Company Logo" />}
+              {company.logo && <img src={company.logo} alt="Company Logo" crossOrigin="anonymous" />}
               <div className="company-name">{company.name || 'บริษัท ซัน คอนแทรคเตอร์ จำกัด'}</div>
             </div>
             <div className="doc-header-title">
