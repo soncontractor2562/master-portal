@@ -110,40 +110,163 @@ export const docGeneratorService = {
     } catch(e) {}
   },
 
-  // 3. Projects Registry
-  async getProjects() {
+  // Local storage project helpers
+  getLocalProjects() {
     try {
-      const { data, error } = await supabase.from('doc_generator_projects').select('*').order('created_at', { ascending: true });
-      if (error) {
-        console.error('Error fetching projects:', error);
-        return [];
-      }
-      return data || [];
+      const raw = localStorage.getItem('daily_reports_projects_v1');
+      return raw ? JSON.parse(raw) : [];
     } catch(e) {
       return [];
     }
   },
+  saveLocalProjects(projects) {
+    try {
+      localStorage.setItem('daily_reports_projects_v1', JSON.stringify(projects));
+    } catch(e) {}
+  },
+
+  // 3. Projects Registry
+  async getProjects() {
+    try {
+      const localCached = this.getLocalProjects();
+      const localMap = {};
+      localCached.forEach(p => {
+        if (p.id) localMap[p.id] = p;
+        if (p.name) localMap[p.name] = p;
+      });
+
+      const { data, error } = await supabase.from('doc_generator_projects').select('*').order('created_at', { ascending: true });
+      if (error) {
+        console.warn('Using local projects cache:', error.message || error);
+        return localCached;
+      }
+
+      const merged = (data || []).map(p => {
+        const cached = localMap[p.id] || localMap[p.name] || {};
+        return {
+          ...p,
+          pr_prefix: p.pr_prefix || cached.pr_prefix || 'PR-',
+          pr_start_no: p.pr_start_no !== undefined ? p.pr_start_no : (cached.pr_start_no || 1)
+        };
+      });
+
+      // Include any local-only projects
+      const dbIds = new Set((data || []).map(p => p.id));
+      const dbNames = new Set((data || []).map(p => p.name));
+      localCached.forEach(lp => {
+        if (!dbIds.has(lp.id) && !dbNames.has(lp.name)) {
+          merged.push(lp);
+        }
+      });
+
+      this.saveLocalProjects(merged);
+      return merged;
+    } catch(e) {
+      return this.getLocalProjects();
+    }
+  },
+
   async addProject(nameOrObj, owner = '', pr_prefix = '', pr_start_no = 1) {
     try {
       const payload = typeof nameOrObj === 'object' ? nameOrObj : { name: nameOrObj, owner, pr_prefix, pr_start_no };
-      const { data, error } = await supabase.from('doc_generator_projects').insert([payload]).select();
-      if (error) console.error('Error adding project:', error);
-      return data ? data[0] : null;
+      const projName = (payload.name || '').trim();
+      const projOwner = (payload.owner || '').trim();
+      const projPrefix = (payload.pr_prefix || 'PR-').trim();
+      const projStartNo = parseInt(payload.pr_start_no, 10) || 1;
+
+      if (!projName) return null;
+
+      // 1. Try full insert (if columns pr_prefix & pr_start_no exist in Supabase table)
+      const { data, error } = await supabase.from('doc_generator_projects')
+        .insert([{ name: projName, owner: projOwner, pr_prefix: projPrefix, pr_start_no: projStartNo }])
+        .select();
+
+      if (!error && data && data[0]) {
+        const created = {
+          ...data[0],
+          pr_prefix: data[0].pr_prefix || projPrefix,
+          pr_start_no: data[0].pr_start_no || projStartNo
+        };
+        const current = this.getLocalProjects();
+        this.saveLocalProjects([...current.filter(p => p.id !== created.id), created]);
+        return created;
+      }
+
+      // 2. Fallback: If error occurred (e.g. pr_prefix column not yet added to Supabase), insert basic schema
+      console.warn('Full project insert failed, attempting basic schema fallback (name, owner):', error?.message);
+      const { data: basicData, error: basicErr } = await supabase.from('doc_generator_projects')
+        .insert([{ name: projName, owner: projOwner }])
+        .select();
+
+      if (!basicErr && basicData && basicData[0]) {
+        const created = {
+          ...basicData[0],
+          pr_prefix: projPrefix,
+          pr_start_no: projStartNo
+        };
+        const current = this.getLocalProjects();
+        this.saveLocalProjects([...current.filter(p => p.id !== created.id), created]);
+        return created;
+      }
+
+      // 3. Ultimate Fallback: Local project creation
+      console.warn('Supabase project insert failed, saving locally:', basicErr?.message);
+      const localProject = {
+        id: 'proj_' + Date.now(),
+        name: projName,
+        owner: projOwner,
+        pr_prefix: projPrefix,
+        pr_start_no: projStartNo,
+        created_at: new Date().toISOString()
+      };
+      const current = this.getLocalProjects();
+      this.saveLocalProjects([...current, localProject]);
+      return localProject;
     } catch(e) {
-      return null;
+      console.error('addProject error:', e);
+      const localProject = {
+        id: 'proj_' + Date.now(),
+        name: typeof nameOrObj === 'object' ? nameOrObj.name : nameOrObj,
+        owner: typeof nameOrObj === 'object' ? nameOrObj.owner : owner,
+        pr_prefix: typeof nameOrObj === 'object' ? (nameOrObj.pr_prefix || 'PR-') : (pr_prefix || 'PR-'),
+        pr_start_no: typeof nameOrObj === 'object' ? (nameOrObj.pr_start_no || 1) : (pr_start_no || 1),
+        created_at: new Date().toISOString()
+      };
+      const current = this.getLocalProjects();
+      this.saveLocalProjects([...current, localProject]);
+      return localProject;
     }
   },
+
   async updateProject(id, updates) {
     try {
+      const local = this.getLocalProjects();
+      const updatedLocal = local.map(p => p.id === id ? { ...p, ...updates } : p);
+      this.saveLocalProjects(updatedLocal);
+
       const { error } = await supabase.from('doc_generator_projects').update(updates).eq('id', id);
-      if (error) console.error('Error updating project:', error);
-    } catch(e) {}
+      if (error) {
+        // Fallback: update only existing basic columns (name, owner)
+        const safeUpdates = {};
+        if (updates.name !== undefined) safeUpdates.name = updates.name;
+        if (updates.owner !== undefined) safeUpdates.owner = updates.owner;
+        if (Object.keys(safeUpdates).length > 0) {
+          await supabase.from('doc_generator_projects').update(safeUpdates).eq('id', id);
+        }
+      }
+    } catch(e) {
+      console.warn('updateProject error:', e);
+    }
   },
+
   async deleteProject(id) {
     try {
-      const { error } = await supabase.from('doc_generator_projects').delete().eq('id', id);
-      if (error) console.error('Error deleting project:', error);
-    } catch(e) {}
+      const local = this.getLocalProjects().filter(p => p.id !== id);
+      this.saveLocalProjects(local);
+      await supabase.from('doc_generator_projects').delete().eq('id', id);
+    } catch(e) {
+      console.warn('deleteProject error:', e);
+    }
   },
 
   // 4. Documents History & Drafts (Hybrid Cloud + Local Fallback)

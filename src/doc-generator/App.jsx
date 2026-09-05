@@ -1157,7 +1157,18 @@ function App() {
         </div>
         <div className="grid">
           <div className="field" style={{ gridColumn: docType === "pr" ? "span 2" : "auto" }}>
-            <label>โครงการ (เลือกจากทะเบียนโครงการ)</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <label style={{ margin: 0 }}>โครงการ (เลือกจากทะเบียนโครงการ)</label>
+              <button 
+                type="button" 
+                className="btn ghost" 
+                onClick={() => setActiveSettingsModal('projects')}
+                style={{ fontSize: '11px', padding: '2px 8px', height: '22px', color: '#0369a1', borderColor: '#bae6fd', background: '#f0f9ff', fontWeight: 'bold', borderRadius: '4px' }}
+                title="เปิดหน้าต่างเพิ่มหรือจัดการทะเบียนโครงการ"
+              >
+                + เพิ่มโครงการใหม่
+              </button>
+            </div>
             <select value={data.project} onChange={e => handleProjectChange(e.target.value)}>
               <option value="">-- ไม่ระบุโครงการ (ใช้ค่าตั้งต้นกลาง) --</option>
               {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
@@ -3098,7 +3109,20 @@ function App() {
                         const prStart = parseInt(document.getElementById("newProjPrStartNo").value.trim(), 10) || 1;
                         if(n){
                           const newProj = await docGeneratorService.addProject({ name: n, owner: o, pr_prefix: prPre, pr_start_no: prStart });
-                          if (newProj) setProjects([...projects, newProj]);
+                          if (newProj) {
+                            setProjects(prev => {
+                              const updated = [...prev.filter(p => p.id !== newProj.id && p.name !== newProj.name), newProj];
+                              localStorage.setItem(PROJECTS_KEY, JSON.stringify(updated));
+                              return updated;
+                            });
+                            // Auto select if creating/editing a document
+                            if (formData && !formData.project) setFormData(prev => ({ ...prev, project: newProj.name, owner: newProj.owner || prev.owner }));
+                            if (reqData && !reqData.project) setReqData(prev => ({ ...prev, project: newProj.name, owner: newProj.owner || prev.owner }));
+                            if (prData && !prData.project) setPrData(prev => ({ ...prev, project: newProj.name }));
+                            alert(`✅ เพิ่มโครงการ "${newProj.name}" ในระบบเรียบร้อยแล้ว!`);
+                          } else {
+                            alert("เกิดข้อผิดพลาดในการบันทึกโครงการ กรุณาลองใหม่อีกครั้ง");
+                          }
                           document.getElementById("newProjName").value = "";
                           document.getElementById("newProjOwner").value = "";
                           document.getElementById("newProjPrPrefix").value = "";
